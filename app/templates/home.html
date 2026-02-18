@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Home - TechFixAI{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section py-5">
+    <!-- Animated Background Elements -->
+    <div class="hero-bg-animation">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+    </div>
+    
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="text-center mb-5 py-4">
+                    <div class="hero-badge mb-4">
+                        <i class="bi bi-cpu me-2"></i>
+                        AI-Powered Support System
+                    </div>
+                    
+                    <h1 class="hero-title mb-4">
+                        Voice-to-Ticket AI
+                    </h1>
+                    
+                    <p class="hero-subtitle mb-5 mx-auto">
+                        Automated incident intake and routing system for Japanese technical support. 
+                        Convert voice problems into structured tickets instantly.
+                    </p>
+                    
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a href="/upload" class="btn btn-primary px-5 py-3">
+                            <i class="bi bi-cloud-upload me-2"></i>Upload Audio
+                        </a>
+                        <a href="/tickets" class="btn btn-outline-light px-5 py-3">
+                            <i class="bi bi-ticket-perforated me-2"></i>View Tickets
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row justify-content-center mt-5">
+            <div class="col-lg-11">
+                <div class="workflow-card">
+                    <div class="text-center mb-5">
+                        <h4 class="fw-semibold">
+                            <i class="bi bi-diagram-3 text-success me-2"></i>
+                            How It Works
+                        </h4>
+                    </div>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-5col">
+                            <div class="workflow-step-vertical text-center">
+                                <i class="bi bi-cloud-upload workflow-icon-lg text-primary mb-2"></i>
+                                <h6 class="fw-bold mb-1">Upload</h6>
+                                <small class="text-muted d-block">Japanese audio describing technical issue</small>
+                            </div>
+                        </div>
+                        <div class="col-md-5col">
+                            <div class="workflow-step-vertical text-center">
+                                <i class="bi bi-mic workflow-icon-lg text-info mb-2"></i>
+                                <h6 class="fw-bold mb-1">Transcribe</h6>
+                                <small class="text-muted d-block">using Whisper AI (Japanese → Text)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-5col">
+                            <div class="workflow-step-vertical text-center">
+                                <i class="bi bi-translate workflow-icon-lg text-success mb-2"></i>
+                                <h6 class="fw-bold mb-1">Translate</h6>
+                                <small class="text-muted d-block">to clear English using LLM</small>
+                            </div>
+                        </div>
+                        <div class="col-md-5col">
+                            <div class="workflow-step-vertical text-center">
+                                <i class="bi bi-file-earmark-text workflow-icon-lg text-warning mb-2"></i>
+                                <h6 class="fw-bold mb-1">Generate</h6>
+                                <small class="text-muted d-block">structured support ticket</small>
+                            </div>
+                        </div>
+                        <div class="col-md-5col">
+                            <div class="workflow-step-vertical text-center">
+                                <i class="bi bi-person-check workflow-icon-lg text-danger mb-2"></i>
+                                <h6 class="fw-bold mb-1">Assign</h6>
+                                <small class="text-muted d-block">to best developer automatically</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container pt-5 pb-5">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Key Features</h2>
+            <p class="section-subtitle text-muted">Everything you need for seamless multilingual support</p>
+        </div>
+        
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card-enhanced h-100">
+                    <div class="feature-icon-enhanced feature-icon-primary">
+                        <i class="bi bi-translate"></i>
+                    </div>
+                    <h5 class="feature-title-enhanced">Smart Translation</h5>
+                    <p class="feature-text-enhanced">
+                        Context-aware technical translation from Japanese to English with AI-powered accuracy
+                    </p>
+                    <div class="feature-badges mt-3">
+                        <span class="feature-badge">Japanese</span>
+                        <span class="feature-badge">English</span>
+                        <span class="feature-badge">LLM</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card-enhanced h-100">
+                    <div class="feature-icon-enhanced feature-icon-success">
+                        <i class="bi bi-person-check"></i>
+                    </div>
+                    <h5 class="feature-title-enhanced">Auto-Assignment</h5>
+                    <p class="feature-text-enhanced">
+                        Deterministic routing based on skills, technical areas, and current workload distribution
+                    </p>
+                    <div class="feature-badges mt-3">
+                        <span class="feature-badge">Smart</span>
+                        <span class="feature-badge">Fast</span>
+                        <span class="feature-badge">Balanced</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card-enhanced h-100">
+                    <div class="feature-icon-enhanced feature-icon-warning">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h5 class="feature-title-enhanced">Audit Trail</h5>
+                    <p class="feature-text-enhanced">
+                        Complete history of every decision, assignment, and action for compliance and transparency
+                    </p>
+                    <div class="feature-badges mt-3">
+                        <span class="feature-badge">Secure</span>
+                        <span class="feature-badge">Tracked</span>
+                        <span class="feature-badge">Compliant</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,1290 @@
+{% extends "base.html" %}
+
+{% block title %}Voice to Ticket - TechFixAI{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Main Container */
+.voice-ticket-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0b1220 0%, #1a2332 100%);
+    padding: 2rem 0;
+}
+
+/* Header */
+.voice-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.voice-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+}
+
+.voice-header .subtitle {
+    color: #94a3b8;
+    font-size: 1.1rem;
+}
+
+/* Step Container - Only show active step */
+.step-container {
+    display: none;
+}
+
+.step-container.active {
+    display: block;
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Step 1: Record/Upload Interface */
+.upload-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    justify-content: center;
+}
+
+.tab-btn {
+    background: rgba(51, 65, 85, 0.5);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #94a3b8;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #fff;
+    border-color: #3b82f6;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Record Button */
+.record-button {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border: none;
+    color: #fff;
+    font-size: 4rem;
+    cursor: pointer;
+    margin: 2rem auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+}
+
+.record-button:hover:not(:disabled) {
+    transform: scale(1.1);
+}
+
+.record-button.recording {
+    animation: pulse-record 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-record {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    50% { box-shadow: 0 0 0 30px rgba(239, 68, 68, 0); }
+}
+
+.timer-display {
+    font-size: 2.5rem;
+    color: #06b6d4;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+/* Waveform Visualizer */
+.audio-visualizer {
+    height: 100px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    margin: 2rem 0;
+}
+
+/* Step 2: Transcription Edit */
+.transcription-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.transcription-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.transcription-textarea {
+    width: 100%;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #fff;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    font-size: 1.1rem;
+    min-height: 150px;
+    resize: vertical;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+
+.transcription-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.edit-hint {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+/* Step 3: Processing States */
+.processing-screen {
+    text-align: center;
+}
+
+.process-circle {
+    width: 300px;
+    height: 300px;
+    margin: 2rem auto;
+    border-radius: 50%;
+    border: 3px solid rgba(59, 130, 246, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: rgba(0, 0, 0, 0.3);
+    transition: all 0.5s ease;
+}
+
+.process-circle.encrypting {
+    border-color: rgba(251, 191, 36, 0.8);
+    box-shadow: 0 0 40px rgba(251, 191, 36, 0.4);
+}
+
+.process-circle.analyzing {
+    border-color: rgba(59, 130, 246, 0.8);
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+}
+
+.process-icon {
+    font-size: 5rem;
+    animation: float 2s ease-in-out infinite;
+}
+
+.process-icon.lock {
+    color: #fbbf24;
+}
+
+.process-icon.analyze {
+    color: #3b82f6;
+    font-size: 6rem;
+    font-weight: 700;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+.process-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 1rem;
+}
+
+.process-subtitle {
+    font-size: 1.2rem;
+    color: #3b82f6;
+}
+
+.workflow-steps {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-top: 3rem;
+}
+
+.workflow-step {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.workflow-step.active {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.workflow-step.completed {
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.step-number {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.2rem;
+    background: rgba(100, 116, 139, 0.3);
+    color: #64748b;
+}
+
+.step-number.active {
+    background: #3b82f6;
+    color: #fff;
+    animation: pulse-step 1.5s ease-in-out infinite;
+}
+
+.step-number.completed {
+    background: #22c55e;
+    color: #fff;
+}
+
+@keyframes pulse-step {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+    50% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+}
+
+.step-text {
+    color: #94a3b8;
+    font-size: 1.1rem;
+}
+
+.step-text.active, .step-text.completed {
+    color: #fff;
+}
+
+/* Step 4: Success Screen */
+.success-icon {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #22c55e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+}
+
+.success-icon i {
+    font-size: 4rem;
+    color: #fff;
+}
+
+.success-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #22c55e;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.ticket-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.developer-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 2px solid #22c55e;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dev-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+    position: relative;
+}
+
+.online-dot {
+    width: 16px;
+    height: 16px;
+    background: #22c55e;
+    border: 3px solid #0b1220;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    animation: pulse-online 2s ease-in-out infinite;
+}
+
+@keyframes pulse-online {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.connect-btn {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    border: none;
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: 600;
+    padding: 1rem 2rem;
+    border-radius: 0.75rem;
+    width: 100%;
+    margin-top: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.connect-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+/* Buttons */
+.btn-primary-custom {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border: none;
+    color: #fff;
+    padding: 0.875rem 2rem;
+    border-radius: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+.btn-secondary-custom {
+    background: rgba(100, 116, 139, 0.3);
+    border: 1px solid rgba(100, 116, 139, 0.5);
+    color: #94a3b8;
+    padding: 0.875rem 2rem;
+    border-radius: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary-custom:hover {
+    background: rgba(100, 116, 139, 0.5);
+    color: #fff;
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="voice-ticket-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="voice-header">
+            <div class="d-flex align-items-center justify-content-center gap-3 mb-2">
+                <i class="bi bi-mic-fill" style="font-size: 2.5rem; color: #8b5cf6;"></i>
+                <h1>Voice to Ticket</h1>
+            </div>
+            <p class="subtitle">Record issues in your language</p>
+            <div class="security-badge-container" id="security-badge"></div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Main Interface -->
+                <div id="main-interface">
+                    <!-- Waveform Circle -->
+                    <div class="waveform-circle" id="waveform-circle">
+                        <div id="circle-content">
+                            <!-- Will be dynamically updated -->
+                        </div>
+                    </div>
+
+                    <!-- Status Text -->
+                    <div id="status-display"></div>
+
+                    <!-- Microphone Button (Initial State) -->
+                    <button class="mic-button" id="mic-btn" style="display: none;">
+                        <i class="bi bi-mic-fill"></i>
+                    </button>
+                </div>
+
+                <!-- Processing Workflow -->
+                <div class="workflow-card">
+                    <div class="workflow-title">Processing Workflow</div>
+                    <div id="workflow-steps">
+                        <div class="workflow-step" data-step="1">
+                            <div class="step-number pending">1</div>
+                            <div class="step-text pending">Voice Recording</div>
+                        </div>
+                        <div class="workflow-step" data-step="2">
+                            <div class="step-number pending">2</div>
+                            <div class="step-text pending">Data Encryption (AES-256)</div>
+                        </div>
+                        <div class="workflow-step" data-step="3">
+                            <div class="step-number pending">3</div>
+                            <div class="step-text pending">Language Detection & Analysis</div>
+                        </div>
+                        <div class="workflow-step" data-step="4">
+                            <div class="step-number pending">4</div>
+                            <div class="step-text pending">Developer Assignment</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Success Screen (Hidden Initially) -->
+                <div class="success-container" id="success-screen">
+                    <div class="success-icon">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <div class="success-title">Ticket Successfully Created</div>
+
+                    <!-- Ticket Details Card -->
+                    <div class="ticket-card">
+                        <div class="ticket-header">
+                            <div class="ticket-badges">
+                                <span class="badge" style="background: #3b82f6; padding: 0.5rem 1rem; font-size: 0.9rem;">
+                                    <i class="bi bi-person-check"></i> ASSIGNED
+                                </span>
+                                <span class="badge" style="background: #8b5cf6; padding: 0.5rem 1rem; font-size: 0.9rem;" id="ticket-category-badge">
+                                    Backend
+                                </span>
+                            </div>
+                            <div class="ticket-number-text">
+                                <div id="ticket-number">TICKET-###</div>
+                                <div class="ticket-id" id="ticket-timestamp">Created: --</div>
+                            </div>
+                        </div>
+
+                        <h3 class="ticket-title-heading">Support Ticket Created</h3>
+
+                        <!-- Transcribed Issue -->
+                        <div class="info-section">
+                            <div class="info-label">YOUR ISSUE (TRANSCRIBED)</div>
+                            <div class="info-content" id="transcribed-issue">
+                                "The server is down and no one can access it. Please respond immediately."
+                            </div>
+                        </div>
+
+                        <!-- Detected Language -->
+                        <div class="info-section">
+                            <div class="info-label"><i class="bi bi-globe"></i> DETECTED LANGUAGE</div>
+                            <div class="info-content" id="detected-language" style="color: #3b82f6;">English</div>
+                        </div>
+
+                        <!-- Assigned Developer -->
+                        <div class="info-label mb-2">ASSIGNED DEVELOPER</div>
+                        <div class="developer-card" id="assigned-developer">
+                            <div class="dev-avatar">
+                                <span id="dev-initials">H</span>
+                                <div class="online-indicator"></div>
+                            </div>
+                            <div class="dev-info">
+                                <div class="dev-name" id="dev-name">Hanako Yamamoto</div>
+                                <div class="dev-role" id="dev-role">Backend Lead</div>
+                            </div>
+                            <div class="dev-response">
+                                <i class="bi bi-circle-fill text-success" style="font-size: 8px;"></i> 2-5 min
+                            </div>
+                        </div>
+
+                        <!-- Online Status -->
+                        <div class="text-center mb-3" style="color: #22c55e;">
+                            <i class="bi bi-circle-fill" style="font-size: 8px;"></i> Online & Available
+                        </div>
+                        <div class="text-center mb-3" style="color: #94a3b8;">
+                            Expected Response: 2-5 min
+                        </div>
+
+                        <!-- Connect Button -->
+                        <button class="connect-btn" id="connect-btn">
+                            <i class="bi bi-chat-dots"></i> Connect with <span id="dev-first-name">Hanako</span>
+                        </button>
+
+                        <!-- Security & Privacy -->
+                        <div class="security-section mt-4">
+                            <div class="security-title">
+                                <i class="bi bi-shield-check"></i> Security & Privacy
+                            </div>
+                            <ul class="security-list">
+                                <li><i class="bi bi-check-lg"></i> Your voice recording is encrypted with AES-256-GCM</li>
+                                <li><i class="bi bi-check-lg"></i> All data is stored securely in our database</li>
+                                <li><i class="bi bi-check-lg"></i> Only assigned developer has access to your information</li>
+                                <li><i class="bi bi-check-lg"></i> Communication is end-to-end encrypted</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chat Modal -->
+<div class="chat-modal" id="chat-modal">
+    <div class="chat-header">
+        <div class="chat-dev-info">
+            <div class="chat-avatar" id="chat-avatar">H</div>
+            <div>
+                <div class="chat-dev-name" id="chat-dev-name">Hanako Yamamoto</div>
+                <div class="chat-status"><i class="bi bi-circle-fill" style="font-size: 6px;"></i> Online • Secure Encrypted Line</div>
+            </div>
+        </div>
+        <button class="chat-close" id="chat-close">×</button>
+    </div>
+    
+    <div class="chat-messages" id="chat-messages">
+        <!-- Messages will be added here dynamically -->
+    </div>
+    
+    <div class="chat-input-container">
+        <div class="chat-input-wrapper">
+            <input type="text" class="chat-input" id="chat-input" placeholder="Type your message securely...">
+            <button class="chat-send-btn" id="chat-send">
+                <i class="bi bi-send-fill"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/voice-recorder.js"></script>
+<script src="/static/js/ui-components.js"></script>
+                            <div class="col-md-4">
+                                <label for="environment" class="form-label fw-bold">Environment</label>
+                                <select class="form-select" id="environment">
+                                    <option value="">Auto-detect</option>
+                                    <option value="Production">Production</option>
+                                    <option value="Staging">Staging</option>
+                                    <option value="Dev">Development</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="urgency" class="form-label fw-bold">Urgency Override</label>
+                                <select class="form-select" id="urgency">
+                                    <option value="">Auto-assign</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="upload-btn">
+                                <i class="bi bi-upload"></i> Upload & Process
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Progress Section -->
+                    <div id="progress-section" class="mt-4" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="bi bi-hourglass-split"></i> Processing audio...
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 100%">
+                                Uploading & Transcribing...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Processing Result Section -->
+                    <div id="result-section" class="mt-5" style="display: none;">
+                        <h5 class="mb-3">
+                            <i class="bi bi-check-circle text-success"></i> Processing Complete
+                        </h5>
+                        
+                        <!-- Split View: Japanese (Left) | English (Right) -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-secondary h-100">
+                                    <div class="card-header bg-secondary text-white">
+                                        <strong>🗣 Original Japanese Transcript</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <p id="japanese-transcript" class="text-muted fst-italic">
+                                            Loading...
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-primary h-100">
+                                    <div class="card-header bg-primary text-white">
+                                        <strong>🌐 English Technical Translation</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <p id="english-translation" class="fw-bold">
+                                            Loading...
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ticket Preview -->
+                        <div id="ticket-preview" class="card border-success mt-4" style="display: none;">
+                            <div class="card-header bg-success text-white">
+                                <strong><i class="bi bi-ticket-perforated"></i> Generated Ticket</strong>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Ticket #:</strong> <span id="ticket-number" class="text-primary"></span></p>
+                                        <p><strong>Issue:</strong> <span id="ticket-title"></span></p>
+                                        <p><strong>Category:</strong> <span id="ticket-category"></span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Priority:</strong> <span id="ticket-priority"></span></p>
+                                        <p><strong>Technical Area:</strong> <span id="ticket-area"></span></p>
+                                        <p><strong>Assigned To:</strong> <span id="assigned-dev" class="text-success"></span></p>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <strong>Assignment Reason:</strong><br>
+                                    <span id="assignment-reason"></span>
+                                </div>
+                                <div class="mt-3">
+                                    <a href="/tickets" class="btn btn-success">View All Tickets</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Uploads -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Recent Uploads
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="recent-uploads">
+                        <p class="text-muted text-center">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/voice-recorder.js"></script>
+<script src="/static/js/ui-components.js"></script>
+<script>
+// ===== VOICE RECORDING FUNCTIONALITY =====
+let voiceRecorder = null;
+let audioVisualizer = null;
+let recordingTimer = null;
+let recordedAudioBlob = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    voiceRecorder = new VoiceRecorderService();
+    audioVisualizer = new AudioVisualizer('audio-visualizer', 20);
+    recordingTimer = new RecordingTimer('recording-timer');
+    
+    setupRecordingHandlers();
+});
+
+function setupRecordingHandlers() {
+    const recordBtn = document.getElementById('record-btn');
+    const stopBtn = document.getElementById('stop-record-btn');
+    const submitBtn = document.getElementById('submit-record-btn');
+    
+    recordBtn.addEventListener('click', startRecording);
+    stopBtn.addEventListener('click', stopRecording);
+    submitBtn.addEventListener('click', submitRecording);
+}
+
+async function startRecording() {
+    const success = await voiceRecorder.startRecording();
+    
+    if (!success) {
+        alert('Unable to access microphone. Please check permissions.');
+        return;
+    }
+    
+    // Update UI
+    document.getElementById('record-btn').classList.add('recording-active');
+    document.getElementById('record-btn').disabled = true;
+    document.getElementById('stop-record-btn').disabled = false;
+    document.getElementById('recording-status').textContent = 'Recording in progress...';
+    
+    // Start visualizer and timer
+    audioVisualizer.start(voiceRecorder);
+    recordingTimer.start();
+    
+    // Hide previous results
+    document.getElementById('audio-preview').style.display = 'none';
+    document.getElementById('result-section').style.display = 'none';
+}
+
+async function stopRecording() {
+    const result = await voiceRecorder.stopRecording();
+    
+    if (result) {
+        recordedAudioBlob = result.blob;
+        
+        // Update UI
+        document.getElementById('record-btn').classList.remove('recording-active');
+        document.getElementById('record-btn').disabled = false;
+        document.getElementById('stop-record-btn').disabled = true;
+        document.getElementById('submit-record-btn').disabled = false;
+        document.getElementById('recording-status').textContent = 'Recording stopped. Ready to process.';
+        
+        // Stop visualizer and timer
+        audioVisualizer.stop();
+        recordingTimer.stop();
+        
+        // Show audio preview
+        const audioPlayer = document.getElementById('audio-player');
+        audioPlayer.src = result.url;
+        document.getElementById('audio-duration').textContent = 
+            `Duration: ${recordingTimer.getSeconds()} seconds`;
+        document.getElementById('audio-preview').style.display = 'block';
+    }
+}
+
+async function submitRecording() {
+    if (!recordedAudioBlob) {
+        alert('No recording available');
+        return;
+    }
+    
+    // Show process steps
+    document.getElementById('process-steps').style.display = 'block';
+    document.getElementById('step-recording').innerHTML = window.createProcessStep(1, 'Recording Captured', true);
+    document.getElementById('step-encryption').innerHTML = window.createProcessStep(2, 'Encrypting Audio', false, true);
+    document.getElementById('step-analysis').innerHTML = window.createProcessStep(3, 'Analyzing Content', false);
+    document.getElementById('step-assignment').innerHTML = window.createProcessStep(4, 'Assigning Developer', false);
+    
+    document.getElementById('submit-record-btn').disabled = true;
+    
+    // Create form data
+    const formData = new FormData();
+    formData.append('audio', recordedAudioBlob, 'recording.wav');
+    
+    try {
+        const response = await fetch('/api/voice/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            document.getElementById('step-encryption').innerHTML = window.createProcessStep(2, 'Encrypting Audio', true);
+            document.getElementById('step-analysis').innerHTML = window.createProcessStep(3, 'Analyzing Content', false, true);
+            
+            const conversationId = data.conversation_id;
+            pollStatus(conversationId);
+        } else {
+            showError(data.detail || 'Upload failed');
+            document.getElementById('submit-record-btn').disabled = false;
+            document.getElementById('step-encryption').innerHTML = window.createProcessStep(2, 'Encrypting Audio', false, false, true);
+        }
+    } catch (error) {
+        showError('Network error: ' + error.message);
+        document.getElementById('submit-record-btn').disabled = false;
+        document.getElementById('step-encryption').innerHTML = window.createProcessStep(2, 'Encrypting Audio', false, false, true);
+    }
+}
+
+// ===== FILE UPLOAD FUNCTIONALITY =====
+<script>
+// ===== STATE MANAGEMENT =====
+let currentState = 'idle'; // idle, recording, analyzing, encrypting, success
+let voiceRecorder = null;
+let audioVisualizer = null;
+let recordingTimer = null;
+let recordedBlob = null;
+let currentTicketData = null;
+
+// ===== INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
+});
+
+function initializeApp() {
+    // Initialize services
+    voiceRecorder = new VoiceRecorderService();
+    
+    // Render security badge
+    renderSecurityBadge();
+    
+    // Set initial state
+    setState('idle');
+    
+    // Setup event listeners
+    setupEventListeners();
+}
+
+function renderSecurityBadge() {
+    const container = document.getElementById('security-badge');
+    if (typeof createSecurityBadge === 'function') {
+        container.innerHTML = createSecurityBadge();
+    } else {
+        container.innerHTML = `
+            <div class="badge bg-dark border border-success px-3 py-2">
+                <i class="bi bi-lock-fill text-success"></i> Secure • AES-256-GCM
+            </div>
+        `;
+    }
+}
+
+function setupEventListeners() {
+    // Microphone button
+    const micBtn = document.getElementById('mic-btn');
+    if (micBtn) {
+        micBtn.addEventListener('click', handleMicClick);
+    }
+    
+    // Connect with developer button
+    const connectBtn = document.getElementById('connect-btn');
+    if (connectBtn) {
+        connectBtn.addEventListener('click', openChat);
+    }
+    
+    // Chat close button
+    const chatClose = document.getElementById('chat-close');
+    if (chatClose) {
+        chatClose.addEventListener('click', closeChat);
+    }
+    
+    // Chat send button
+    const chatSend = document.getElementById('chat-send');
+    if (chatSend) {
+        chatSend.addEventListener('click', sendMessage);
+    }
+    
+    // Chat input enter key
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) {
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    }
+}
+
+// ===== STATE MANAGEMENT =====
+async function setState(newState) {
+    currentState = newState;
+    const circle = document.getElementById('waveform-circle');
+    const circleContent = document.getElementById('circle-content');
+    const statusDisplay = document.getElementById('status-display');
+    const micBtn = document.getElementById('mic-btn');
+    const mainInterface = document.getElementById('main-interface');
+    const successScreen = document.getElementById('success-screen');
+    
+    // Reset classes
+    circle.className = 'waveform-circle';
+    
+    switch (newState) {
+        case 'idle':
+            circle.classList.add('');
+            circleContent.innerHTML = '';
+            statusDisplay.innerHTML = '';
+            micBtn.style.display = 'flex';
+            micBtn.disabled = false;
+            mainInterface.style.display = 'block';
+            successScreen.style.display = 'none';
+            updateWorkflowStep(0);
+            break;
+            
+        case 'recording':
+            circle.classList.add('recording');
+            circleContent.innerHTML = '<div class="circle-timer" id="timer-display">00:00</div>';
+            statusDisplay.innerHTML = '<div class="status-text">Listening to Your Issue</div>';
+            micBtn.style.display = 'none';
+            
+            // Start recording
+            await startRecording();
+            updateWorkflowStep(1, 'active');
+            break;
+            
+        case 'analyzing':
+            circle.classList.add('analyzing');
+            circleContent.innerHTML = '<div class="state-icon analyzing">Z</div>';
+            statusDisplay.innerHTML = `
+                <div class="status-text">Analyzing & Assigning</div>
+                <div class="status-subtext">
+                    <i class="bi bi-globe"></i> Detected: <strong>English ()</strong>
+                </div>
+            `;
+            updateWorkflowStep(1, 'completed');
+            updateWorkflowStep(2, 'completed');
+            updateWorkflowStep(3, 'active');
+            break;
+            
+        case 'encrypting':
+            circle.classList.add('encrypting');
+            circleContent.innerHTML = '<div class="state-icon encrypting"><i class="bi bi-lock-fill"></i></div>';
+            statusDisplay.innerHTML = '<div class="status-text">Securing Your Data</div>';
+            updateWorkflowStep(1, 'completed');
+            updateWorkflowStep(2, 'active');
+            break;
+            
+        case 'success':
+            mainInterface.style.display = 'none';
+            successScreen.style.display = 'block';
+            updateWorkflowStep(1, 'completed');
+            updateWorkflowStep(2, 'completed');
+            updateWorkflowStep(3, 'completed');
+            updateWorkflowStep(4, 'completed');
+            break;
+    }
+}
+
+function updateWorkflowStep(step, status = 'pending') {
+    const stepElement = document.querySelector(`.workflow-step[data-step="${step}"]`);
+    if (!stepElement) return;
+    
+    const numberElement = stepElement.querySelector('.step-number');
+    const textElement = stepElement.querySelector('.step-text');
+    
+    // Remove all status classes
+    stepElement.classList.remove('active', 'completed');
+    numberElement.classList.remove('pending', 'active', 'completed');
+    textElement.classList.remove('pending');
+    
+    // Add new status
+    if (status === 'active') {
+        stepElement.classList.add('active');
+        numberElement.classList.add('active');
+        numberElement.textContent = step;
+    } else if (status === 'completed') {
+        stepElement.classList.add('completed');
+        numberElement.classList.add('completed');
+        numberElement.innerHTML = '<i class="bi bi-check-lg"></i>';
+    } else {
+        numberElement.classList.add('pending');
+        textElement.classList.add('pending');
+        numberElement.textContent = step;
+    }
+}
+
+// ===== RECORDING FUNCTIONS =====
+async function handleMicClick() {
+    if (currentState === 'idle') {
+        await setState('recording');
+    } else if (currentState === 'recording') {
+        await stopAndProcess();
+    }
+}
+
+async function startRecording() {
+    const success = await voiceRecorder.startRecording();
+    
+    if (!success) {
+        alert('Unable to access microphone. Please check permissions.');
+        setState('idle');
+        return;
+    }
+    
+    // Initialize visualizer in circle
+    audioVisualizer = new AudioVisualizer('circle-content', 20, true);
+    audioVisualizer.start(voiceRecorder);
+    
+    // Start timer
+    recordingTimer = new RecordingTimer('timer-display');
+    recordingTimer.start();
+    
+    // Auto-stop after 60 seconds
+    setTimeout(() => {
+        if (currentState === 'recording') {
+            stopAndProcess();
+        }
+    }, 60000);
+}
+
+async function stopAndProcess() {
+    // Stop recording
+    const result = await voiceRecorder.stopRecording();
+    
+    if (!result) {
+        setState('idle');
+        return;
+    }
+    
+    recordedBlob = result.blob;
+    
+    // Stop visualizer and timer
+    if (audioVisualizer) audioVisualizer.stop();
+    if (recordingTimer) recordingTimer.stop();
+    
+    // Transition to encrypting state
+    await setState('encrypting');
+    
+    // Simulate encryption delay
+    await sleep(2000);
+    
+    // Upload the recording
+    await uploadRecording();
+}
+
+async function uploadRecording() {
+    if (!recordedBlob) {
+        setState('idle');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('audio', recordedBlob, 'recording.wav');
+    
+    try {
+        const response = await fetch('/api/voice/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Transition to analyzing
+            await setState('analyzing');
+            
+            // Poll for completion
+            await pollTicketStatus(data.conversation_id);
+        } else {
+            alert('Upload failed: ' + (data.detail || 'Unknown error'));
+            setState('idle');
+        }
+    } catch (error) {
+        alert('Network error: ' + error.message);
+        setState('idle');
+    }
+}
+
+async function pollTicketStatus(conversationId) {
+    let attempts = 0;
+    const maxAttempts = 40;
+    
+    while (attempts < maxAttempts) {
+        attempts++;
+        
+        try {
+            const response = await fetch(`/api/voice/status/${conversationId}`);
+            const data = await response.json();
+            
+            // Update detected language if available
+            if (data.detected_language) {
+                const statusSubtext = document.querySelector('.status-subtext strong');
+                if (statusSubtext) {
+                    statusSubtext.textContent = data.detected_language;
+                }
+            }
+            
+            // Check if ticket is created
+            if (data.ticket && data.ticket.ticket_number) {
+                currentTicketData = data;
+                await showSuccessScreen(data);
+                return;
+            }
+            
+            // Check if failed
+            if (data.status === 'failed') {
+                alert('Processing failed. Please try again.');
+                setState('idle');
+                return;
+            }
+            
+            await sleep(2000);
+            
+        } catch (error) {
+            console.error('Poll error:', error);
+            if (attempts >= 3) {
+                alert('Failed to check status. Please refresh the page.');
+                setState('idle');
+                return;
+            }
+        }
+    }
+    
+    alert('Processing timeout. Please check the tickets page.');
+    setState('idle');
+}
+
+async function showSuccessScreen(data) {
+    // Update ticket details
+    const ticket = data.ticket;
+    const developer = ticket.assigned_developer;
+    
+    // Ticket number and timestamp
+    document.getElementById('ticket-number').textContent = ticket.ticket_number;
+    const createdDate = new Date(ticket.created_at || Date.now());
+    document.getElementById('ticket-timestamp').textContent = 
+        'Created: ' + createdDate.toLocaleString('en-US', { 
+            month: 'numeric', 
+            day: 'numeric', 
+            year: 'numeric', 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+        });
+    
+    // Category badge
+    const categoryBadge = document.getElementById('ticket-category-badge');
+    if (ticket.category) {
+        categoryBadge.textContent = ticket.category;
+    }
+    
+    // Transcribed issue
+    const transcribedIssue = document.getElementById('transcribed-issue');
+    transcribedIssue.textContent = `"${data.english_translation || data.japanese_transcript || ticket.description || 'Issue recorded'}"`;
+    
+    // Detected language
+    const detectedLang = document.getElementById('detected-language');
+    detectedLang.textContent = data.detected_language || 'English';
+    
+    // Developer info
+    if (developer) {
+        const initials = developer.name.split(' ').map(n => n[0]).join('');
+        document.getElementById('dev-initials').textContent = initials;
+        document.getElementById('dev-name').textContent = developer.name;
+        document.getElementById('dev-role').textContent = developer.expertise?.split(',')[0] || 'Developer';
+        document.getElementById('dev-first-name').textContent = developer.name.split(' ')[0];
+        
+        // Update chat
+        document.getElementById('chat-avatar').textContent = initials;
+        document.getElementById('chat-dev-name').textContent = developer.name;
+    }
+    
+    // Show success state
+    await setState('success');
+    
+    // Initialize chat with first message
+    addChatMessage(
+        'dev',
+        `Hi, I received your issue about "${ticket.title || 'your request'}". Let me investigate this for you.`,
+        developer?.name.split(' ').map(n => n[0]).join('') || 'H'
+    );
+}
+
+// ===== CHAT FUNCTIONS =====
+function openChat() {
+    document.getElementById('chat-modal').classList.add('active');
+}
+
+function closeChat() {
+    document.getElementById('chat-modal').classList.remove('active');
+}
+
+function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    addChatMessage('user', message, 'Y');
+    input.value = '';
+    
+    // Simulate developer response
+    setTimeout(() => {
+        const responses = [
+            "The fix is being deployed. It should be live in a few minutes.",
+            "I'm working on it right now. I'll update you shortly.",
+            "Let me check the logs and get back to you.",
+            "Thanks for the information. I'll investigate this immediately."
+        ];
+        const response = responses[Math.floor(Math.random() * responses.length)];
+        const devInitials = document.getElementById('chat-avatar').textContent;
+        addChatMessage('dev', response, devInitials);
+    }, 2000);
+}
+
+function addChatMessage(type, text, avatar) {
+    const messagesContainer = document.getElementById('chat-messages');
+    const timestamp = new Date().toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit', 
+        hour12: true 
+    });
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${type}`;
+    messageDiv.innerHTML = `
+        <div class="message-avatar ${type}">${avatar}</div>
+        <div>
+            <div class="message-content">${text}</div>
+            <div class="message-time">${timestamp}</div>
+        </div>
+    `;
+    
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// ===== UTILITY FUNCTIONS =====
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+</script>
+{% endblock %}

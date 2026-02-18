@@ -1,0 +1,1223 @@
+{% extends "base.html" %}
+
+{% block title %}Voice to Ticket - TechFixAI{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Main Container */
+.voice-ticket-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0b1220 0%, #1a2332 100%);
+    padding: 2rem 0;
+}
+
+/* Header */
+.voice-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.voice-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+}
+
+.voice-header .subtitle {
+    color: #94a3b8;
+    font-size: 1.1rem;
+}
+
+/* Step Container - Progressive workflow */
+.step-container {
+    display: none;
+}
+
+.step-container.active {
+    display: block;
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Step 1: Record/Upload Interface */
+.upload-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    justify-content: center;
+}
+
+.tab-btn {
+    background: rgba(51, 65, 85, 0.5);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #94a3b8;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #fff;
+    border-color: #3b82f6;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Record Button */
+.record-button {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border: none;
+    color: #fff;
+    font-size: 4rem;
+    cursor: pointer;
+    margin: 2rem auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+}
+
+.record-button:hover:not(:disabled) {
+    transform: scale(1.1);
+}
+
+.record-button.recording {
+    animation: pulse-record 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-record {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    50% { box-shadow: 0 0 0 30px rgba(239, 68, 68, 0); }
+}
+
+.timer-display {
+    font-size: 2.5rem;
+    color: #06b6d4;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+/* Waveform Visualizer */
+.audio-visualizer {
+    height: 100px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    margin: 2rem 0;
+}
+
+/* Step 2: Transcription Edit */
+.transcription-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.transcription-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.transcription-textarea {
+    width: 100%;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #fff;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    font-size: 1.1rem;
+    min-height: 150px;
+    resize: vertical;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+
+.transcription-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.edit-hint {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+/* Step 3: Processing States */
+.processing-screen {
+    text-align: center;
+}
+
+.process-circle {
+    width: 300px;
+    height: 300px;
+    margin: 2rem auto;
+    border-radius: 50%;
+    border: 3px solid rgba(59, 130, 246, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: rgba(0, 0, 0, 0.3);
+    transition: all 0.5s ease;
+}
+
+.process-circle.encrypting {
+    border-color: rgba(251, 191, 36, 0.8);
+    box-shadow: 0 0 40px rgba(251, 191, 36, 0.4);
+}
+
+.process-circle.analyzing {
+    border-color: rgba(59, 130, 246, 0.8);
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+}
+
+.process-icon {
+    font-size: 5rem;
+    animation: float 2s ease-in-out infinite;
+}
+
+.process-icon.lock {
+    color: #fbbf24;
+}
+
+.process-icon.analyze {
+    color: #3b82f6;
+    font-size: 6rem;
+    font-weight: 700;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+.process-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 1rem;
+}
+
+.process-subtitle {
+    font-size: 1.2rem;
+    color: #3b82f6;
+}
+
+.workflow-steps {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-top: 3rem;
+}
+
+.workflow-step {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.workflow-step.active {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.workflow-step.completed {
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.step-number {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.2rem;
+    background: rgba(100, 116, 139, 0.3);
+    color: #64748b;
+}
+
+.step-number.active {
+    background: #3b82f6;
+    color: #fff;
+    animation: pulse-step 1.5s ease-in-out infinite;
+}
+
+.step-number.completed {
+    background: #22c55e;
+    color: #fff;
+}
+
+@keyframes pulse-step {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+    50% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+}
+
+.step-text {
+    color: #94a3b8;
+    font-size: 1.1rem;
+}
+
+.step-text.active, .step-text.completed {
+    color: #fff;
+}
+
+/* Step 4: Success Screen */
+.success-icon {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #22c55e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+}
+
+.success-icon i {
+    font-size: 4rem;
+    color: #fff;
+}
+
+.success-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #22c55e;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.ticket-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.info-section {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.info-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+}
+
+.info-content {
+    color: #fff;
+    font-size: 1rem;
+}
+
+.developer-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 2px solid #22c55e;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dev-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+    position: relative;
+}
+
+.online-dot {
+    width: 16px;
+    height: 16px;
+    background: #22c55e;
+    border: 3px solid #0b1220;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    animation: pulse-online 2s ease-in-out infinite;
+}
+
+@keyframes pulse-online {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.connect-btn {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    border: none;
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: 600;
+    padding: 1rem 2rem;
+    border-radius: 0.75rem;
+    width: 100%;
+    margin-top: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.connect-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+/* Buttons */
+.btn-primary-custom {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border: none;
+    color: #fff;
+    padding: 0.875rem 2rem;
+    border-radius: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+.btn-secondary-custom {
+    background: rgba(100, 116, 139, 0.3);
+    border: 1px solid rgba(100, 116, 139, 0.5);
+    color: #94a3b8;
+    padding: 0.875rem 2rem;
+    border-radius: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary-custom:hover {
+    background: rgba(100, 116, 139, 0.5);
+    color: #fff;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="voice-ticket-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="voice-header">
+            <h1><i class="bi bi-soundwave text-primary"></i> Voice to Ticket</h1>
+            <p class="subtitle">Speak in Japanese | We'll handle the rest</p>
+        </div>
+
+        <!-- Step 1: Record or Upload Audio -->
+        <div id="step1" class="step-container active">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="upload-card">
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" onclick="switchTab('record')">
+                                <i class="bi bi-mic-fill"></i> Record Audio
+                            </button>
+                            <button class="tab-btn" onclick="switchTab('upload')">
+                                <i class="bi bi-upload"></i> Upload Audio
+                            </button>
+                        </div>
+
+                        <!-- Record Tab -->
+                        <div id="recordTab" class="tab-content active">
+                            <div class="text-center">
+                                <h3 class="text-white mb-4">Record Your Issue</h3>
+                                <p class="text-muted mb-4">Click the button below and speak in Japanese</p>
+                                
+                                <button id="recordBtn" class="record-button" onclick="toggleRecording()">
+                                    <i class="bi bi-mic-fill"></i>
+                                </button>
+
+                                <div id="timerDisplay" class="timer-display" style="display: none;">00:00</div>
+                                
+                                <div id="audioVisualizer" class="audio-visualizer" style="display: none;"></div>
+
+                                <p class="text-muted mt-3" id="recordingStatus">Click to start recording</p>
+                            </div>
+                        </div>
+
+                        <!-- Upload Tab -->
+                        <div id="uploadTab" class="tab-content">
+                            <div class="text-center">
+                                <h3 class="text-white mb-4">Upload Audio File</h3>
+                                <p class="text-muted mb-4">Upload a pre-recorded Japanese audio (MP3, WAV, M4A, WebM)</p>
+                                
+                                <div class="mb-3">
+                                    <input type="file" class="form-control" id="audioFileInput" accept="audio/*" onchange="handleFileSelect(this)">
+                                </div>
+
+                                <button id="uploadBtn" class="btn btn-primary-custom" onclick="uploadFile()" disabled>
+                                    <i class="bi bi-cloud-upload"></i> Upload Audio
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Review & Edit Transcription -->
+        <div id="step2" class="step-container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="transcription-card">
+                        <h3 class="text-white mb-4 text-center">
+                            <i class="bi bi-chat-quote text-primary"></i> Review Transcription
+                        </h3>
+                        
+                        <div class="mb-4">
+                            <div class="transcription-label">Japanese Transcription (Original)</div>
+                            <textarea id="japaneseTranscript" class="transcription-textarea" rows="6" placeholder="Your transcribed Japanese text will appear here..."></textarea>
+                            <div class="edit-hint">
+                                <i class="bi bi-info-circle"></i> You can edit the transcription above for accuracy
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button class="btn btn-secondary-custom me-2" onclick="goBack(1)">
+                                <i class="bi bi-arrow-left"></i> Back
+                            </button>
+                            <button class="btn btn-primary-custom" onclick="proceedToTranslation()">
+                                Confirm & Translate <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Processing (Translation, Ticket Creation, Assignment) -->
+        <div id="step3" class="step-container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="processing-screen text-center">
+                        <!-- Process Circle -->
+                        <div id="processCircle" class="process-circle encrypting">
+                            <div class="process-icon lock">
+                                <i class="bi bi-lock-fill"></i>
+                            </div>
+                        </div>
+
+                        <h2 id="processTitle" class="process-title">Encrypting...</h2>
+                        <p id="processSubtitle" class="process-subtitle">Securing Your Data</p>
+
+                        <!-- Workflow Steps -->
+                        <div class="workflow-steps mt-5">
+                            <div class="workflow-step" id="workflowStep1">
+                                <div class="step-number active">1</div>
+                                <div class="step-text active">Translating to English</div>
+                            </div>
+                            <div class="workflow-step" id="workflowStep2">
+                                <div class="step-number pending">2</div>
+                                <div class="step-text pending">Creating Ticket</div>
+                            </div>
+                            <div class="workflow-step" id="workflowStep3">
+                                <div class="step-number pending">3</div>
+                                <div class="step-text pending">Analyzing Issue Category</div>
+                            </div>
+                            <div class="workflow-step" id="workflowStep4">
+                                <div class="step-number pending">4</div>
+                                <div class="step-text pending">Assigning Developer</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Success & Chat -->
+        <div id="step4" class="step-container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <!-- Success Icon -->
+                    <div class="success-icon">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <h2 class="success-title">Ticket Successfully Created!</h2>
+
+                    <!-- Ticket Card -->
+                    <div class="ticket-card mb-4">
+                        <div class="row mb-3">
+                            <div class="col-8">
+                                <span class="badge bg-success me-2">ASSIGNED</span>
+                                <span class="badge bg-primary" id="ticketCategory">Backend Issue</span>
+                            </div>
+                            <div class="col-4 text-end">
+                                <small class="text-muted">Ticket #</small><br>
+                                <code id="ticketNumber">TK-000000</code>
+                            </div>
+                        </div>
+
+                        <h4 class="text-white mb-3" id="ticketTitle">Issue Title</h4>
+
+                        <div class="info-section mb-3">
+                            <div class="info-label">Transcribed Issue</div>
+                            <div class="info-content" id="ticketDescription">Description will appear here</div>
+                        </div>
+
+                        <div class="info-section">
+                            <div class="info-label">
+                                <i class="bi bi-translate"></i> Detected Language
+                            </div>
+                            <div class="info-content" id="detectedLanguage">English</div>
+                        </div>
+                    </div>
+
+                    <!-- Developer Card -->
+                    <div class="developer-card">
+                        <div class="dev-avatar">
+                            <span id="devInitials">HY</span>
+                            <div class="online-dot"></div>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-white" id="devName">Hanako Yamamoto</div>
+                            <small class="text-muted" id="devExpertise">Python, FastAPI Expert</small>
+                        </div>
+                    </div>
+
+                    <button class="connect-btn" onclick="openChat()">
+                        <i class="bi bi-chat-dots-fill"></i> Connect with Developer
+                    </button>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-secondary-custom" onclick="createNewTicket()">
+                            <i class="bi bi-plus-circle"></i> Create Another Ticket
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chat Modal -->
+<div id="chatModal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <div class="d-flex align-items-center">
+                    <div class="dev-avatar me-3" style="width: 48px; height: 48px; font-size: 1.2rem;">
+                        <span id="chatDevInitials">HY</span>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 text-white" id="chatDevName">Hanako Yamamoto</h6>
+                        <small class="text-success">● Online</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="chatMessages" style="max-height: 400px; overflow-y: auto;">
+                <!-- Messages will be added here -->
+            </div>
+            <div class="modal-footer border-secondary">
+                <div class="input-group">
+                    <input type="text" id="chatInput" class="form-control bg-dark text-white border-secondary" 
+                           placeholder="Type your message..." onkeypress="handleChatKeyPress(event)">
+                    <button class="btn btn-primary" onclick="sendChatMessage()">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/voice-recorder.js"></script>
+<script src="/static/js/ui-components.js"></script>
+<script>
+// Global variables
+let currentStep = 1;
+let isRecording = false;
+let recorder = null;
+let visualizer = null;
+let recordingTimer = null;
+let recordingSeconds = 0;
+let audioBlob = null;
+let currentConversationId = null;
+let selectedFile = null;
+
+// Step navigation
+function showStep(stepNumber) {
+    document.querySelectorAll('.step-container').forEach(container => {
+        container.classList.remove('active');
+    });
+    const stepContainer = document.getElementById(`step${stepNumber}`);
+    if (stepContainer) {
+        stepContainer.classList.add('active');
+        currentStep = stepNumber;
+    }
+}
+
+function goBack(toStep) {
+    showStep(toStep);
+}
+
+// Tab switching
+function switchTab(tabName) {
+    // Update buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Update content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    if (tabName === 'record') {
+        document.getElementById('recordTab').classList.add('active');
+    } else {
+        document.getElementById('uploadTab').classList.add('active');
+    }
+}
+
+// Recording functions
+async function toggleRecording() {
+    if (!isRecording) {
+        await startRecording();
+    } else {
+        await stopRecording();
+    }
+}
+
+async function startRecording() {
+    try {
+        recorder = new VoiceRecorderService();
+        
+        // Start recording (this will request microphone permission)
+        const started = await recorder.startRecording();
+        
+        if (!started) {
+            throw new Error('Failed to start recording');
+        }
+        
+        // Update UI - hide button, show visualizer and timer
+        const btn = document.getElementById('recordBtn');
+        btn.classList.add('recording');
+        btn.innerHTML = '<i class="bi bi-stop-fill"></i>';
+        
+        document.getElementById('timerDisplay').style.display = 'block';
+        document.getElementById('audioVisualizer').style.display = 'flex';
+        document.getElementById('recordingStatus').textContent = 'Recording... Click to stop';
+        
+        // Initialize visualizer
+        visualizer = new AudioVisualizer('audioVisualizer', recorder);
+        
+        isRecording = true;
+        
+        // Start timer
+        recordingSeconds = 0;
+        recordingTimer = setInterval(() => {
+            recordingSeconds++;
+            const mins = Math.floor(recordingSeconds / 60).toString().padStart(2, '0');
+            const secs = (recordingSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('timerDisplay').textContent = `${mins}:${secs}`;
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Failed to start recording:', error);
+        alert('Failed to access microphone. Please grant permission and try again.');
+    }
+}
+
+async function stopRecording() {
+    if (!recorder || !isRecording) return;
+    
+    // Stop timer
+    clearInterval(recordingTimer);
+    
+    // Stop recording (returns object with blob, url, size)
+    const recordingData = await recorder.stopRecording();
+    isRecording = false;
+    
+    if (!recordingData || !recordingData.blob) {
+        alert('Recording failed. Please try again.');
+        return;
+    }
+    
+    audioBlob = recordingData.blob;
+    
+    // Update UI
+    const btn = document.getElementById('recordBtn');
+    btn.classList.remove('recording');
+    btn.innerHTML = '<i class="bi bi-mic-fill"></i>';
+    document.getElementById('recordingStatus').textContent = 'Processing...';
+    
+    // Upload the recording
+    await uploadAudio(audioBlob);
+}
+
+// File upload functions
+function handleFileSelect(input) {
+    const file = input.files[0];
+    if (file) {
+        selectedFile = file;
+        document.getElementById('uploadBtn').disabled = false;
+    }
+}
+
+async function uploadFile() {
+    if (!selectedFile) return;
+    await uploadAudio(selectedFile);
+}
+
+// Upload audio to server
+async function uploadAudio(audioData) {
+    try {
+        const formData = new FormData();
+        formData.append('audio', audioData);
+        
+        const response = await fetch('/api/voice/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+        
+        const data = await response.json();
+        currentConversationId = data.conversation_id;
+        
+        // Show processing message
+        document.getElementById('recordingStatus').textContent = 'Transcribing Japanese audio...';
+        
+        // Poll for Japanese transcription
+        await pollForTranscription();
+        
+    } catch (error) {
+        console.error('Upload error:', error);
+        alert('Failed to upload audio. Please try again.');
+        document.getElementById('recordingStatus').textContent = 'Upload failed. Try again.';
+    }
+}
+
+// Poll for Japanese transcription
+async function pollForTranscription() {
+    let attempts = 0;
+    const maxAttempts = 30; // 30 seconds max
+    
+    while (attempts < maxAttempts) {
+        try {
+            const response = await fetch(`/api/voice/status/${currentConversationId}`);
+            const data = await response.json();
+            
+            // Check if we have Japanese transcription
+            if (data.japanese_transcript) {
+                // Show the transcription in Step 2
+                document.getElementById('japaneseTranscript').value = data.japanese_transcript;
+                
+                // Reset recording status
+                document.getElementById('recordingStatus').textContent = 'Click to start recording';
+                document.getElementById('timerDisplay').style.display = 'none';
+                document.getElementById('audioVisualizer').style.display = 'none';
+                
+                // Move to step 2
+                showStep(2);
+                return;
+            }
+            
+            await sleep(1000); // Check every second
+            attempts++;
+            
+        } catch (error) {
+            console.error('Status poll error:', error);
+            attempts++;
+            await sleep(1000);
+        }
+    }
+    
+    // Timeout - show error
+    alert('Transcription took too long. Please try again.');
+    document.getElementById('recordingStatus').textContent = 'Transcription failed. Try again.';
+}
+
+// Step 2: Proceed to translation
+async function proceedToTranslation() {
+    const transcription = document.getElementById('japaneseTranscript').value;
+    if (!transcription.trim()) {
+        alert('Please enter or confirm the transcription');
+        return;
+    }
+    
+    // Move to step 3 (processing)
+    showStep(3);
+    
+    // Start processing animation and wait for backend to complete
+    await processTicketCreation();
+}
+
+// Step 3: Process ticket creation (poll backend for progress)
+async function processTicketCreation() {
+    // Quick check if already complete
+    try {
+        const quickCheck = await fetch(`/api/voice/status/${currentConversationId}`);
+        const quickData = await quickCheck.json();
+        
+        if (quickData.status === 'completed' && quickData.ticket && quickData.ticket.assigned_developer) {
+            console.log('✅ Processing already complete, showing results immediately');
+            showSuccessScreen(quickData);
+            return;
+        }
+    } catch (error) {
+        console.log('Quick check failed, proceeding with normal flow');
+    }
+    
+    const processingStates = [
+        { 
+            icon: 'lock-fill', 
+            title: 'Encrypting...', 
+            subtitle: 'Securing Your Data', 
+            state: 'encrypting', 
+            stepNum: null 
+        },
+        { 
+            icon: 'translate', 
+            title: 'Translating to English...', 
+            subtitle: 'Converting Japanese to English', 
+            state: 'analyzing', 
+            stepNum: 1,
+            checkStatus: (data) => data.has_translation
+        },
+        { 
+            icon: 'ticket-perforated', 
+            title: 'Creating Ticket...', 
+            subtitle: 'Generating Support Request', 
+            state: 'analyzing', 
+            stepNum: 2,
+            checkStatus: (data) => data.ticket !== undefined
+        },
+        { 
+            icon: 'gear-fill', 
+            title: 'Analyzing Category...', 
+            subtitle: 'Categorizing Issue Type', 
+            state: 'analyzing', 
+            stepNum: 3,
+            checkStatus: (data) => data.ticket && data.ticket.category
+        },
+        { 
+            icon: 'person-check', 
+            title: 'Assigning Developer...', 
+            subtitle: 'Finding Best Match', 
+            state: 'analyzing', 
+            stepNum: 4,
+            checkStatus: (data) => data.ticket && data.ticket.assigned_developer
+        }
+    ];
+    
+    let currentStateIndex = 0;
+    let attempts = 0;
+    const maxAttempts = 90; // ~72 seconds max (90 * 800ms)
+    
+    // Show first state (encrypting) - give it more visibility as a showcase
+    updateProcessingUI(processingStates[0]);
+    await sleep(2500); // 2.5 seconds to showcase encryption step
+    
+    // Poll backend and update UI based on progress
+    while (currentStateIndex < processingStates.length && attempts < maxAttempts) {
+        try {
+            const response = await fetch(`/api/voice/status/${currentConversationId}`);
+            const data = await response.json();
+            
+            // Check if processing failed
+            if (data.status === 'failed') {
+                alert('Processing failed. Please try again.');
+                createNewTicket();
+                return;
+            }
+            
+            // Check if current state is complete
+            const currentState = processingStates[currentStateIndex];
+            
+            // State is complete if:
+            // 1. No checkStatus function (always complete)
+            // 2. checkStatus returns true
+            const isStateComplete = !currentState.checkStatus || currentState.checkStatus(data);
+            
+            if (isStateComplete) {
+                // Mark workflow step as completed
+                if (currentState.stepNum) {
+                    updateWorkflowStep(currentState.stepNum, 'completed');
+                }
+                
+                // Move to next state
+                currentStateIndex++;
+                
+                if (currentStateIndex < processingStates.length) {
+                    const nextState = processingStates[currentStateIndex];
+                    updateProcessingUI(nextState);
+                    
+                    if (nextState.stepNum) {
+                        updateWorkflowStep(nextState.stepNum, 'active');
+                    }
+                } else {
+                    // All states complete - show success
+                    showSuccessScreen(data);
+                    return;
+                }
+            }
+            
+            // Faster polling for snappier UI
+            await sleep(800);
+            attempts++;
+            
+        } catch (error) {
+            console.error('Status poll error:', error);
+            attempts++;
+        }
+    }
+    
+    // Timeout
+    alert('Ticket creation is taking longer than expected. Please check the tickets page.');
+    
+    // If we're here, check one more time for completion
+    try {
+        const response = await fetch(`/api/voice/status/${currentConversationId}`);
+        const data = await response.json();
+        
+        if (data.ticket && data.ticket.assigned_developer) {
+            showSuccessScreen(data);
+        } else {
+            alert('Processing is taking longer than expected. Please check the tickets page.');
+        }
+    } catch (error) {
+        console.error('Final status check error:', error);
+        alert('Unable to confirm ticket creation. Please check the tickets page.');
+    }
+}
+
+function updateProcessingUI(state) {
+    const circle = document.getElementById('processCircle');
+    circle.className = `process-circle ${state.state}`;
+    circle.innerHTML = `<div class="process-icon ${state.state === 'encrypting' ? 'lock' : 'analyze'}">
+        <i class="bi bi-${state.icon}"></i>
+    </div>`;
+    
+    document.getElementById('processTitle').textContent = state.title;
+    document.getElementById('processSubtitle').textContent = state.subtitle;
+}
+
+function updateWorkflowStep(stepNum, state) {
+    const step = document.getElementById(`workflowStep${stepNum}`);
+    if (!step) return;
+    
+    const numberDiv = step.querySelector('.step-number');
+    const textDiv = step.querySelector('.step-text');
+    
+    // Remove all state classes
+    numberDiv.classList.remove('pending', 'active', 'completed');
+    textDiv.classList.remove('pending', 'active', 'completed');
+    step.classList.remove('active', 'completed');
+    
+    // Add new state
+    numberDiv.classList.add(state);
+    textDiv.classList.add(state);
+    if (state !== 'pending') {
+        step.classList.add(state);
+    }
+}
+
+// Poll ticket status
+async function pollTicketStatus() {
+    let attempts = 0;
+    const maxAttempts = 40;
+    
+    while (attempts < maxAttempts) {
+        try {
+            const response = await fetch(`/api/voice/status/${currentConversationId}`);
+            const data = await response.json();
+            
+            if (data.status === 'completed' && data.ticket) {
+                showSuccessScreen(data);
+                return;
+            }
+            
+            await sleep(2000);
+            attempts++;
+            
+        } catch (error) {
+            console.error('Status poll error:', error);
+            attempts++;
+        }
+    }
+}
+
+// Show success screen
+function showSuccessScreen(data) {
+    const ticket = data.ticket;
+    const developer = data.assigned_developer || ticket.assigned_developer;
+    
+    // Populate ticket details
+    document.getElementById('ticketNumber').textContent = ticket.ticket_number;
+    document.getElementById('ticketCategory').textContent = ticket.category || 'Backend Issue';
+    
+    // Show English translation as title (if available), otherwise use ticket title
+    const englishTranslation = data.english_translation || ticket.description;
+    const displayTitle = englishTranslation.replace(/^Technical issue reported:\s*/i, '');
+    
+    document.getElementById('ticketTitle').textContent = displayTitle || ticket.title;
+    document.getElementById('ticketDescription').textContent = data.japanese_transcript || ticket.title;
+    document.getElementById('detectedLanguage').textContent = data.detected_language || 'Japanese';
+    
+    // Populate developer details
+    if (developer) {
+        const initials = developer.name ? developer.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'HY';
+        document.getElementById('devInitials').textContent = initials;
+        document.getElementById('devName').textContent = developer.name;
+        document.getElementById('devExpertise').textContent = developer.expertise || developer.languages || 'Technical Expert';
+        
+        // For chat modal
+        document.getElementById('chatDevInitials').textContent = initials;
+        document.getElementById('chatDevName').textContent = developer.name;
+    }
+    
+    // Show step 4
+    showStep(4);
+}
+
+// Chat functions
+function openChat() {
+    const chatModal = new bootstrap.Modal(document.getElementById('chatModal'));
+    chatModal.show();
+    
+    // Add welcome message
+    addChatMessage('developer', 'Hello! I\'ve received your ticket and will start working on it right away. How can I assist you?', true);
+}
+
+function handleChatKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendChatMessage();
+    }
+}
+
+function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    addChatMessage('user', message);
+    input.value = '';
+    
+    // Simulate developer response (in production, this would be real-time)
+    setTimeout(() => {
+        addChatMessage('developer', 'Thanks for the additional info. I\'m looking into it now.');
+    }, 2000);
+}
+
+function addChatMessage(sender, text, isWelcome = false) {
+    const messagesDiv = document.getElementById('chatMessages');
+    const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    
+    const messageHTML = `
+        <div class="mb-3 ${sender === 'user' ? 'text-end' : ''}">
+            <div class="d-inline-block ${sender === 'user' ? 'bg-primary' : 'bg-secondary'} rounded px-3 py-2" style="max-width: 70%;">
+                <div class="text-white">${text}</div>
+                <small class="text-white-50">${time}</small>
+            </div>
+        </div>
+    `;
+    
+    messagesDiv.insertAdjacentHTML('beforeend', messageHTML);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// Create new ticket
+function createNewTicket() {
+    currentConversationId = null;
+    audioBlob = null;
+    selectedFile = null;
+    recordingSeconds = 0;
+    
+    // Reset UI
+    document.getElementById('japaneseTranscript').value = '';
+    document.getElementById('audioFileInput').value = '';
+    document.getElementById('uploadBtn').disabled = true;
+    document.getElementById('recordingStatus').textContent = 'Click to start recording';
+    document.getElementById('timerDisplay').style.display = 'none';
+    document.getElementById('audioVisualizer').style.display = 'none';
+    
+    // Reset record button
+    const btn = document.getElementById('recordBtn');
+    btn.classList.remove('recording');
+    btn.innerHTML = '<i class="bi bi-mic-fill"></i>';
+    
+    // Go back to step 1
+    showStep(1);
+}
+
+// Utility
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Voice to Ticket initialized');
+    showStep(1);
+});
+</script>
+{% endblock %}

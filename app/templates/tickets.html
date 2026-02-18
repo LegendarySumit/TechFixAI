@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Tickets - Voice-to-Ticket AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="mb-4">
+        <h2><i class="bi bi-ticket-perforated"></i> Support Tickets</h2>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="position-relative">
+                        <select class="form-select" id="filter-status">
+                            <option value="">All Status</option>
+                            <option value="open">Open</option>
+                            <option value="assigned">Assigned</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                        <i class="bi bi-chevron-down position-absolute" style="right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none; opacity: 0.6;"></i>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="position-relative">
+                        <select class="form-select" id="filter-priority">
+                            <option value="">All Priority</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                        <i class="bi bi-chevron-down position-absolute" style="right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none; opacity: 0.6;"></i>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="position-relative">
+                        <select class="form-select" id="filter-technical-area">
+                            <option value="">All Areas</option>
+                            <option value="backend">Backend</option>
+                            <option value="frontend">Frontend</option>
+                            <option value="database">Database</option>
+                            <option value="infrastructure">Infrastructure</option>
+                        </select>
+                        <i class="bi bi-chevron-down position-absolute" style="right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none; opacity: 0.6;"></i>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary w-100" onclick="loadTickets()">
+                        <i class="bi bi-search"></i> Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tickets List -->
+    <div id="tickets-container">
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mt-2">Loading tickets...</p>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav id="pagination-container" style="display: none;">
+        <ul class="pagination justify-content-center"></ul>
+    </nav>
+</div>
+
+<script>
+let currentPage = 0;
+const pageSize = 10;
+
+async function loadTickets() {
+    const status = document.getElementById('filter-status').value;
+    const priority = document.getElementById('filter-priority').value;
+    const technicalArea = document.getElementById('filter-technical-area').value;
+    
+    const params = new URLSearchParams({
+        skip: currentPage * pageSize,
+        limit: pageSize
+    });
+    
+    if (status) params.append('status', status);
+    if (priority) params.append('priority', priority);
+    if (technicalArea) params.append('technical_area', technicalArea);
+    
+    try {
+        const response = await fetch(`/api/tickets/?${params}`);
+        const data = await response.json();
+        
+        displayTickets(data.tickets);
+        updatePagination(data.total);
+    } catch (error) {
+        document.getElementById('tickets-container').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle"></i> Failed to load tickets: ${error.message}
+            </div>
+        `;
+    }
+}
+
+function displayTickets(tickets) {
+    const container = document.getElementById('tickets-container');
+    
+    if (tickets.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <p class="text-muted mt-3">No tickets found</p>
+                <a href="/upload" class="btn btn-primary">Create First Ticket</a>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = tickets.map(ticket => `
+        <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h5 class="card-title mb-2">
+                            <a href="/tickets/${ticket.ticket_number}" class="text-decoration-none">
+                                ${ticket.title}
+                            </a>
+                        </h5>
+                        <div class="mb-2">
+                            <span class="badge bg-${getPriorityColor(ticket.priority)}">${ticket.priority}</span>
+                            <span class="badge bg-${getStatusColor(ticket.status)} ms-1">${ticket.status}</span>
+                            ${ticket.technical_area ? `<span class="badge bg-secondary ms-1">${ticket.technical_area}</span>` : ''}
+                        </div>
+                        <p class="text-muted mb-2">
+                            <small>
+                                ${ticket.assigned_to ? `<i class="bi bi-person"></i> ${ticket.assigned_to}` : '<i class="bi bi-person-x"></i> Unassigned'}
+                            </small>
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted d-block">${ticket.ticket_number}</small>
+                        <small class="text-muted">${new Date(ticket.created_at).toLocaleDateString()}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getPriorityColor(priority) {
+    const colors = {
+        'low': 'success',
+        'medium': 'info',
+        'high': 'warning',
+        'critical': 'danger'
+    };
+    return colors[priority] || 'secondary';
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'open': 'secondary',
+        'assigned': 'primary',
+        'in_progress': 'warning',
+        'resolved': 'success',
+        'closed': 'dark'
+    };
+    return colors[status] || 'secondary';
+}
+
+function updatePagination(total) {
+    // Pagination logic here if needed
+    const totalPages = Math.ceil(total / pageSize);
+    document.getElementById('pagination-container').style.display = totalPages > 1 ? 'block' : 'none';
+}
+
+// Load tickets on page load
+loadTickets();
+</script>
+{% endblock %}
