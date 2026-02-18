@@ -44,3 +44,27 @@ async def developers_page(request: Request):
 async def ticket_detail_page(request: Request, ticket_number: str):
     """Ticket details page with chat"""
     return templates.TemplateResponse("ticket_detail.html", {"request": request})
+
+
+@router.get("/documentation", response_class=HTMLResponse)
+async def documentation_page(request: Request):
+    """Documentation and API reference page"""
+    return templates.TemplateResponse("documentation.html", {"request": request})
+
+
+@router.get("/security", response_class=HTMLResponse)
+async def security_page(request: Request):
+    """Security information page"""
+    return templates.TemplateResponse("security.html", {"request": request})
+
+
+@router.get("/privacy", response_class=HTMLResponse)
+async def privacy_page(request: Request):
+    """Privacy policy page"""
+    return templates.TemplateResponse("privacy.html", {"request": request})
+
+
+@router.get("/about", response_class=HTMLResponse)
+async def about_page(request: Request):
+    """About us page"""
+    return templates.TemplateResponse("about.html", {"request": request})
