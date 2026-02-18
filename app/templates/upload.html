@@ -85,6 +85,64 @@
     display: block;
 }
 
+/* Drag and Drop Zone */
+.drag-drop-zone {
+    border: 2px dashed rgba(59, 130, 246, 0.5);
+    border-radius: 1rem;
+    padding: 3rem 2rem;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.5), rgba(30, 58, 138, 0.2));
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.drag-drop-zone::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="dots" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="30" cy="30" r="2" fill="rgba(59,130,246,0.1)"/></pattern></defs><rect width="60" height="60" fill="url(%23dots)"/></svg>');
+    pointer-events: none;
+}
+
+.drag-drop-zone:hover {
+    border-color: rgba(59, 130, 246, 0.8);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 58, 138, 0.3));
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+}
+
+.drag-drop-zone.dragover {
+    border-color: #22c55e;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(34, 197, 94, 0.2));
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.4);
+    transform: scale(1.02);
+}
+
+.drag-drop-content {
+    position: relative;
+    z-index: 1;
+}
+
+.drag-drop-icon {
+    font-size: 4rem;
+    color: #3b82f6;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.drag-drop-zone:hover .drag-drop-icon {
+    color: #60a5fa;
+    transform: translateY(-5px);
+}
+
+.drag-drop-zone.dragover .drag-drop-icon {
+    color: #22c55e;
+    transform: translateY(-10px) scale(1.1);
+}
+
 /* Record Button */
 .record-button {
     width: 150px;
@@ -502,11 +560,18 @@
                                 <h3 class="text-white mb-4">Upload Audio File</h3>
                                 <p class="text-muted mb-4">Upload a pre-recorded Japanese audio (MP3, WAV, M4A, WebM)</p>
                                 
-                                <div class="mb-3">
-                                    <input type="file" class="form-control" id="audioFileInput" accept="audio/*" onchange="handleFileSelect(this)">
+                                <!-- Drag and Drop Zone -->
+                                <div id="dragDropZone" class="drag-drop-zone">
+                                    <div class="drag-drop-content">
+                                        <i class="bi bi-cloud-arrow-up drag-drop-icon"></i>
+                                        <h5 class="text-white mt-3 mb-2">Drag and drop your audio file here</h5>
+                                        <p class="text-muted mb-3">or click to browse</p>
+                                        <input type="file" class="form-control d-none" id="audioFileInput" accept="audio/*" onchange="handleFileSelect(this)">
+                                        <small class="text-muted">MP3, WAV, M4A, WebM • Max 100MB</small>
+                                    </div>
                                 </div>
 
-                                <button id="uploadBtn" class="btn btn-primary-custom" onclick="uploadFile()" disabled>
+                                <button id="uploadBtn" class="btn btn-primary-custom mt-4" onclick="uploadFile()" disabled>
                                     <i class="bi bi-cloud-upload"></i> Upload Audio
                                 </button>
                             </div>
@@ -1218,6 +1283,61 @@ function sleep(ms) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Voice to Ticket initialized');
     showStep(1);
+    initializeDragDrop();
 });
+
+// Drag and Drop functionality
+function initializeDragDrop() {
+    const dragDropZone = document.getElementById('dragDropZone');
+    const audioFileInput = document.getElementById('audioFileInput');
+    
+    if (!dragDropZone || !audioFileInput) return;
+    
+    // Click to open file browser
+    dragDropZone.addEventListener('click', (e) => {
+        e.stopPropagation();
+        audioFileInput.click();
+    });
+    
+    // Also handle file input change directly
+    audioFileInput.addEventListener('change', () => {
+        if (audioFileInput.files && audioFileInput.files[0]) {
+            handleFileSelect(audioFileInput);
+        }
+    });
+    
+    // Drag over
+    dragDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragDropZone.classList.add('dragover');
+    });
+    
+    // Drag leave
+    dragDropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragDropZone.classList.remove('dragover');
+    });
+    
+    // Drop
+    dragDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragDropZone.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            // Only accept audio files
+            if (file.type.startsWith('audio/')) {
+                audioFileInput.files = files;
+                handleFileSelect(audioFileInput);
+            } else {
+                alert('Please drop an audio file (MP3, WAV, M4A, WebM)');
+            }
+        }
+    });
+}
 </script>
 {% endblock %}

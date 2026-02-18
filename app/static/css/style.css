@@ -10,19 +10,11 @@
     --text-secondary: #9ca3af;    /* muted text */
 
     --accent-primary: #3b82f6;    /* blue */
-    --accent-success: #22c55e;
-    --accent-warning: #f59e0b;
-    --accent-danger: #ef4444;
+    --accent-success: #22c55e;    /* green */
+    --accent-warning: #f59e0b;    /* amber */
+    --accent-danger: #ef4444;     /* red */
 
     --border-subtle: #1f2937;
-    
-    /* Legacy Bootstrap compatibility */
-    --primary-color: #3b82f6;
-    --secondary-color: #6c757d;
-    --success-color: #22c55e;
-    --danger-color: #ef4444;
-    --warning-color: #f59e0b;
-    --info-color: #3b82f6;
 }
 
 body {
@@ -134,11 +126,6 @@ main {
 .btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
-}
-
-.btn-primary {
-    background-color: var(--accent-primary);
-    border-color: var(--accent-primary);
 }
 
 .btn-success {
@@ -545,10 +532,12 @@ main {
 
 /* Workflow Card */
 .workflow-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-subtle);
+    background: rgba(17, 24, 39, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(59, 130, 246, 0.3);
     border-radius: 16px;
     padding: 3rem 2.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .workflow-card h4 {
@@ -558,15 +547,20 @@ main {
 
 .workflow-step-vertical {
     padding: 1.75rem 1rem;
-    background: rgba(31, 41, 55, 0.3);
-    border-radius: 8px;
+    background: rgba(31, 41, 55, 0.4);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
     transition: all 0.3s ease;
     height: 100%;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .workflow-step-vertical:hover {
-    background: rgba(31, 41, 55, 0.5);
+    background: rgba(31, 41, 55, 0.6);
+    border-color: rgba(59, 130, 246, 0.4);
     transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .workflow-icon-lg {
@@ -614,14 +608,16 @@ main {
 
 /* Enhanced Feature Cards */
 .feature-card-enhanced {
-    background: linear-gradient(135deg, rgba(17, 24, 39, 0.6), rgba(31, 41, 55, 0.6));
-    border: 1px solid var(--border-subtle);
+    background: rgba(17, 24, 39, 0.5);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(59, 130, 246, 0.25);
     border-radius: 16px;
     padding: 2.5rem 2rem;
     text-align: center;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .feature-card-enhanced::before {
@@ -642,9 +638,9 @@ main {
 
 .feature-card-enhanced:hover {
     transform: translateY(-8px);
-    border-color: rgba(59, 130, 246, 0.4);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
-    background: linear-gradient(135deg, rgba(17, 24, 39, 0.8), rgba(31, 41, 55, 0.8));
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 16px 40px rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    background: rgba(17, 24, 39, 0.7);
 }
 
 .feature-icon-enhanced {
@@ -793,34 +789,6 @@ main {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 0;
-}
-
-/* Button Refinements */
-.btn-primary {
-    background: var(--accent-primary);
-    border-color: var(--accent-primary);
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.btn-primary:hover {
-    background: #2563eb;
-    border-color: #2563eb;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.btn-outline-light {
-    border: 1px solid var(--border-subtle);
-    color: var(--text-primary);
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.btn-outline-light:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--accent-primary);
-    color: var(--text-primary);
 }
 
 /* =================================

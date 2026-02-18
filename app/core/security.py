@@ -14,7 +14,7 @@ api_key_header = APIKeyHeader(name=settings.API_KEY_HEADER, auto_error=False)
 async def verify_api_key(api_key: str = Security(api_key_header)) -> str:
     """
     Verify API key for authenticated endpoints.
-    Simple implementation for v1 - expand as needed.
+    Validates against SECRET_KEY from environment.
     """
     if not api_key:
         raise HTTPException(
@@ -22,11 +22,8 @@ async def verify_api_key(api_key: str = Security(api_key_header)) -> str:
             detail="Missing API key"
         )
     
-    # TODO: Implement proper API key validation against database
-    # For now, simple environment check
-    valid_keys = ["dev-key-123"]  # Move to database in production
-    
-    if api_key not in valid_keys:
+    # Validate against SECRET_KEY from environment
+    if not settings.SECRET_KEY or api_key != settings.SECRET_KEY:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API key"

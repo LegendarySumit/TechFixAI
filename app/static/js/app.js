@@ -119,4 +119,3 @@ window.VoiceTicketAI = {
     api
 };
 
-console.log('Voice-to-Ticket AI System Loaded ✓');
