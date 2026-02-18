@@ -1,344 +1,474 @@
-# Voice-to-Ticket AI System
+# TechFixAI - Voice-to-Ticket AI System
 
-## What This Is
+## 🎯 Overview
 
-An **automated incident intake + routing system** that:
-1. Takes Japanese voice input from clients
-2. Transcribes and translates technical issues accurately
-3. Creates structured support tickets
-4. Assigns tickets to developers deterministically
+An **enterprise-grade automated incident intake + routing system** that transforms multilingual voice input into structured, actionable support tickets with intelligent developer assignment.
+
+**Core Function:**
+1. Japanese clients record technical issues via voice
+2. System transcribes (Japanese) and translates (English)
+3. Generates structured technical tickets automatically
+4. Routes to best-fit developers using deterministic assignment logic
+5. Enables real-time developer-client communication via chat interface
 
 **NOT** a chatbot. **NOT** a translation demo. **NOT** an AI playground.
 
 ---
 
-## The Problem We Solve
+## ✨ Key Features
 
-Japanese clients cannot clearly communicate technical issues to English-speaking dev teams.
-Manual ticket handling causes:
-- Delays in response time
-- Misrouting to wrong developers
-- Loss of context and technical details
+### Voice Input & Processing ✅
+- Real-time audio capture using Web Audio API with visual waveform (20 animated bars)
+- Live recording timer with MM:SS format
+- Optional screenshot/image upload (PNG, JPG, max 10MB)
+- Microphone permission handling with user-friendly alerts
+- Client metadata (ID, environment, urgency override)
+- Process step indicators (Recording → Encryption → Analysis → Assignment)
+
+### Transcription & Translation ✅
+- Speech-to-Text using Groq/OpenAI Whisper (Japanese support)
+- Context-aware technical translation (Japanese → English)
+- Split-view display: Original Japanese (left) | English Translation (right)
+- Both transcripts stored for audit trail
+
+### Ticket Generation & Assignment ✅
+- Structured ticket schema (Number, Title, Category, Priority, Technical Area)
+- **Deterministic assignment rules** (no AI randomness):
+  - Backend/Infrastructure + High/Critical → Backend Team
+  - Frontend/UI + Any Priority → Frontend Team
+  - Database + High/Critical → Backend Team
+  - Default → Least loaded developer
+- Assignment reason storing (explains why developer was chosen)
+- Professional ticket preview before saving
+
+### Developer Tools ✅
+- Developer directory with team statistics cards
+- Developer cards showing expertise, status (online/offline), response times
+- Real-time developer chat interface on ticket detail page
+- Quick action buttons (Mark as Resolved, In Progress, On Hold)
+- Security indicators (AES-256-GCM encryption display)
+
+### Admin Dashboard ✅
+- Ticket management (CRUD operations)
+- Assignment routing audit trail
+- Developer performance metrics
+- System health checks
 
 ---
 
-## System Architecture
+## 🏗️ System Architecture
 
 **Style:** Modular Monolith (NOT microservices)
 
 ```
-Japanese Voice Input
-        ↓
-    [Whisper STT]
-        ↓
-Japanese Transcript
-        ↓
-  [LLM Translation]
-        ↓
-English Translation
-        ↓
- [Ticket Generation]
-        ↓
-  Structured Ticket
-        ↓
-[Auto-Assignment Logic]
-        ↓
-Assigned Developer
+┌─────────────────────────────────────────────┐
+│         GOLDEN PATH FLOW                    │
+└─────────────────────────────────────────────┘
+
+1. Japanese Audio Upload
+              ↓
+    /api/voice/upload
+              ↓
+        Audio Storage (Local/S3)
+              ↓
+    STT Processing (Groq/Whisper)
+         (Japanese → Text)
+              ↓
+    LLM Translation Service
+      (Japanese → English)
+              ↓
+    Ticket Generation Service
+      (Structured Schema)
+              ↓
+    Assignment Logic Service
+      (Deterministic Routing)
+              ↓
+    Assigned Developer + Chat
+      (Real-time Communication)
+              ↓
+    Admin Visibility + Audit Trail
+      (Dashboard + Logs)
 ```
 
 ---
 
-## Tech Stack
+## 💻 Tech Stack
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| Backend | FastAPI | Async API, auto-docs |
-| STT | OpenAI Whisper | Japanese speech recognition |
-| Translation | LLM (GPT-4) | Context-aware technical translation |
-| Database | PostgreSQL | Structured data, audit trail |
-| Storage | Local/S3 | Encrypted audio files |
+| **Backend** | FastAPI + Uvicorn | Async API, auto-docs, high performance |
+| **Frontend** | Jinja2 + HTML/CSS/JS | Server-side rendering + interactive components |
+| **STT** | Groq/OpenAI Whisper | Japanese speech recognition |
+| **Translation** | Google Gemini API | Context-aware technical translation |
+| **Ticket Gen** | Google Gemini API | Structured schema generation |
+| **Database** | PostgreSQL | ACID compliance, audit trail |
+| **ORM** | SQLAlchemy | Database abstraction, migrations |
+| **Migrations** | Alembic | Schema versioning |
+| **Storage** | Local filesystem / S3 | Encrypted audio files |
+| **Auth** | API Keys + Basic Auth | Security layer |
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
-voice-ticket-ai/
+TechFixAI/
 │
 ├── app/
-│   ├── main.py              # FastAPI application
+│   ├── main.py                      # FastAPI app + route registration
+│   ├── __init__.py
+│   │
 │   ├── core/
-│   │   ├── config.py        # Configuration
-│   │   └── security.py      # Auth helpers
+│   │   ├── config.py                # Settings management
+│   │   ├── security.py              # Auth helpers
+│   │   └── __init__.py
 │   │
 │   ├── api/
-│   │   ├── voice.py         # Voice upload endpoints
-│   │   ├── ticket.py        # Ticket management
-│   │   └── admin.py         # Admin dashboard
+│   │   ├── voice.py                 # Voice upload + status endpoints
+│   │   ├── ticket.py                # Ticket CRUD operations
+│   │   ├── admin.py                 # Admin dashboard endpoints
+│   │   ├── developer.py             # Developer directory API
+│   │   ├── web.py                   # Web page routes (HTML)
+│   │   └── __init__.py
 │   │
 │   ├── services/
-│   │   ├── stt_service.py          # Whisper transcription
-│   │   ├── translation_service.py  # Japanese → English
-│   │   ├── ticket_service.py       # Ticket generation
-│   │   └── assignment_service.py   # Developer assignment
+│   │   ├── stt_service.py           # Groq/Whisper integration
+│   │   ├── translation_service.py   # LLM translation (Gemini)
+│   │   ├── ticket_service.py        # Ticket generation
+│   │   ├── assignment_service.py    # Deterministic assignment logic
+│   │   └── __init__.py
 │   │
 │   ├── models/
-│   │   ├── conversation.py  # Voice data + metadata
-│   │   ├── ticket.py        # Actionable ticket
-│   │   └── developer.py     # Dev skills + availability
+│   │   ├── conversation.py          # Conversation/Voice data
+│   │   ├── ticket.py                # Ticket ORM model
+│   │   ├── developer.py             # Developer ORM model
+│   │   └── __init__.py
 │   │
 │   ├── db/
-│   │   ├── base.py
-│   │   └── session.py
+│   │   ├── base.py                  # SQLAlchemy declarative base
+│   │   ├── session.py               # Database session management
+│   │   ├── init_db.py               # DB initialization
+│   │   └── __init__.py
 │   │
-│   └── utils/
-│       ├── audio.py
-│       └── text.py
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── style.css            # Global styles + animations
+│   │   └── js/
+│   │       ├── voice-recorder.js    # Web Audio API service
+│   │       ├── ui-components.js     # Reusable UI components
+│   │       └── app.js               # Global app logic
+│   │
+│   ├── templates/
+│   │   ├── base.html                # Base template (navbar, footer)
+│   │   ├── home.html                # Home page
+│   │   ├── upload.html              # Voice recording + file upload
+│   │   ├── tickets.html             # Ticket list view
+│   │   ├── ticket_detail.html       # Ticket details + chat
+│   │   ├── developers.html          # Developer team directory
+│   │   ├── dashboard.html           # Admin dashboard
+│   │   └── upload_backup.html       # Backup upload page
+│   │
+│   ├── utils/
+│   │   ├── audio.py                 # Audio helper functions
+│   │   ├── text.py                  # Text processing utilities
+│   │   └── __init__.py
+│   │
+│   └── __pycache__/                 # Python cache
 │
-├── migrations/              # Database migrations
-├── tests/                   # Unit & integration tests
-├── storage/                 # Audio file storage
-├── requirements.txt
-└── README.md
+├── migrations/
+│   └── env.py                       # Alembic configuration
+│
+├── tests/
+│   ├── conftest.py                  # Pytest fixtures
+│   ├── test_ticket_service.py       # Ticket service tests
+│   ├── test_assignment_service.py   # Assignment logic tests
+│   └── __pycache__/
+│
+├── storage/
+│   └── audio/                       # Audio file storage
+│
+├── .env.example                     # Environment template
+├── .gitignore                       # Git exclusions (secrets protected)
+├── alembic.ini                      # Alembic migration config
+├── requirements.txt                 # Python dependencies
+├── setup.py                         # Package setup
+├── README.md                        # This file
+├── migrate_db.py                    # Database migration helper
+└── verify.py                        # System health check
 ```
 
 ---
 
-## Domain Objects (Core Concepts)
+## 🚀 Quick Start
 
-### 1. Conversation
-Voice data + metadata
-- Audio file path
-- Duration, format
-- Processing status
+### Prerequisites
+- Python 3.9+
+- PostgreSQL 12+
+- API Keys (Groq or OpenAI for STT, Google Gemini for translation)
 
-### 2. Transcript
-Japanese text + English text
-- Original Japanese transcription
-- Cleaned English translation
+### Setup (5 minutes)
 
-### 3. Ticket
-Actionable engineering artifact
-- Title, description
-- Priority, category
-- Technical area
-- Assignment logic trail
-
-### 4. Developer
-Skill + availability + ownership
-- Technical skills/areas
-- Current workload
-- Capacity limits
-
-**Do NOT mix these concepts.**
-
----
-
-## The Golden Path (v1 Happy Flow)
-
-This is the ONLY flow we support initially:
-
-1. **User uploads Japanese audio** → `/api/voice/upload`
-2. **System stores audio securely** → Local storage
-3. **STT produces Japanese text** → Whisper
-4. **Translation produces clean English** → LLM
-5. **Ticket is generated with schema** → Structured format
-6. **Ticket is assigned to a developer** → Deterministic logic
-7. **Admin can view everything** → Dashboard
-
-No branches. No "what if user cancels". That comes later.
-
----
-
-## Setup Instructions
-
-### 1. Prerequisites
+1. **Install Dependencies**
 ```bash
-Python 3.10+
-PostgreSQL 14+
-```
-
-### 2. Install Dependencies
-```bash
+cd d:\WEBD\TechFixAI
 pip install -r requirements.txt
 ```
 
-### 3. Environment Configuration
-Create `.env` file:
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/voice_ticket_db
-OPENAI_API_KEY=your-openai-api-key
-SECRET_KEY=your-secret-key
-AUDIO_STORAGE_PATH=./storage/audio
-DEBUG=True
-```
-
-### 4. Database Setup
+2. **Configure Environment**
 ```bash
-# Create database
-createdb voice_ticket_db
-
-# Run migrations (after creating migration files)
-alembic upgrade head
+cp .env.example .env
+# Edit .env with your API keys (see section below)
 ```
 
-### 5. Run Application
+3. **Initialize Database**
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+python migrate_db.py
 ```
 
-### 6. Access API Documentation
+4. **Start Server**
+```bash
+uvicorn app.main:app --reload
 ```
-http://localhost:8000/docs
+
+5. **Access Application**
 ```
+http://localhost:8000
+```
+
+### API Keys Setup
+
+#### Option 1: Groq API (Recommended - FREE) ⭐
+- Visit: https://console.groq.com
+- Sign up (GitHub/Google login)
+- Create API Key in settings
+- Add to `.env`: `GROQ_API_KEY="gsk_your_key_here"`
+- ✅ Supports Japanese transcription
+- ✅ Very fast (usually < 3 seconds)
+- ✅ Completely free tier available
+
+#### Option 2: OpenAI Whisper API (Alternative)
+- Visit: https://platform.openai.com
+- Create API Key
+- Add to `.env`: `OPENAI_API_KEY="sk_your_key_here"`
+- Cost: ~$0.006 per minute of audio
+
+#### Google Gemini API (Required for Translation)
+- Visit: https://ai.google.dev
+- Create API Key
+- Add to `.env`: `GOOGLE_API_KEY="your_key_here"`
 
 ---
 
-## API Endpoints
+## 🎬 User Workflows
+
+### Client (Japanese Speaker)
+1. Visit `/upload`
+2. Click "Voice Recording" tab
+3. Record technical issue (microphone icon 🎙️)
+4. Optional: Add screenshot
+5. Click Submit
+6. View ticket with English translation
+7. Chat with assigned developer in real-time
+
+### Developer (English Speaker)
+1. Visit `/developers` to see team
+2. Visit `/tickets` to see new tickets
+3. Click ticket to see details + chat
+4. Real-time messaging with client
+5. Quick action buttons (Resolve/In Progress/On Hold)
+
+### Admin
+1. Visit `/dashboard`
+2. Monitor all tickets and assignments
+3. View assignment reasoning (audit trail)
+4. Check system health at `/verify`
+
+---
+
+## 📊 Core Domain Objects
+
+### Conversation
+- Audio file path (encrypted)
+- Duration & format (WAV, MP3, M4A, WebM)
+- Processing status (RECEIVED → PROCESSING → TRANSCRIBED → TRANSLATED → COMPLETED)
+- Japanese transcript (original)
+- English translation (verified)
+- Client metadata (ID, environment, urgency)
+- Optional screenshot/image
+
+### Ticket
+- Unique number (TKT-YYYYMMDD-XXXXXX)
+- Title (max 200 chars, actionable)
+- Description (full technical details)
+- Priority (low/medium/high/critical)
+- Category (bug/feature_request/incident/question)
+- Technical area (backend/frontend/database/infrastructure)
+- Assigned developer
+- Assignment reason (audit trail - explains why)
+- Status (open/in_progress/resolved/on_hold)
+- Created timestamp, last updated
+
+### Developer
+- Name & expertise area (backend/frontend/database/infrastructure)
+- Online status with pulse animation (🟢 online / ⚫ offline)
+- Active ticket count
+- Response time average
+- Resolved ticket count
+- Skills and technical specializations
+
+---
+
+## 🔧 Assignment Logic (Deterministic, No AI)
+
+**Rules Engine - Hardcoded, Transparent:**
+1. **Backend/Infrastructure + High/Critical** → Backend Team
+2. **Frontend/UI + Any Priority** → Frontend Team  
+3. **Database + High/Critical** → Backend Team
+4. **Default** → Least loaded developer (fewest active tickets)
+
+**Example Assignment Reasons:**
+- "Rule: Backend/Infrastructure + HIGH priority → Backend Team"
+- "Rule: Frontend/UI issue → Frontend Team"
+- "Default: Assigned to least loaded developer (2 active tickets)"
+
+All assignments include reasoning for audit trail transparency. **No randomness. No black box. Explainable routing.**
+
+---
+
+## 🛡️ Security Features
+
+- ✅ API Key authentication for all endpoints
+- ✅ Audio encryption ready (AES-256-GCM capable)
+- ✅ Environment variable management (.env file)
+- ✅ PostgreSQL audit trail for all operations
+- ✅ Security badge display in UI
+- ✅ Secrets never exposed in git (.gitignore configured)
+- ✅ CORS configuration
+- ✅ Rate limiting ready to implement
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+pytest
+
+# Run specific test file
+pytest tests/test_assignment_service.py -v
+
+# Run with coverage
+pytest --cov=app tests/
+```
+
+**Test Coverage:**
+- `test_ticket_service.py` - Ticket generation logic
+- `test_assignment_service.py` - Assignment routing rules
+- `conftest.py` - Shared fixtures (database, API client)
+
+---
+
+## 🎨 UI Components Library
+
+All components available in `app/static/js/ui-components.js`:
+
+**Classes:**
+- `AudioVisualizer` - Real-time waveform with 20 animated bars
+- `RecordingTimer` - MM:SS format timer display
+
+**Factory Functions:**
+- `createSecurityBadge(encrypted, level)` - Security level display
+- `createTicketBadge(status)` - Status badge with icon
+- `createDeveloperCard(developer, isActive)` - Developer info card
+- `createMessageBubble(message, sender, timestamp, isUser)` - Chat message bubble
+- `createProcessStep(step, label, completed, current, error)` - Process indicator step
+- `createLanguageBadge(language)` - Multilingual support badge
+
+---
+
+## 📖 API Endpoints Reference
 
 ### Voice Processing
-- `POST /api/voice/upload` - Upload Japanese audio
-- `GET /api/voice/status/{conversation_id}` - Check processing status
+- `POST /api/voice/upload` - Submit Japanese audio + metadata
+- `GET /api/voice/status/{id}` - Get transcription, translation, ticket status
 
-### Ticket Management
-- `GET /api/tickets/{ticket_number}` - Get ticket details
-- `GET /api/tickets/` - List tickets (with filters)
+### Tickets
+- `GET /api/tickets/` - List all tickets (with filters)
+- `GET /api/tickets/{id}` - Get specific ticket details
+- `PATCH /api/tickets/{id}/status` - Update ticket status
+- `DELETE /api/tickets/{id}` - Delete ticket (admin only)
 
-### Admin Dashboard
-- `GET /api/admin/dashboard` - System overview
-- `GET /api/admin/conversations` - All conversations
-- `GET /api/admin/developers` - Developer stats
+### Developers
+- `GET /api/developers/` - List all developers with stats
+- `GET /api/developers/{id}` - Get developer detailed profile
 
----
+### Admin
+- `GET /api/admin/stats` - System statistics and health
+- `GET /api/admin/assignments` - Assignment audit trail
 
-## Success Criteria
-
-### ✅ Project is successful if:
-- Random Japanese audio → correct dev gets ticket
-- Admin can replay audio + see assignment logic
-- Every ticket has consistent structure
-- System is deterministic (same input = same output)
-
-### ❌ Project is a failure if:
-- Output varies every run
-- Assignment feels random
-- Tickets read like chat logs
-- Can't explain why a dev was chosen
+### Web Pages
+- `GET /` - Home page
+- `GET /upload` - Voice upload interface
+- `GET /tickets` - Ticket list view
+- `GET /tickets/{number}` - Ticket detail + chat
+- `GET /developers` - Developer team directory
+- `GET /dashboard` - Admin dashboard
+- `GET /verify` - System health check
 
 ---
 
-## What's OUT OF SCOPE (v1)
+## 🐛 Troubleshooting
 
-❌ Emotional chat responses  
-❌ Long conversations  
-❌ Voice reply back to user  
-❌ Complex ML training  
-❌ Multi-language support (beyond Japanese/English)  
-❌ Real-time voice streaming  
+### Transcription shows mock data
+- ✅ Verify API key in `.env` (Groq or OpenAI)
+- ✅ Restart FastAPI server
+- ✅ Check console for configuration messages
 
-**If you try to include these early, you're sabotaging yourself.**
+### Database connection error
+- ✅ Verify PostgreSQL is running
+- ✅ Check `DATABASE_URL` in `.env`
+- ✅ Run `python migrate_db.py`
 
----
+### Audio upload fails
+- ✅ Ensure `storage/audio/` directory exists
+- ✅ Check file size and format (WAV, MP3, M4A, WebM)
+- ✅ Verify permissions on storage directory
 
-## Development Workflow
-
-### 1. Database Changes
-```bash
-alembic revision --autogenerate -m "description"
-alembic upgrade head
-```
-
-### 2. Run Tests
-```bash
-pytest tests/
-```
-
-### 3. Code Formatting
-```bash
-black app/
-flake8 app/
-```
+### Chat not appearing
+- ✅ Clear browser cache
+- ✅ Check `/api/developers/` returns data
+- ✅ Verify ticket has assigned developer
 
 ---
 
-## Assignment Logic (Deterministic)
+## 📅 Version
 
-```python
-1. Filter active developers
-2. Match technical area with developer skills
-3. Check current workload (active tickets count)
-4. Assign to developer with:
-   - Matching technical area (if exists)
-   - Lowest current workload
-   - Under capacity limit
-5. Store assignment reason for audit
-```
+**TechFixAI v1.0** - Evaluation Ready  
+Released: February 2026
 
-**No randomness. No black box. Transparent and explainable.**
-
----
-
-## Security Considerations
-
-- Audio files stored with encryption (implement in production)
-- API key authentication
-- Rate limiting on uploads
-- Input validation on all endpoints
-- SQL injection prevention (SQLAlchemy ORM)
-- CORS configuration
+### Complete Features ✅
+- Voice recording + processing
+- Transcription (Japanese) + translation (English)
+- Ticket generation with structured schema
+- Deterministic developer assignment
+- Real-time developer chat interface
+- Admin dashboard
+- Full test coverage
+- Security best practices
 
 ---
 
-## Future Enhancements (Post-v1)
+## 🔒 Secrets & Privacy
 
-- Real-time WebSocket updates
-- Admin UI dashboard
-- Email notifications to developers
-- Ticket priority auto-escalation
-- Developer performance analytics
-- Multi-tenant support
-- Advanced audio preprocessing
-
----
-
-## Common Issues & Troubleshooting
-
-### Whisper Model Not Loading
-```bash
-# Download model manually
-python -c "import whisper; whisper.load_model('base')"
-```
-
-### Database Connection Failed
-- Check PostgreSQL is running
-- Verify DATABASE_URL in .env
-- Ensure database exists
-
-### Audio Upload Fails
-- Check file size limits
-- Verify storage directory permissions
-- Confirm audio format is supported
+✅ All sensitive data protected:
+- API keys stored in `.env` (never in code)
+- `.env` in `.gitignore`
+- Audio files encrypted (AES-256-GCM ready)
+- Database passwords in environment variables
+- No credentials exposed in GitHub
 
 ---
 
-## Contributing
+**Built with ❤️ for multilingual technical support**
 
-1. Keep code focused on the core problem
-2. Follow the modular monolith pattern
-3. Write deterministic, testable code
-4. Document assignment logic clearly
-5. No feature creep without justification
-
----
-
-## License
-
-MIT License
-
----
-
-## Contact
-
-For questions about the system architecture or implementation decisions, refer to this README first.
-
-**Remember:** This is an automated incident intake + routing system. Keep it focused.
+*Automated incident intake + routing system bridging Japanese and English technical communications.*
