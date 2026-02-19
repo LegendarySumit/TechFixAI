@@ -4,7 +4,7 @@ Analyzes transcribed text quality and accuracy.
 """
 
 import json
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from app.core.config import settings
 
 
@@ -36,7 +36,7 @@ class ConfidenceService:
         self,
         transcribed_text: str,
         language: str = "Japanese"
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         Calculate transcription confidence using Gemini AI analysis.
         
@@ -79,7 +79,7 @@ class ConfidenceService:
             print("⚠️ Gemini API not available - using heuristic analysis")
             return self._heuristic_analyze(transcribed_text)
     
-    async def _gemini_analyze(self, text: str, language: str) -> Dict[str, any]:
+    async def _gemini_analyze(self, text: str, language: str) -> Dict[str, Any]:
         """Analyze text quality using Gemini API."""
         try:
             model = self.gemini_client.GenerativeModel('gemini-pro')

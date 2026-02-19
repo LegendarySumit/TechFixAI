@@ -18,8 +18,8 @@ from app.services.stt_service import stt_service
 from app.services.translation_service import translation_service
 from app.services.ticket_service import ticket_service
 from app.services.assignment_service import assignment_service
-from encryption import audio_encryption
-from audit import audit_log
+from app.utils.encryption import audio_encryption
+from app.utils.audit import audit_log
 
 router = APIRouter()
 

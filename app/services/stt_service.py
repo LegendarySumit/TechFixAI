@@ -8,7 +8,7 @@ import random
 from typing import Optional
 
 from app.core.config import settings
-from encryption import audio_encryption
+from app.utils.encryption import audio_encryption
 
 
 class STTService:
