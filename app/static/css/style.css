@@ -98,6 +98,36 @@ main {
     }
 }
 
+/* Navbar Authentication Buttons */
+.saas-navbar .btn-primary {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.saas-navbar .btn-primary:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.saas-navbar .btn-outline-primary {
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.saas-navbar .btn-outline-primary:hover {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
 /* Cards - Dark Theme */
 .card {
     background: var(--bg-secondary);
