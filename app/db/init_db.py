@@ -9,6 +9,7 @@ from app.db.base import Base
 from app.models.conversation import Conversation
 from app.models.ticket import Ticket
 from app.models.developer import Developer
+from app.models.user import User
 from app.db.session import SessionLocal
 
 
