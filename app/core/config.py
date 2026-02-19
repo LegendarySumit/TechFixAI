@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str = ""  # Must be set via environment variable
     API_KEY_HEADER: str = "X-API-Key"
+    ENCRYPTION_ENABLED: bool = True  # Enable AES-256 encryption for audio
+    DATA_RETENTION_DAYS: int = 30  # Delete audio/files older than this
     
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
@@ -28,6 +30,7 @@ class Settings(BaseSettings):
     
     # AI Services
     WHISPER_MODEL: str = "base"  # base, small, medium, large
+    TRANSCRIPTION_MIN_CONFIDENCE: float = 0.75  # 75% confidence threshold (0.0-1.0)
     GROQ_API_KEY: str = ""  # Get free key at https://console.groq.com
     OPENAI_API_KEY: str = ""
     GEMINI_API_KEY: str = ""

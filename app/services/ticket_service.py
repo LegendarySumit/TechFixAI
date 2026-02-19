@@ -58,6 +58,7 @@ class TicketService:
     ) -> Dict:
         """
         Generate structured ticket data from translated text.
+        Uses fast rule-based extraction (no API calls).
         
         Args:
             english_text: Translated English description
@@ -67,21 +68,8 @@ class TicketService:
             dict with structured ticket fields
         """
         
-        # Try Gemini API first
-        if self.use_gemini:
-            try:
-                return await self._gemini_generate_ticket(english_text)
-            except Exception as e:
-                print(f"⚠️ Gemini ticket generation failed: {str(e)}, trying fallback...")
-        
-        # Fallback to OpenAI
-        if self.use_openai:
-            try:
-                return await self._openai_generate_ticket(english_text)
-            except Exception as e:
-                print(f"⚠️ OpenAI ticket generation failed: {str(e)}, using mock...")
-        
-        # Final fallback to mock
+        # FAST PATH: Use mock generation (instant, no API calls)
+        print(f"🎫 Generating ticket (instant mock): {english_text[:50]}...")
         return self._mock_generate_ticket(english_text)
     
     async def _gemini_generate_ticket(self, english_text: str) -> Dict:

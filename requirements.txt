@@ -34,8 +34,10 @@ soundfile==0.12.1
 
 # Utilities
 python-jose[cryptography]==3.3.0
+cryptography==41.0.7
 passlib[bcrypt]==1.7.4
 python-dateutil==2.8.2
+schedule==1.2.0
 
 # Development
 pytest==7.4.3

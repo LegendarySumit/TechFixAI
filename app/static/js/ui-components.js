@@ -248,28 +248,27 @@ function createDeveloperCard(developer, isActive = false) {
 
 // Message Bubble Component (returns HTML string)
 function createMessageBubble(message, sender, timestamp, isUser = false) {
-  const alignment = isUser ? 'justify-content-end' : 'justify-content-start';
-  const bubbleClass = isUser ? 'bg-primary text-white' : 'bg-secondary text-white';
+  const messageClass = isUser ? 'user' : 'developer';
+  const bubbleClass = isUser ? 'chat-bubble user' : 'chat-bubble developer';
   const avatar = sender.charAt(0).toUpperCase();
-  const avatarBg = isUser ? 'bg-info' : 'bg-dark';
+  const avatarBg = isUser ? 'bg-info' : 'bg-primary';
+  const timeStr = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
   return `
-    <div class="d-flex gap-2 mb-3 ${alignment}">
+    <div class="chat-message ${messageClass}">
       ${!isUser ? `
-        <div class="rounded-circle ${avatarBg} d-flex align-items-center justify-content-center text-white fw-bold"
-             style="width: 32px; height: 32px; flex-shrink: 0;">
+        <div class="rounded-circle ${avatarBg} d-flex align-items-center justify-content-center text-white fw-bold me-2"
+             style="width: 28px; height: 28px; flex-shrink: 0; font-size: 0.75rem;">
           ${avatar}
         </div>
       ` : ''}
-      <div class="${bubbleClass} rounded-3 px-3 py-2" style="max-width: 70%;">
-        <p class="mb-0 small">${message}</p>
-        ${timestamp ? `
-          <small class="opacity-75">${new Date(timestamp).toLocaleTimeString()}</small>
-        ` : ''}
+      <div class="${bubbleClass}">
+        <p class="mb-1" style="line-height: 1.5;">${message}</p>
+        ${timeStr ? `<div class="chat-timestamp">${timeStr}</div>` : ''}
       </div>
       ${isUser ? `
-        <div class="rounded-circle ${avatarBg} d-flex align-items-center justify-content-center text-white fw-bold"
-             style="width: 32px; height: 32px; flex-shrink: 0;">
+        <div class="rounded-circle ${avatarBg} d-flex align-items-center justify-content-center text-white fw-bold ms-2"
+             style="width: 28px; height: 28px; flex-shrink: 0; font-size: 0.75rem;">
           ${avatar}
         </div>
       ` : ''}

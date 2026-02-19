@@ -18,6 +18,8 @@ from app.services.stt_service import stt_service
 from app.services.translation_service import translation_service
 from app.services.ticket_service import ticket_service
 from app.services.assignment_service import assignment_service
+from encryption import audio_encryption
+from audit import audit_log
 
 router = APIRouter()
 
@@ -30,18 +32,17 @@ async def process_voice_pipeline(
     """
     Background task: The Golden Path.
     
-    1. STT produces Japanese text
-    2. Translation produces clean English
-    3. Ticket is generated with schema
-    4. Ticket is assigned to a developer
+    1. Groq STT → Japanese text
+    2. Groq Translation → English text
+    3. Ticket generation
+    4. Developer assignment
     """
     try:
-        # Get conversation
         conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
         if not conversation:
             return
         
-        # Step 1: Transcribe audio (STT)
+        # Step 1: STT with Groq (FAST - 3-5 seconds)
         conversation.status = ConversationStatus.PROCESSING
         db.commit()
         
@@ -50,7 +51,9 @@ async def process_voice_pipeline(
         conversation.status = ConversationStatus.TRANSCRIBED
         db.commit()
         
-        # Step 2: Translate to English
+        print(f"✅ STT: {conversation.japanese_transcript[:60]}")
+        
+        # Step 2: Translate with Groq (FAST - 1-2 seconds)
         translation_result = await translation_service.translate_technical_text(
             conversation.japanese_transcript,
             context="technical support"
@@ -59,7 +62,9 @@ async def process_voice_pipeline(
         conversation.status = ConversationStatus.TRANSLATED
         db.commit()
         
-        # Step 3: Generate structured ticket
+        print(f"✅ Translation: {conversation.english_translation[:60]}")
+        
+        # Step 3: Ticket generation (INSTANT - direct from English)
         ticket_data = await ticket_service.generate_ticket_from_text(
             conversation.english_translation,
             conversation.japanese_transcript
@@ -71,16 +76,22 @@ async def process_voice_pipeline(
             ticket_data=ticket_data
         )
         
-        # Step 4: Assign to developer
+        print(f"✅ Ticket: #{ticket.ticket_number}")
+        
+        # Step 4: Assignment (FAST - 1-2 seconds)
         if settings.AUTO_ASSIGNMENT_ENABLED:
             assigned_dev = await assignment_service.assign_ticket(db, ticket)
+            if assigned_dev:
+                print(f"✅ Assigned: {assigned_dev.name}")
         
-        # Mark as completed
+        # Mark complete
         conversation.status = ConversationStatus.COMPLETED
         db.commit()
         
+        print(f"🎉 COMPLETE - Fast Groq translation + instant ticket\n")
+        
     except Exception as e:
-        # Mark as failed
+        print(f"❌ Pipeline error: {str(e)}\n")
         conversation.status = ConversationStatus.FAILED
         db.commit()
         raise e
@@ -155,8 +166,16 @@ async def upload_voice(
             f.write(image_content)
     
     # Create conversation record with metadata
+    # Encrypt audio data before storing in database (AES-256)
+    encrypted_audio = None
+    if settings.ENCRYPTION_ENABLED:
+        encrypted_audio = audio_encryption.encrypt(audio_content)
+    else:
+        encrypted_audio = audio_content
+    
     conversation = Conversation(
         audio_file_path=audio_file_path,
+        audio_data=encrypted_audio,  # Store encrypted audio bytes in database
         audio_format=audio.content_type,
         image_file_path=image_file_path,
         client_id=client_id,
@@ -167,6 +186,14 @@ async def upload_voice(
     db.add(conversation)
     db.commit()
     db.refresh(conversation)
+    
+    # Audit log
+    audit_log(
+        endpoint="/voice/upload",
+        action="UPLOAD_VOICE",
+        resource_id=f"conversation_{conversation.id}",
+        details={"audio_format": audio.content_type, "file_size_mb": file_size_mb}
+    )
     
     # Start background processing
     background_tasks.add_task(
@@ -205,6 +232,10 @@ async def get_voice_status(
         "japanese_transcript": conversation.japanese_transcript,
         "english_translation": conversation.english_translation,
         "detected_language": "Japanese",  # Default for Japanese support system
+        "transcription_confidence": conversation.transcription_confidence,
+        "transcription_quality": conversation.transcription_quality,
+        "needs_clarity": conversation.status == ConversationStatus.LOW_CONFIDENCE,
+        "processing_step": conversation.status.value,  # Add current step
         "metadata": {
             "client_id": conversation.client_id,
             "environment": conversation.environment,

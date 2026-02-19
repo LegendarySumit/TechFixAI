@@ -8,6 +8,7 @@ import random
 from typing import Optional
 
 from app.core.config import settings
+from encryption import audio_encryption
 
 
 class STTService:
@@ -85,7 +86,7 @@ class STTService:
         
         # Final fallback to mock
         print("⚠️ Using MOCK transcription (no API keys configured)")
-        return self._mock_transcribe(audio_file_path, language)
+        return await self._mock_transcribe(audio_file_path, language)
     
     async def _groq_transcribe(self, audio_file_path: str, language: str) -> dict:
         """Transcribe using Groq's Whisper API (free, very fast)."""
@@ -129,17 +130,11 @@ class STTService:
             "method": "openai"
         }
     
-    def _mock_transcribe(self, audio_file_path: str, language: str) -> dict:
+    async def _mock_transcribe(self, audio_file_path: str, language: str) -> dict:
         """
         Mock transcription for development/testing.
         Returns realistic Japanese technical support requests.
         """
-        # Get file size to simulate different length transcriptions
-        try:
-            file_size = os.path.getsize(audio_file_path)
-        except:
-            file_size = 1000
-        
         # Sample Japanese technical issues
         japanese_samples = [
             "サーバーがダウンしており、誰もアクセスできません。すぐに対応してください。",
@@ -162,8 +157,7 @@ class STTService:
         return {
             "text": text,
             "language": language,
-            "method": "mock",
-            "segments": []
+            "method": "mock"
         }
 
 

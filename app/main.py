@@ -6,17 +6,36 @@ Purpose: Automated incident intake + routing system
 NOT a chatbot. NOT a translation app. NOT an AI demo.
 """
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.api import voice, ticket, admin, web, developer
+from scheduler import start_cleanup_scheduler
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Manage application lifespan events.
+    Startup: Initialize background tasks
+    Shutdown: Cleanup resources
+    """
+    # Startup
+    print("🚀 Starting Voice-to-Ticket AI System...")
+    start_cleanup_scheduler()
+    yield
+    # Shutdown
+    print("🛑 Application shutdown")
+
 
 app = FastAPI(
     title="Voice-to-Ticket AI System",
     description="Automated incident intake + routing for Japanese technical support",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # CORS configuration

@@ -63,6 +63,7 @@ class TranslationService:
     ) -> dict:
         """
         Translate Japanese text to English with technical context.
+        FAST: Uses Groq (primary) with instant mock fallback.
         
         Args:
             japanese_text: Source Japanese text
@@ -75,63 +76,43 @@ class TranslationService:
                 - method: Translation method used
         """
         
-        # Try Groq API first
+        print(f"🌐 Translating: {japanese_text[:50]}...")
+        
+        # Try Groq API first (VERY FAST)
         if self.use_groq:
             try:
                 return await self._groq_translate(japanese_text, context)
             except Exception as e:
-                print(f"⚠️ Groq translation failed: {str(e)}, trying Gemini...")
+                print(f"⚠️ Groq failed: {str(e)} - using mock")
         
-        # Try Gemini API
-        if self.use_gemini:
-            try:
-                return await self._gemini_translate(japanese_text, context)
-            except Exception as e:
-                print(f"⚠️ Gemini translation failed: {str(e)}, trying fallback...")
-        
-        # Fallback to OpenAI
-        if self.use_openai:
-            try:
-                return await self._openai_translate(japanese_text, context)
-            except Exception as e:
-                print(f"⚠️ OpenAI translation failed: {str(e)}, using mock...")
-        
-        # Final fallback to mock
+        # Instant fallback to mock
+        print("   ⚡ Using instant mock translation")
         return self._mock_translate(japanese_text, context)
     
     async def _groq_translate(self, japanese_text: str, context: str) -> dict:
-        """Translate using Groq API with chat completion."""
-        print(f"🌐 Translating with Groq API: {japanese_text[:50]}...")
+        """Translate using Groq API (FAST)."""
+        print(f"   Groq translating...")
         
         try:
             completion = self.groq_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",  # Fast and accurate model
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a professional translator. Translate Japanese text to natural, fluent English. Output ONLY the English translation, no explanations or additional text."
+                        "content": "Translate Japanese to English. Output ONLY the translation."
                     },
                     {
                         "role": "user",
-                        "content": f"Translate this Japanese text to English:\n\n{japanese_text}"
+                        "content": japanese_text
                     }
                 ],
-                temperature=0.3,
-                max_tokens=500
+                temperature=0.1,
+                max_tokens=300
             )
             
             translated_text = completion.choices[0].message.content.strip()
             
-            # Validate translation
-            has_japanese = any('\u3040' <= char <= '\u309F' or  # Hiragana
-                             '\u30A0' <= char <= '\u30FF' or  # Katakana  
-                             '\u4E00' <= char <= '\u9FAF'     # Kanji
-                             for char in translated_text)
-            
-            if has_japanese:
-                raise Exception("Translation still contains Japanese characters")
-            
-            print(f"✅ Groq translation complete: {translated_text[:50]}...")
+            print(f"   ✅ Groq done: {translated_text[:50]}...")
             
             return {
                 "translated_text": translated_text,
@@ -139,54 +120,8 @@ class TranslationService:
                 "method": "groq"
             }
         except Exception as e:
-            print(f"❌ Groq translation error: {str(e)}")
+            print(f"   ❌ Groq error: {str(e)}")
             raise
-    
-    async def _gemini_translate(self, japanese_text: str, context: str) -> dict:
-        """Translate using Gemini API."""
-        print(f"🌐 Translating with Gemini API: {japanese_text[:50]}...")
-        
-        try:
-            prompt = f"""You are a professional translator. Translate the following Japanese text to natural, fluent English.
-
-Requirements:
-- Translate ONLY to English, do not include any Japanese text in your response
-- Preserve the meaning and urgency of the original message
-- Use clear, professional language
-- Output ONLY the translated English text, no explanations or metadata
-
-Japanese text:
-{japanese_text}
-
-English translation:"""
-            
-            response = self.gemini_model.generate_content(prompt)
-            
-            # Check if response is valid
-            if not response or not response.text:
-                raise Exception("Empty response from Gemini API")
-            
-            translated_text = response.text.strip()
-            
-            # Validate that translation actually happened (check if Japanese characters remain)
-            has_japanese = any('\u3040' <= char <= '\u309F' or  # Hiragana
-                             '\u30A0' <= char <= '\u30FF' or  # Katakana  
-                             '\u4E00' <= char <= '\u9FAF'     # Kanji
-                             for char in translated_text)
-            
-            if has_japanese:
-                raise Exception("Translation still contains Japanese characters")
-            
-            print(f"✅ Gemini translation complete: {translated_text[:50]}...")
-            
-            return {
-                "translated_text": translated_text,
-                "original_text": japanese_text,
-                "method": "gemini"
-            }
-        except Exception as e:
-            print(f"❌ Gemini translation error: {str(e)}")
-            raise  # Re-raise to trigger fallback
     
     async def _openai_translate(self, japanese_text: str, context: str) -> dict:
         """Translate using OpenAI API."""

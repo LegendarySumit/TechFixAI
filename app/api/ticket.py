@@ -3,14 +3,42 @@ Ticket API endpoints.
 View and manage tickets.
 """
 
+import asyncio
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.ticket import Ticket, TicketStatus, TicketPriority
+from app.models.conversation import Conversation
 
 router = APIRouter()
+
+
+def delete_ticket_and_audio(ticket_number: str, delay_seconds: int = 5):
+    """
+    Background task to delete ticket and associated audio after a delay.
+    """
+    import time
+    from app.db.session import SessionLocal
+    
+    time.sleep(delay_seconds)
+    
+    db = SessionLocal()
+    try:
+        ticket = db.query(Ticket).filter(Ticket.ticket_number == ticket_number).first()
+        if ticket:
+            conversations = db.query(Conversation).filter(Conversation.ticket_id == ticket.id).all()
+            for conversation in conversations:
+                db.delete(conversation)
+            
+            db.delete(ticket)
+            db.commit()
+    except Exception as e:
+        print(f"Error deleting ticket {ticket_number}: {str(e)}")
+        db.rollback()
+    finally:
+        db.close()
 
 
 @router.get("/{ticket_number}")
@@ -106,10 +134,11 @@ async def list_tickets(
 async def update_ticket_status(
     ticket_number: str,
     status_update: dict,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     """
-    Update ticket status.
+    Update ticket status and schedule deletion after a delay.
     """
     ticket = db.query(Ticket).filter(Ticket.ticket_number == ticket_number).first()
     
@@ -120,19 +149,21 @@ async def update_ticket_status(
     if not new_status:
         raise HTTPException(status_code=400, detail="Status is required")
     
-    # Update status
     ticket.status = new_status
     
-    # If marked as resolved, set resolved_at timestamp
     if new_status == 'resolved':
         from datetime import datetime
         ticket.resolved_at = datetime.utcnow()
     
     db.commit()
     
+    background_tasks.add_task(delete_ticket_and_audio, ticket_number, delay_seconds=5)
+    
     return {
         "success": True,
         "ticket_number": ticket.ticket_number,
         "status": ticket.status,
-        "message": f"Ticket status updated to {new_status}"
+        "message": f"Ticket status updated to {new_status}. Ticket will be deleted in 5 seconds.",
+        "will_delete": True,
+        "delete_delay": 5
     }
