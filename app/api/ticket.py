@@ -3,7 +3,6 @@ Ticket API endpoints.
 View and manage tickets.
 """
 
-import asyncio
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
@@ -17,7 +16,8 @@ router = APIRouter()
 
 def delete_ticket_and_audio(ticket_number: str, delay_seconds: int = 5):
     """
-    Background task to delete ticket and associated audio after a delay.
+    Background task to delete ticket and associated conversation after a delay.
+    Opens its own DB session (must not reuse request session which is already closed).
     """
     import time
     from app.db.session import SessionLocal
@@ -28,11 +28,13 @@ def delete_ticket_and_audio(ticket_number: str, delay_seconds: int = 5):
     try:
         ticket = db.query(Ticket).filter(Ticket.ticket_number == ticket_number).first()
         if ticket:
-            conversations = db.query(Conversation).filter(Conversation.ticket_id == ticket.id).all()
-            for conversation in conversations:
-                db.delete(conversation)
-            
+            conversation_id = ticket.conversation_id
             db.delete(ticket)
+            db.flush()  # release FK before deleting parent
+            if conversation_id:
+                conv = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+                if conv:
+                    db.delete(conv)
             db.commit()
     except Exception as e:
         print(f"Error deleting ticket {ticket_number}: {str(e)}")
@@ -86,7 +88,7 @@ async def list_tickets(
     technical_area: Optional[str] = Query(None),
     assigned_developer_id: Optional[int] = Query(None),
     skip: int = 0,
-    limit: int = 50,
+    limit: int = Query(default=50, le=200),  # cap at 200 to prevent full-table dumps
     db: Session = Depends(get_db)
 ):
     """
@@ -167,3 +169,33 @@ async def update_ticket_status(
         "will_delete": True,
         "delete_delay": 5
     }
+
+
+@router.delete("/{ticket_number}")
+async def delete_ticket(
+    ticket_number: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Permanently delete a ticket and its associated conversation.
+    """
+    ticket = db.query(Ticket).filter(Ticket.ticket_number == ticket_number).first()
+
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    conversation_id = ticket.conversation_id
+
+    # Delete ticket first (it holds the FK to conversation)
+    db.delete(ticket)
+    db.flush()
+
+    # Now safe to delete the orphaned conversation
+    if conversation_id:
+        conv = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+        if conv:
+            db.delete(conv)
+
+    db.commit()
+
+    return {"success": True, "message": f"Ticket {ticket_number} deleted"}

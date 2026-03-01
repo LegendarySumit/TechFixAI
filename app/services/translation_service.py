@@ -153,6 +153,47 @@ Translate from Japanese to English with these requirements:
             "method": "openai"
         }
     
+    async def translate_to_japanese(self, english_text: str) -> dict:
+        """
+        Translate English text to Japanese.
+        Uses Groq (fast) with mock fallback.
+        """
+        print(f"🌐 Translating EN→JA: {english_text[:50]}...")
+
+        if self.use_groq:
+            try:
+                completion = self.groq_client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "Translate the following English text to Japanese. Output ONLY the Japanese translation, no explanations."
+                        },
+                        {
+                            "role": "user",
+                            "content": english_text
+                        }
+                    ],
+                    temperature=0.1,
+                    max_tokens=300
+                )
+                translated = completion.choices[0].message.content.strip()
+                print(f"   ✅ EN→JA done: {translated[:40]}...")
+                return {
+                    "translated_text": translated,
+                    "original_text": english_text,
+                    "method": "groq"
+                }
+            except Exception as e:
+                print(f"   ⚠️ Groq EN→JA failed: {e}")
+
+        # Mock fallback
+        return {
+            "translated_text": f"[日本語訳] {english_text}",
+            "original_text": english_text,
+            "method": "mock"
+        }
+
     def _mock_translate(self, japanese_text: str, context: str) -> dict:
         """
         Mock translation fallback - uses generic English message.

@@ -1,192 +1,90 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
+{% block title %}About - TechFixAI{% endblock %}
 
-{% block title %}About Us - TechFixAI{% endblock %}
+{% block extra_css %}
+<style>
+.about-hero{padding:7rem 0 4rem;text-align:center;position:relative;overflow:hidden}
+.about-hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(99,102,241,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.05) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
+.about-hero-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:99px;font-size:.78rem;font-weight:600;color:#818cf8;letter-spacing:.05em;text-transform:uppercase;margin-bottom:1.5rem}
+.about-hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;letter-spacing:-.5px;line-height:1.15;margin-bottom:1.1rem}
+.about-hero h1 span{background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.about-hero p{color:#8899bb;max-width:600px;margin:0 auto;font-size:1.05rem;line-height:1.8}
+.stat-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin:4rem 0}
+.stat-card-a{background:rgba(13,27,46,.7);border:1px solid rgba(99,102,241,.15);border-radius:16px;padding:2rem;text-align:center;backdrop-filter:blur(10px)}
+.stat-num{font-size:2.5rem;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-label{font-size:.82rem;color:#8899bb;font-weight:500;margin-top:.25rem;text-transform:uppercase;letter-spacing:.07em}
+.section-hd{font-size:1.6rem;font-weight:800;letter-spacing:-.3px;margin-bottom:.4rem}
+.section-hd span{background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.section-sub{color:#8899bb;font-size:.9rem;margin-bottom:2.25rem}
+.about-sect{padding:4rem 0;border-top:1px solid rgba(99,102,241,.08)}
+.mission-card{background:rgba(13,27,46,.7);border:1px solid rgba(99,102,241,.15);border-radius:20px;padding:2.5rem;backdrop-filter:blur(10px)}
+.pipeline-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:0;position:relative}
+.pipeline-steps::before{display:none}
+.p-step{position:relative;z-index:1;text-align:center;padding:1.5rem 1rem}
+.p-step-num{width:54px;height:54px;border-radius:50%;background:rgba(13,27,46,.9);border:2px solid rgba(99,102,241,.4);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.1rem;font-weight:800;color:#818cf8;position:relative;z-index:1}
+.p-step-num::before{content:'';position:absolute;inset:-4px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.15),transparent 70%)}
+.p-step h5{font-size:.9rem;font-weight:700;margin-bottom:.4rem;color:#c7d2fe}
+.p-step p{font-size:.78rem;color:#6b7fa3;line-height:1.6}
+.tech-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.tech-item{background:rgba(13,27,46,.7);border:1px solid rgba(99,102,241,.12);border-radius:14px;padding:1.5rem 1.25rem;display:flex;align-items:center;gap:1rem;transition:all .2s}
+.tech-item:hover{border-color:rgba(99,102,241,.3);transform:translateY(-2px);background:rgba(13,27,46,.9)}
+.tech-icon-box{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(34,211,238,.08));border:1px solid rgba(99,102,241,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem;color:#818cf8}
+.tech-name{font-size:.88rem;font-weight:700;color:#c7d2fe}
+.tech-role{font-size:.75rem;color:#4a5f7a;margin-top:.1rem}
+@media(max-width:600px){.stat-strip{grid-template-columns:1fr}.pipeline-steps::before{display:none}}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row">
-        <div class="col-lg-10 mx-auto">
-            <!-- Header -->
-            <div class="mb-5 text-center">
-                <h1 class="display-5 fw-bold mb-3">
-                    <i class="bi bi-info-circle text-primary me-2"></i>About TechFixAI
-                </h1>
-                <p class="lead text-muted mx-auto" style="max-width: 600px;">
-                    Transforming multilingual technical support with intelligent voice-to-ticket automation
-                </p>
-            </div>
-
-            <!-- Mission -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-4">Our Mission</h3>
-                <div class="card bg-dark border-primary p-4">
-                    <p class="text-muted mb-0">
-                        We believe that language barriers shouldn't impact technical support quality. TechFixAI leverages cutting-edge AI and 
-                        machine learning to instantly convert voice problems (especially Japanese) into structured, actionable support tickets. 
-                        Our goal is to make support teams more efficient, reduce response times, and eliminate miscommunication.
-                    </p>
-                </div>
-            </div>
-
-            <!-- Why We Built This -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-4">Why We Built This</h3>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="d-flex gap-3">
-                            <div class="flex-shrink-0">
-                                <i class="bi bi-lightbulb text-warning" style="font-size: 1.5rem;"></i>
-                            </div>
-                            <div>
-                                <h6 class="fw-semibold">Problem Identification</h6>
-                                <p class="text-muted small">
-                                    Global support teams struggle with multilingual inputs, ticket categorization, and proper assignment of complex issues.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex gap-3">
-                            <div class="flex-shrink-0">
-                                <i class="bi bi-rocket text-success" style="font-size: 1.5rem;"></i>
-                            </div>
-                            <div>
-                                <h6 class="fw-semibold">Our Solution</h6>
-                                <p class="text-muted small">
-                                    An AI-powered pipeline that transcribes, translates, structures, and routes support tickets automatically.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- How It Works -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-4">The TechFixAI Pipeline</h3>
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="card bg-dark border-primary text-center p-4">
-                            <div style="font-size: 2.5rem; color: #3b82f6;" class="mb-3">
-                                <i class="bi bi-mic-fill"></i>
-                            </div>
-                            <h6 class="fw-semibold mb-2">1. Transcribe</h6>
-                            <p class="text-muted small">
-                                Japanese audio is transcribed using Groq/OpenAI Whisper API with high accuracy.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card bg-dark border-success text-center p-4">
-                            <div style="font-size: 2.5rem; color: #22c55e;" class="mb-3">
-                                <i class="bi bi-translate"></i>
-                            </div>
-                            <h6 class="fw-semibold mb-2">2. Translate</h6>
-                            <p class="text-muted small">
-                                Technical context is preserved during translation from Japanese to clear, actionable English.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card bg-dark border-warning text-center p-4">
-                            <div style="font-size: 2.5rem; color: #f59e0b;" class="mb-3">
-                                <i class="bi bi-person-check"></i>
-                            </div>
-                            <h6 class="fw-semibold mb-2">3. Route</h6>
-                            <p class="text-muted small">
-                                Structured tickets are intelligently assigned to developers based on expertise and availability.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Key Metrics -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-4">Impact By The Numbers</h3>
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="text-center p-4 border border-primary rounded">
-                            <div class="display-6 fw-bold text-primary mb-2">90%+</div>
-                            <p class="text-muted small mb-0">Accuracy in transcription</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="text-center p-4 border border-success rounded">
-                            <div class="display-6 fw-bold text-success mb-2">&lt;5s</div>
-                            <p class="text-muted small mb-0">End-to-end processing time</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="text-center p-4 border border-warning rounded">
-                            <div class="display-6 fw-bold text-warning mb-2">100%</div>
-                            <p class="text-muted small mb-0">Automated routing</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Technology Stack -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-4">Technology Stack</h3>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <h6 class="fw-semibold text-primary mb-3"><i class="bi bi-cpu me-2"></i>Backend</h6>
-                        <ul class="text-muted small ms-3">
-                            <li>FastAPI (Python)</li>
-                            <li>SQLAlchemy ORM</li>
-                            <li>PostgreSQL Database</li>
-                            <li>Groq & OpenAI APIs</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="fw-semibold text-primary mb-3"><i class="bi bi-browser-chrome me-2"></i>Frontend</h6>
-                        <ul class="text-muted small ms-3">
-                            <li>HTML5 & CSS3</li>
-                            <li>Bootstrap 5</li>
-                            <li>Vanilla JavaScript</li>
-                            <li>Web Audio API</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Team & Contact -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-4">Get In Touch</h3>
-                <p class="text-muted mb-3">
-                    Have questions or want to learn more about TechFixAI?
-                </p>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <a href="/developers" class="btn btn-outline-primary btn-sm w-100">
-                            <i class="bi bi-people me-2"></i>Meet Our Team
-                        </a>
-                    </div>
-                    <div class="col-md-6">
-                        <a href="mailto:hello@techfixai.com" class="btn btn-outline-primary btn-sm w-100">
-                            <i class="bi bi-envelope me-2"></i>Contact Us
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Social Links -->
-            <div class="text-center pt-5 border-top border-subtle">
-                <p class="text-muted small mb-3">Follow us on social media</p>
-                <div class="d-flex gap-3 justify-content-center">
-                    <a href="https://github.com/LegendarySumit/TechFixAI" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-github me-1"></i>GitHub
-                    </a>
-                    <a href="https://twitter.com/intent/follow?screen_name=TechFixAI" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-twitter-x me-1"></i>Twitter
-                    </a>
-                    <a href="https://www.linkedin.com/company/techfixai" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-linkedin me-1"></i>LinkedIn
-                    </a>
-                </div>
-            </div>
-        </div>
+<section class="about-hero">
+  <div class="container">
+    <div class="about-hero-badge"><i class="bi bi-cpu-fill"></i> About TechFixAI</div>
+    <h1>Built to eliminate<br><span>manual ticket creation</span></h1>
+    <p>TechFixAI transforms Japanese audio reports from factory workers into structured IT support tickets — automatically, accurately, and in seconds.</p>
+    <div class="stat-strip">
+      <div class="stat-card-a"><div class="stat-num">95%</div><div class="stat-label">Faster ticket creation</div></div>
+      <div class="stat-card-a"><div class="stat-num">99%</div><div class="stat-label">Transcription accuracy</div></div>
+      <div class="stat-card-a"><div class="stat-num">10×</div><div class="stat-label">Team productivity</div></div>
     </div>
-</div>
+  </div>
+</section>
+
+<section class="about-sect">
+  <div class="container">
+    <h2 class="section-hd">Our <span>Mission</span></h2>
+    <p class="section-sub">Why we built this</p>
+    <div class="mission-card">
+      <p style="color:#c7d2fe;font-size:1rem;line-height:1.85;margin:0">At TechFixAI, our mission is to bridge the communication gap between frontline factory workers and IT support teams. Traditional ticket systems require technical literacy and manual entry — creating friction, delays, and lost context. We've built an AI system that lets workers simply <strong style="color:#818cf8">speak naturally in Japanese</strong>, and handles everything else: transcription, translation, issue classification, severity scoring, and routing to the right developer — all in one automated pipeline.</p>
+    </div>
+  </div>
+</section>
+
+<section class="about-sect">
+  <div class="container">
+    <h2 class="section-hd">How It <span>Works</span></h2>
+    <p class="section-sub">End-to-end intelligent pipeline</p>
+    <div class="pipeline-steps">
+      <div class="p-step"><div class="p-step-num">1</div><h5>Voice Input</h5><p>Worker records Japanese audio describing the issue</p></div>
+      <div class="p-step"><div class="p-step-num">2</div><h5>Transcription</h5><p>Whisper AI converts speech to text with high accuracy</p></div>
+      <div class="p-step"><div class="p-step-num">3</div><h5>Translation</h5><p>Japanese text is translated to English</p></div>
+      <div class="p-step"><div class="p-step-num">4</div><h5>Classification</h5><p>Groq LLM extracts issue type, severity, and category</p></div>
+      <div class="p-step"><div class="p-step-num">5</div><h5>Ticket Created</h5><p>Structured ticket assigned to the right developer</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="about-sect">
+  <div class="container">
+    <h2 class="section-hd"><span>Technology</span> Stack</h2>
+    <p class="section-sub">Powered by modern AI and web technologies</p>
+    <div class="tech-grid">
+      <div class="tech-item"><div class="tech-icon-box"><i class="bi bi-lightning-charge-fill"></i></div><div><div class="tech-name">FastAPI</div><div class="tech-role">Backend API</div></div></div>
+      <div class="tech-item"><div class="tech-icon-box"><i class="bi bi-mic-fill"></i></div><div><div class="tech-name">Whisper AI</div><div class="tech-role">Speech-to-Text</div></div></div>
+      <div class="tech-item"><div class="tech-icon-box"><i class="bi bi-cpu"></i></div><div><div class="tech-name">Groq LLM</div><div class="tech-role">AI Processing</div></div></div>
+      <div class="tech-item"><div class="tech-icon-box"><i class="bi bi-database-fill"></i></div><div><div class="tech-name">MongoDB</div><div class="tech-role">Database</div></div></div>
+      <div class="tech-item"><div class="tech-icon-box"><i class="bi bi-shield-lock-fill"></i></div><div><div class="tech-name">JWT Auth</div><div class="tech-role">Security</div></div></div>
+      <div class="tech-item"><div class="tech-icon-box"><i class="bi bi-file-code"></i></div><div><div class="tech-name">Jinja2</div><div class="tech-role">Templating</div></div></div>
+    </div>
+  </div>
+</section>
 {% endblock %}

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+
+  <!-- Inner subtle glow circle -->
+  <circle cx="32" cy="32" r="22" fill="rgba(255,255,255,0.05)"/>
+
+  <!-- Chip frame -->
+  <rect x="17" y="17" width="30" height="30" rx="5" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+
+  <!-- Chip pins — top -->
+  <line x1="23" y1="17" x2="23" y2="11" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="32" y1="17" x2="32" y2="11" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="41" y1="17" x2="41" y2="11" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Chip pins — bottom -->
+  <line x1="23" y1="47" x2="23" y2="53" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="32" y1="47" x2="32" y2="53" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="41" y1="47" x2="41" y2="53" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Chip pins — left -->
+  <line x1="17" y1="23" x2="11" y2="23" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="17" y1="32" x2="11" y2="32" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="17" y1="41" x2="11" y2="41" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Chip pins — right -->
+  <line x1="47" y1="23" x2="53" y2="23" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="47" y1="32" x2="53" y2="32" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="47" y1="41" x2="53" y2="41" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Lightning bolt – main icon (white, with glow filter) -->
+  <path filter="url(#glow)"
+        d="M36.5 18 L25 34 L31.5 34 L27.5 46 L41 29 L34 29 Z"
+        fill="white"/>
+
+</svg>

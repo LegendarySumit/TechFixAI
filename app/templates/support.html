@@ -1,0 +1,128 @@
+﻿{% extends "base.html" %}
+{% block title %}Support - TechFixAI{% endblock %}
+
+{% block extra_css %}
+<style>
+.sup-hero{padding:4.5rem 0 2.5rem;text-align:center;position:relative;overflow:hidden}
+.sup-hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(ellipse 700px 350px at 50% 0%,rgba(99,102,241,.06),transparent);pointer-events:none}
+.sup-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:99px;font-size:.78rem;font-weight:600;color:#818cf8;letter-spacing:.05em;text-transform:uppercase;margin-bottom:1.25rem}
+.sup-hero h1{font-size:clamp(1.9rem,4.5vw,2.9rem);font-weight:800;letter-spacing:-.5px;margin-bottom:.85rem}
+.sup-hero h1 span{background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sup-hero p{color:#8899bb;max-width:560px;margin:0 auto;font-size:.98rem;line-height:1.75}
+.sup-section{padding:2.5rem 0;border-top:1px solid rgba(99,102,241,.08)}
+.sup-hd{font-size:1.4rem;font-weight:800;letter-spacing:-.3px;margin-bottom:.35rem}
+.sup-hd span{background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sup-sub{color:#8899bb;font-size:.875rem;margin-bottom:1.75rem}
+
+/* Contact cards */
+.contact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:0}
+.contact-card{background:rgba(13,27,46,.7);border:1px solid rgba(99,102,241,.12);border-radius:16px;padding:1.75rem;text-align:center;backdrop-filter:blur(10px);transition:all .2s}
+.contact-card:hover{border-color:rgba(99,102,241,.3);transform:translateY(-3px)}
+.contact-card-icon{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(34,211,238,.08));border:1px solid rgba(99,102,241,.18);display:flex;align-items:center;justify-content:center;font-size:1.35rem;color:#818cf8;margin:0 auto 1rem}
+.contact-card h4{font-size:.95rem;font-weight:700;color:#c7d2fe;margin-bottom:.4rem}
+.contact-card p{font-size:.8rem;color:#6b7fa3;line-height:1.6;margin-bottom:.9rem}
+.contact-card a{font-size:.82rem;color:#818cf8;text-decoration:none;font-weight:600;border:1px solid rgba(99,102,241,.22);padding:.4rem .85rem;border-radius:8px;display:inline-flex;align-items:center;gap:.35rem;transition:all .2s}
+.contact-card a:hover{background:rgba(99,102,241,.08);border-color:rgba(99,102,241,.4);color:#a5b4fc}
+
+/* FAQ */
+.faq-wrap{max-width:720px;margin:0 auto}
+.faq-list{display:flex;flex-direction:column;gap:.75rem}
+.faq-item{background:rgba(13,27,46,.7);border:1px solid rgba(99,102,241,.12);border-radius:12px;overflow:hidden;transition:border-color .2s}
+.faq-item.open{border-color:rgba(99,102,241,.28)}
+.faq-q{display:flex;justify-content:space-between;align-items:center;padding:1.1rem 1.35rem;cursor:pointer;user-select:none;gap:1rem}
+.faq-q span{font-size:.9rem;font-weight:600;color:#c7d2fe;line-height:1.4}
+.faq-q i{color:#4a5f7a;font-size:.85rem;transition:transform .3s ease;flex-shrink:0}
+.faq-item.open .faq-q i{transform:rotate(180deg);color:#818cf8}
+.faq-a-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s ease}
+.faq-item.open .faq-a-wrap{grid-template-rows:1fr}
+.faq-a-inner{overflow:hidden}
+.faq-a{padding:0 1.35rem 1.1rem;font-size:.85rem;color:#8899bb;line-height:1.75;border-top:1px solid rgba(99,102,241,.15);padding-top:.85rem;margin:0 1.35rem}
+
+@media(max-width:768px){.contact-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="sup-hero">
+  <div class="container">
+    <div class="sup-badge"><i class="bi bi-headset"></i> Support Center</div>
+    <h1>How can we <span>help you?</span></h1>
+    <p>Browse common questions, check system status, or reach out to us directly. We're here to help.</p>
+  </div>
+</section>
+
+<!-- Contact options -->
+<section class="sup-section">
+  <div class="container">
+    <h2 class="sup-hd">Get in <span>Touch</span></h2>
+    <p class="sup-sub">Choose the best way to reach us</p>
+    <div class="contact-grid">
+      <div class="contact-card">
+        <div class="contact-card-icon"><i class="bi bi-envelope-fill"></i></div>
+        <h4>Email Support</h4>
+        <p>Send us a message and we'll respond within 24 hours on business days.</p>
+        <a href="mailto:support@techfixai.com"><i class="bi bi-box-arrow-up-right"></i> support@techfixai.com</a>
+      </div>
+      <div class="contact-card">
+        <div class="contact-card-icon"><i class="bi bi-file-text-fill"></i></div>
+        <h4>Documentation</h4>
+        <p>Find setup guides, API references, and feature walkthroughs in our docs.</p>
+        <a href="/documentation"><i class="bi bi-arrow-right"></i> View Docs</a>
+      </div>
+      <div class="contact-card">
+        <div class="contact-card-icon"><i class="bi bi-shield-lock-fill"></i></div>
+        <h4>Security Issues</h4>
+        <p>Found a vulnerability? Report it responsibly and we'll respond within 48 hours.</p>
+        <a href="mailto:security@techfixai.com"><i class="bi bi-box-arrow-up-right"></i> security@techfixai.com</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="sup-section">
+  <div class="container">
+    <h2 class="sup-hd" style="text-align:center"><span>Common</span> Questions</h2>
+    <p class="sup-sub" style="text-align:center">Frequently asked questions</p>
+    <div class="faq-wrap">
+    <div class="faq-list">
+      <div class="faq-item open">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>What audio formats are supported?</span><i class="bi bi-chevron-down"></i></div>
+        <div class="faq-a-wrap"><div class="faq-a-inner"><div class="faq-a">TechFixAI accepts <strong>.wav</strong> and <strong>.mp3</strong> files. For best results, use clear audio recorded in a quiet environment. The maximum file size is 25 MB.</div></div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>How long does ticket processing take?</span><i class="bi bi-chevron-down"></i></div>
+        <div class="faq-a-wrap"><div class="faq-a-inner"><div class="faq-a">Most audio files are transcribed and converted into a structured ticket within 10–30 seconds, depending on file length and current load.</div></div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Can I re-assign a ticket after creation?</span><i class="bi bi-chevron-down"></i></div>
+        <div class="faq-a-wrap"><div class="faq-a-inner"><div class="faq-a">Yes. Managers can re-assign any ticket to a different developer from the ticket detail view at any time.</div></div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>How does the AI classify issue severity?</span><i class="bi bi-chevron-down"></i></div>
+        <div class="faq-a-wrap"><div class="faq-a-inner"><div class="faq-a">The Groq LLM analyzes the translated text and assigns a severity level (Low / Medium / High / Critical) based on the nature and urgency of the reported problem.</div></div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Is my audio data stored permanently?</span><i class="bi bi-chevron-down"></i></div>
+        <div class="faq-a-wrap"><div class="faq-a-inner"><div class="faq-a">No. Audio files are automatically deleted 30 days after processing. Transcriptions and ticket data are retained for the life of your account. See our <a href="/privacy" style="color:#818cf8">Privacy Policy</a> for full details.</div></div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>How do I add a new developer to the team?</span><i class="bi bi-chevron-down"></i></div>
+        <div class="faq-a-wrap"><div class="faq-a-inner"><div class="faq-a">Go to the <strong>Developers</strong> page and click <em>Add Developer</em>. Fill in their name and specialisation, and they will immediately be available for ticket assignment.</div></div></div>
+      </div>
+    </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleFaq(el){
+  var item=el.closest('.faq-item');
+  var wasOpen=item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(function(i){i.classList.remove('open')});
+  if(!wasOpen)item.classList.add('open');
+}
+</script>
+{% endblock %}

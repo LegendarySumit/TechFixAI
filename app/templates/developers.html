@@ -1,563 +1,335 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Developers - TechFixAI{% endblock %}
 
+{% block extra_css %}
+<style>
+.developer-card{background:rgba(13,27,46,.75);border:1px solid rgba(99,102,241,.14);border-radius:16px;transition:transform .25s,border-color .25s,box-shadow .25s;cursor:pointer;}
+.developer-card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(99,102,241,.18)!important;border-color:rgba(99,102,241,.35);}
+.dev-avatar{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.25rem;flex-shrink:0;box-shadow:0 4px 14px rgba(99,102,241,.3);}
+.status-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.15);}
+.dot-online{background:#10b981;box-shadow:0 0 7px #10b981;}
+.dot-busy{background:#f59e0b;box-shadow:0 0 7px #f59e0b;}
+.dot-offline{background:#4b5563;}
+/* Responsive developer cards */
+.dev-card-inner{display:flex;gap:.875rem;align-items:flex-start;margin-bottom:.875rem;}
+.dev-card-body{flex:1 1 0;min-width:0;overflow:hidden;}
+.dev-card-name{font-size:1.05rem;font-weight:700;color:#e0e7ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block;}
+.dev-card-actions{display:flex;flex-direction:column;gap:.3rem;align-items:flex-end;flex-shrink:0;}
+@media(max-width:480px){
+  .developer-card{padding:.875rem !important;}
+  .dev-avatar{width:48px;height:48px;font-size:1rem;}
+  .dev-card-name{font-size:.95rem;}
+  .stat-pill{font-size:.72rem;padding:.32rem .65rem;}
+  .exp-badge{font-size:.67rem;padding:.2rem .5rem;}
+}
+@media(max-width:380px){
+  .developer-card{padding:.75rem !important;}
+  .dev-card-inner{gap:.65rem;}
+  .dev-avatar{width:42px;height:42px;font-size:.875rem;}
+  .dev-card-name{font-size:.88rem;}
+  .status-select{font-size:.72rem;padding:.2rem .45rem;}
+  .exp-badge{font-size:.63rem;padding:.18rem .45rem;}
+  .stat-pill{font-size:.68rem;padding:.28rem .55rem;gap:.3rem;}
+}
+@media(max-width:320px){
+  .developer-card{padding:.625rem !important;border-radius:12px;}
+  .dev-avatar{width:38px;height:38px;font-size:.8rem;}
+  .dev-card-name{font-size:.82rem;}
+  .dev-card-actions .btn{padding:.15rem .4rem !important;font-size:.65rem !important;}
+}
+@media(max-width:249px){
+  .dev-avatar{width:34px;height:34px;font-size:.72rem;}
+  .dev-card-name{font-size:.75rem;}
+  .developer-card{padding:.5rem !important;border-radius:10px;}
+  .stat-pill{font-size:.62rem;padding:.22rem .45rem;}
+  .exp-badge{font-size:.58rem;padding:.15rem .38rem;}
+  .status-select{font-size:.65rem;}
+}
+.exp-badge{background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;font-size:.72rem;padding:.28rem .65rem;border-radius:99px;white-space:nowrap;}
+.status-select{background:rgba(9,20,36,.7);border:1px solid rgba(99,102,241,.2);color:#c7d2fe;border-radius:8px;padding:.25rem .55rem;font-size:.78rem;cursor:pointer;outline:none;}
+.status-select:focus{border-color:rgba(99,102,241,.5);}
+.stat-pill{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.15);border-radius:10px;padding:.45rem .9rem;font-size:.8rem;color:#8899bb;display:flex;align-items:center;gap:.45rem;}
+.stat-pill strong{color:#e0e7ff;}
+.btn-add-dev{background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:#fff;font-weight:600;border-radius:10px;padding:.55rem 1.1rem;font-size:.875rem;display:flex;align-items:center;gap:.5rem;transition:opacity .2s,transform .2s;}
+.btn-add-dev:hover{opacity:.9;transform:translateY(-2px);color:#fff;}
+.dev-modal-content{background:rgba(10,20,38,.92);border:1px solid rgba(99,102,241,.28);border-radius:18px;backdrop-filter:blur(24px);}
+.dev-modal-header{border-bottom:1px solid rgba(99,102,241,.18);padding:1.25rem 1.5rem;}
+.dev-modal-body{padding:1.5rem;max-height:70vh;overflow-y:auto;}
+.dev-modal-footer{border-top:1px solid rgba(99,102,241,.18);padding:1rem 1.5rem;}
+.form-label-sm{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:#6b7fa3;font-weight:600;margin-bottom:.35rem;}
+.form-ctrl{background:rgba(9,20,36,.8);border:1px solid rgba(99,102,241,.22);color:#e0e7ff;border-radius:10px;padding:.55rem .85rem;font-size:.9rem;width:100%;outline:none;transition:border-color .2s;}
+.form-ctrl:focus{border-color:rgba(99,102,241,.55);background:rgba(9,20,36,.95);}
+.form-ctrl::placeholder{color:#374b66;}
+.form-ctrl option{background:#0d1b2e;}
+.metric-mini{background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.14);border-radius:10px;padding:.7rem 1rem;text-align:center;}
+.metric-mini .val{font-size:1.15rem;font-weight:700;color:#e0e7ff;}
+.metric-mini .lbl{font-size:.72rem;color:#5a74a0;text-transform:uppercase;letter-spacing:.04em;}
+#devToast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;min-width:240px;background:rgba(10,20,38,.95);border:1px solid rgba(99,102,241,.3);border-radius:12px;padding:.85rem 1.1rem;color:#c7d2fe;font-size:.875rem;display:none;align-items:center;gap:.6rem;backdrop-filter:blur(12px);}
+#devToast.show{display:flex;}
+#devToast.success{border-color:rgba(16,185,129,.35);}
+#devToast.error{border-color:rgba(239,68,68,.35);}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <!-- Enhanced Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="mb-2 fw-bold">
-                <i class="bi bi-people-fill" style="color: #8b5cf6;"></i> Development Team
-            </h2>
-            <div class="d-flex align-items-center gap-3">
-                <span class="text-muted">
-                    <i class="bi bi-circle-fill text-success" style="font-size: 8px;"></i>
-                    Online: <strong id="online-count-display">0/0</strong>
-                </span>
-            </div>
-        </div>
-        <div id="security-badge-container"></div>
-    </div>
-
-    <!-- Developer Cards Grid (2 columns) -->
-    <div id="developers-container" class="row g-4">
-        <div class="col-12 text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="text-muted mt-2">Loading developers...</p>
-        </div>
-    </div>
-
-    <!-- Developer Details Modal -->
-    <div class="modal fade" id="developerModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content dev-modal-content">
-                <div class="modal-header dev-modal-header">
-                    <h5 class="modal-title" id="modal-developer-name">Developer Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body dev-modal-body" id="modal-developer-details">
-                    <!-- Details will be loaded here -->
-                </div>
-                <div class="modal-footer dev-modal-footer">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
-                    <a href="/upload" class="btn btn-primary-gradient">
-                        <i class="bi bi-plus-circle"></i> Create Ticket
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="page-bg-wrap">
+<div class="page-bg-layer">
+  <canvas id="devs-canvas" aria-hidden="true"></canvas>
+  <div class="gradient-orb orb-1"></div><div class="gradient-orb orb-2"></div>
+  <div class="gradient-orb orb-3"></div><div class="gradient-orb orb-4"></div>
+  <div class="gradient-orb orb-5"></div>
 </div>
 
-<script src="/static/js/ui-components.js"></script>
+<div class="container py-5">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-start mb-5 flex-wrap gap-3">
+    <div>
+      <h2 class="mb-2 fw-bold"><i class="bi bi-people-fill" style="color:#8b5cf6"></i> Development Team</h2>
+      <div class="d-flex flex-wrap gap-2 mt-2">
+        <div class="stat-pill"><span class="status-dot dot-online"></span>Online: <strong id="stat-online">0</strong></div>
+        <div class="stat-pill"><span class="status-dot dot-busy"></span>Busy: <strong id="stat-busy">0</strong></div>
+        <div class="stat-pill"><span class="status-dot dot-offline"></span>Offline: <strong id="stat-offline">0</strong></div>
+        <div class="stat-pill"><i class="bi bi-ticket-perforated" style="color:#818cf8"></i>Active tickets: <strong id="stat-tickets">0</strong></div>
+      </div>
+    </div>
+    <button class="btn-add-dev" onclick="openAddModal()"><i class="bi bi-person-plus-fill"></i> Add Developer</button>
+  </div>
+
+  <!-- Cards -->
+  <div id="developers-container" class="row g-4">
+    <div class="col-12 text-center py-5">
+      <div class="spinner-border" style="color:#6366f1"></div>
+      <p class="text-muted mt-3 small">Loading developers...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Add Developer Modal -->
+<div class="modal fade" id="addDevModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content dev-modal-content">
+      <div class="modal-header dev-modal-header">
+        <h5 class="modal-title text-white fw-bold"><i class="bi bi-person-plus-fill me-2" style="color:#818cf8"></i>Add Developer</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body dev-modal-body">
+        <div class="d-flex flex-column gap-3">
+          <div><div class="form-label-sm">Full Name *</div><input id="add-name" class="form-ctrl" type="text" placeholder="e.g. Tanaka Hiroshi"></div>
+          <div><div class="form-label-sm">Email *</div><input id="add-email" class="form-ctrl" type="email" placeholder="e.g. tanaka@company.com"></div>
+          <div><div class="form-label-sm">Expertise (comma-separated)</div><input id="add-expertise" class="form-ctrl" type="text" placeholder="e.g. Python, FastAPI, Backend"></div>
+          <div><div class="form-label-sm">Languages</div><input id="add-languages" class="form-ctrl" type="text" placeholder="e.g. English, Japanese"></div>
+          <div><div class="form-label-sm">Initial Status</div>
+            <select id="add-status" class="form-ctrl">
+              <option value="online">Online</option>
+              <option value="busy">Busy</option>
+              <option value="offline">Offline</option>
+            </select>
+          </div>
+          <div><div class="form-label-sm">Max Concurrent Tickets</div><input id="add-max-tickets" class="form-ctrl" type="number" value="5" min="1" max="20"></div>
+        </div>
+      </div>
+      <div class="modal-footer dev-modal-footer justify-content-end gap-2">
+        <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-add-dev" onclick="submitAddDeveloper()"><i class="bi bi-check-lg"></i> Add Developer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="developerModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content dev-modal-content">
+      <div class="modal-header dev-modal-header">
+        <h5 class="modal-title text-white fw-bold" id="modal-developer-name">Developer Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body dev-modal-body" id="modal-developer-details"></div>
+      <div class="modal-footer dev-modal-footer justify-content-end gap-2">
+        <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        <a href="/upload" class="btn-add-dev text-decoration-none"><i class="bi bi-plus-circle"></i> Create Ticket</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="devToast"><i class="bi bi-check-circle-fill" id="toast-icon"></i><span id="toast-msg"></span></div>
+
+</div><!-- /page-bg-wrap -->
+{% endblock %}
+
+{% block extra_js %}
 <script>
+(function(){
+  const c=document.getElementById('devs-canvas');if(!c)return;
+  const ctx=c.getContext('2d');let W,H,pts=[];const N=90,CONN=155;
+  function resize(){W=c.width=c.offsetWidth;H=c.height=c.offsetHeight;}
+  function Pt(){this.x=Math.random()*W;this.y=Math.random()*H;this.vx=(Math.random()-.5)*.35;this.vy=(Math.random()-.5)*.35;this.r=Math.random()*1.4+.7;this.a=Math.random()*.45+.18;}
+  Pt.prototype.move=function(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>W)this.vx*=-1;if(this.y<0||this.y>H)this.vy*=-1;};
+  function init(){resize();pts=Array.from({length:N},()=>new Pt());}
+  function draw(){ctx.clearRect(0,0,W,H);for(let i=0;i<pts.length;i++){const p=pts[i];p.move();ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(129,140,248,'+p.a+')';ctx.fill();for(let j=i+1;j<pts.length;j++){const q=pts[j],dx=p.x-q.x,dy=p.y-q.y,d=Math.sqrt(dx*dx+dy*dy);if(d<CONN){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle='rgba(99,102,241,'+(0.13*(1-d/CONN))+')';ctx.lineWidth=.6;ctx.stroke();}}}requestAnimationFrame(draw);}
+  window.addEventListener('resize',()=>{resize();pts.forEach(p=>{p.x=Math.random()*W;p.y=Math.random()*H;});},{passive:true});
+  init();draw();
+})();
+
 let developersData = [];
 
+function showToast(msg, type='success') {
+  const t=document.getElementById('devToast');
+  document.getElementById('toast-msg').textContent=msg;
+  document.getElementById('toast-icon').className=type==='success'?'bi bi-check-circle-fill text-success':'bi bi-exclamation-circle-fill text-danger';
+  t.className='show '+type;
+  setTimeout(()=>{ t.className=''; },3200);
+}
+
 async function loadDevelopers() {
-    try {
-        const response = await fetch('/api/developers/');
-        const data = await response.json();
-        
-        developersData = data.developers || [];
-        displayDevelopers(developersData);
-        updateStats(data);
-        renderSecurityBadge();
-    } catch (error) {
-        console.error('Failed to load developers:', error);
-        document.getElementById('developers-container').innerHTML = `
-            <div class="col-12">
-                <div class="alert alert-danger">
-                    <i class="bi bi-exclamation-triangle"></i> Failed to load developers: ${error.message}
-                </div>
-            </div>
-        `;
-    }
+  try {
+    const res=await fetch('/api/developers/');
+    const data=await res.json();
+    developersData=data.developers||[];
+    renderCards(developersData);
+    updateStats(developersData);
+  } catch(e) {
+    document.getElementById('developers-container').innerHTML=
+      `<div class="col-12"><div class="alert alert-danger">Failed to load: ${e.message}</div></div>`;
+  }
 }
 
-function renderSecurityBadge() {
-    const container = document.getElementById('security-badge-container');
-    if (typeof createSecurityBadge === 'function') {
-        container.innerHTML = createSecurityBadge();
-    } else {
-        container.innerHTML = `
-            <div class="badge bg-dark border border-success px-3 py-2">
-                <i class="bi bi-shield-check text-success"></i> Secure • AES-256-GCM
-            </div>
-        `;
-    }
+function initials(name){ return (name||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2); }
+
+function statusDot(s){
+  const cls=s==='online'?'dot-online':s==='busy'?'dot-busy':'dot-offline';
+  return `<span class="status-dot ${cls}"></span>`;
+}
+function statusLabel(s){
+  if(s==='online') return '<span style="color:#10b981;font-size:.78rem;font-weight:600">Online</span>';
+  if(s==='busy')   return '<span style="color:#f59e0b;font-size:.78rem;font-weight:600">Busy</span>';
+  return '<span style="color:#6b7280;font-size:.78rem;font-weight:600">Offline</span>';
 }
 
-function displayDevelopers(developers) {
-    const container = document.getElementById('developers-container');
-    
-    if (developers.length === 0) {
-        container.innerHTML = `
-            <div class="col-12 text-center py-5">
-                <i class="bi bi-people display-1 text-muted"></i>
-                <p class="text-muted mt-3">No developers available</p>
+function renderCards(developers){
+  const container=document.getElementById('developers-container');
+  if(!developers.length){
+    container.innerHTML=`<div class="col-12 text-center py-5"><i class="bi bi-people display-1 text-muted"></i><p class="text-muted mt-3">No developers yet. Add one above.</p></div>`;
+    return;
+  }
+  container.innerHTML=developers.map((dev,idx)=>`
+    <div class="col-md-6" id="dev-card-${dev.id}">
+      <div class="developer-card p-3 p-sm-4 h-100">
+        <div class="dev-card-inner">
+          <div class="dev-avatar">${initials(dev.name)}</div>
+          <div class="dev-card-body">
+            <div class="d-flex align-items-center gap-2 mb-1" style="min-width:0">
+              ${statusDot(dev.status)}
+              <span class="dev-card-name">${dev.name}</span>
             </div>
-        `;
-        return;
-    }
-    
-    // Enhanced 2-column layout with refined cards
-    container.innerHTML = developers.map((dev, index) => `
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm hover-lift developer-card" style="cursor: pointer;" onclick="showDeveloperDetails(${index})">
-                <div class="card-body p-4">
-                    <!-- Card Header: Avatar, Name, Status -->
-                    <div class="d-flex align-items-start gap-3 mb-3">
-                        <div class="position-relative">
-                            <div class="developer-avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-                                 style="width: 64px; height: 64px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); font-size: 1.5rem; flex-shrink: 0;">
-                                ${dev.name.split(' ').map(n => n[0]).join('')}
-                            </div>
-                            <span class="position-absolute bottom-0 end-0 p-2 bg-${dev.status === 'online' ? 'success' : 'secondary'} border border-light rounded-circle ${dev.status === 'online' ? 'pulse' : ''}"
-                                  style="width: 18px; height: 18px;">
-                                <span class="visually-hidden">${dev.status}</span>
-                            </span>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h5 class="mb-1 fw-bold">${dev.name}</h5>
-                            <p class="mb-2 small text-muted">${dev.email}</p>
-                            <div class="d-flex align-items-center gap-3 small text-muted">
-                                <span>
-                                    <i class="bi bi-clock-history"></i> ${dev.avg_response_time || '2-5 min'}
-                                </span>
-                                <span>
-                                    <i class="bi bi-ticket-perforated"></i> ${dev.active_tickets || 0} active
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Expertise Section -->
-                    <div class="mt-3 pt-3 border-top">
-                        <p class="mb-2 small text-muted fw-semibold">EXPERTISE</p>
-                        <div class="d-flex flex-wrap gap-2">
-                            ${dev.expertise ? dev.expertise.split(',').map(exp => 
-                                `<span class="badge rounded-pill" style="background: linear-gradient(135deg, #3b82f6, #2563eb); padding: 0.4rem 0.8rem;">${exp.trim()}</span>`
-                            ).join('') : '<span class="text-muted small">Not specified</span>'}
-                        </div>
-                    </div>
-                    
-                    ${dev.languages ? `
-                        <div class="mt-3">
-                            <small class="text-muted">
-                                <i class="bi bi-translate"></i> ${dev.languages}
-                            </small>
-                        </div>
-                    ` : ''}
-                </div>
+            <div class="mb-1">${statusLabel(dev.status)}</div>
+            <p class="mb-1 small text-muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${dev.email}</p>
+            <div class="d-flex gap-2 small text-muted flex-wrap mt-1">
+              <span><i class="bi bi-ticket-perforated"></i> ${dev.active_tickets||0} active</span>
+              <span><i class="bi bi-check-circle"></i> ${dev.resolved_tickets||0} resolved</span>
             </div>
+          </div>
+          <div class="dev-card-actions">
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:.72rem;padding:.2rem .5rem;border-radius:7px" onclick="showDetails(${idx})"><i class="bi bi-eye"></i></button>
+            <button class="btn btn-sm btn-outline-danger" style="font-size:.72rem;padding:.2rem .5rem;border-radius:7px" onclick="deleteDeveloper(${dev.id},'${dev.name.replace(/'/g,"\\'")}')"><i class="bi bi-trash3"></i></button>
+          </div>
         </div>
-    `).join('');
-}
-
-function updateStats(data) {
-    const total = data.total || 0;
-    const online = (data.developers || []).filter(d => d.status === 'online').length;
-    document.getElementById('online-count-display').textContent = `${online}/${total}`;
-}
-
-function showDeveloperDetails(index) {
-    const dev = developersData[index];
-    if (!dev) return;
-    
-    document.getElementById('modal-developer-name').textContent = dev.name;
-    document.getElementById('modal-developer-details').innerHTML = `
-        <div class="dev-details-container">
-            <!-- Avatar Section -->
-            <div class="text-center mb-4 pb-3 border-bottom dev-border">
-                <div class="dev-modal-avatar mx-auto mb-3">
-                    ${dev.name.split(' ').map(n => n[0]).join('')}
-                </div>
-                <h5 class="fw-bold mb-1 text-white">${dev.name}</h5>
-                <p class="text-muted mb-2 small">${dev.email}</p>
-                <span class="badge ${dev.status === 'online' ? 'badge-online' : 'badge-offline'}">
-                    <i class="bi bi-circle-fill me-1"></i>${dev.status === 'online' ? 'Online Now' : 'Offline'}
-                </span>
-            </div>
-            
-            <!-- Information Grid -->
-            <div class="row g-3">
-                <!-- Expertise Column -->
-                <div class="col-12">
-                    <div class="info-section">
-                        <h6 class="section-title mb-3">
-                            <i class="bi bi-star-fill text-warning me-2"></i>Expertise Areas:
-                        </h6>
-                        <div class="d-flex flex-wrap gap-2">
-                            ${dev.expertise ? dev.expertise.split(',').map(exp => 
-                                `<span class="badge-expertise">${exp.trim()}</span>`
-                            ).join('') : '<span class="text-muted small">Not specified</span>'}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Languages Column -->
-                ${dev.languages ? `
-                    <div class="col-12">
-                        <div class="info-section">
-                            <h6 class="section-title mb-2">
-                                <i class="bi bi-translate text-info me-2"></i>Languages:
-                            </h6>
-                            <p class="mb-0 text-light">${dev.languages}</p>
-                        </div>
-                    </div>
-                ` : ''}
-                
-                <!-- Performance Metrics -->
-                <div class="col-12">
-                    <div class="info-section">
-                        <h6 class="section-title mb-3">
-                            <i class="bi bi-graph-up text-success me-2"></i>Performance Metrics:
-                        </h6>
-                        <div class="metrics-grid">
-                            <div class="metric-item">
-                                <div class="metric-icon">
-                                    <i class="bi bi-clock"></i>
-                                </div>
-                                <div class="metric-content">
-                                    <div class="metric-label">Avg Response</div>
-                                    <div class="metric-value">${dev.avg_response_time || '2-5 min'}</div>
-                                </div>
-                            </div>
-                            <div class="metric-item">
-                                <div class="metric-icon">
-                                    <i class="bi bi-ticket-perforated"></i>
-                                </div>
-                                <div class="metric-content">
-                                    <div class="metric-label">Active Tickets</div>
-                                    <div class="metric-value">${dev.active_tickets || 0}</div>
-                                </div>
-                            </div>
-                            <div class="metric-item">
-                                <div class="metric-icon">
-                                    <i class="bi bi-check-circle"></i>
-                                </div>
-                                <div class="metric-content">
-                                    <div class="metric-label">Resolved</div>
-                                    <div class="metric-value">${dev.resolved_tickets || 0}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Joined Date -->
-                ${dev.created_at ? `
-                    <div class="col-12">
-                        <div class="text-muted small">
-                            <i class="bi bi-calendar-check"></i> Joined: ${new Date(dev.created_at).toLocaleDateString()}
-                        </div>
-                    </div>
-                ` : ''}
-            </div>
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span style="font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#5a74a0">Status:</span>
+          <select class="status-select" onchange="changeStatus(${dev.id},this.value)">
+            <option value="online"  ${dev.status==='online' ?'selected':''}>Online</option>
+            <option value="busy"    ${dev.status==='busy'   ?'selected':''}>Busy</option>
+            <option value="offline" ${dev.status==='offline'?'selected':''}>Offline</option>
+          </select>
         </div>
-    `;
-    
-    const modal = new bootstrap.Modal(document.getElementById('developerModal'));
-    modal.show();
+        <div class="border-top pt-3" style="border-color:rgba(99,102,241,.1)!important">
+          <div class="d-flex flex-wrap gap-1 mb-1">
+            ${dev.expertise?dev.expertise.split(',').map(e=>`<span class="exp-badge">${e.trim()}</span>`).join(''):'<span class="text-muted small">No expertise listed</span>'}
+          </div>
+          ${dev.languages?`<div class="mt-1"><small class="text-muted"><i class="bi bi-translate me-1"></i>${dev.languages}</small></div>`:''}
+        </div>
+      </div>
+    </div>
+  `).join('');
 }
 
-// Load developers on page load
+function updateStats(devs){
+  document.getElementById('stat-online').textContent =devs.filter(d=>d.status==='online').length;
+  document.getElementById('stat-busy').textContent   =devs.filter(d=>d.status==='busy').length;
+  document.getElementById('stat-offline').textContent=devs.filter(d=>d.status==='offline').length;
+  document.getElementById('stat-tickets').textContent=devs.reduce((s,d)=>s+(d.active_tickets||0),0);
+}
+
+async function changeStatus(id, newStatus){
+  try {
+    const res=await fetch(`/api/developers/${id}/status`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:newStatus})});
+    if(!res.ok){const e=await res.json();throw new Error(e.detail||'Failed');}
+    await loadDevelopers();
+    showToast(`Status updated to ${newStatus}`);
+  } catch(e){ showToast(e.message,'error'); }
+}
+
+async function deleteDeveloper(id, name){
+  if(!confirm(`Remove ${name} from the team?\n\nDevelopers with active tickets cannot be removed.`)) return;
+  try {
+    const res=await fetch(`/api/developers/${id}`,{method:'DELETE'});
+    if(!res.ok){const e=await res.json();throw new Error(e.detail||'Failed');}
+    showToast(`${name} removed`);
+    await loadDevelopers();
+  } catch(e){ showToast(e.message,'error'); }
+}
+
+let addModalInstance=null;
+function openAddModal(){
+  ['add-name','add-email','add-expertise','add-languages'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('add-status').value='online';
+  document.getElementById('add-max-tickets').value='5';
+  if(!addModalInstance) addModalInstance=new bootstrap.Modal(document.getElementById('addDevModal'));
+  addModalInstance.show();
+}
+
+async function submitAddDeveloper(){
+  const name=document.getElementById('add-name').value.trim();
+  const email=document.getElementById('add-email').value.trim();
+  const expertise=document.getElementById('add-expertise').value.trim();
+  const languages=document.getElementById('add-languages').value.trim();
+  const status=document.getElementById('add-status').value;
+  const maxT=parseInt(document.getElementById('add-max-tickets').value)||5;
+  if(!name||!email){showToast('Name and email are required','error');return;}
+  try {
+    const res=await fetch('/api/developers/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,expertise:expertise||null,languages:languages||null,status,max_concurrent_tickets:maxT})});
+    if(!res.ok){const e=await res.json();throw new Error(e.detail||'Failed');}
+    addModalInstance.hide();
+    showToast(`${name} added to the team`);
+    await loadDevelopers();
+  } catch(e){ showToast(e.message,'error'); }
+}
+
+function showDetails(idx){
+  const dev=developersData[idx];if(!dev)return;
+  document.getElementById('modal-developer-name').textContent=dev.name;
+  document.getElementById('modal-developer-details').innerHTML=`
+    <div class="text-center mb-4">
+      <div class="dev-avatar mx-auto mb-3" style="width:80px;height:80px;font-size:1.75rem">${initials(dev.name)}</div>
+      <h5 class="fw-bold text-white mb-1">${dev.name}</h5>
+      <p class="text-muted small mb-2">${dev.email}</p>
+      <div class="d-flex justify-content-center align-items-center gap-2">${statusDot(dev.status)} ${statusLabel(dev.status)}</div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-4"><div class="metric-mini"><div class="val">${dev.active_tickets||0}</div><div class="lbl">Active</div></div></div>
+      <div class="col-4"><div class="metric-mini"><div class="val">${dev.resolved_tickets||0}</div><div class="lbl">Resolved</div></div></div>
+      <div class="col-4"><div class="metric-mini"><div class="val">${dev.avg_response_time||'–'}</div><div class="lbl">Response</div></div></div>
+    </div>
+    ${dev.expertise?`<div class="mb-3"><div class="form-label-sm mb-2">Expertise</div><div class="d-flex flex-wrap gap-1">${dev.expertise.split(',').map(e=>`<span class="exp-badge">${e.trim()}</span>`).join('')}</div></div>`:''}
+    ${dev.languages?`<div class="mb-2"><div class="form-label-sm mb-1">Languages</div><p class="text-light small mb-0">${dev.languages}</p></div>`:''}
+    ${dev.created_at?`<p class="text-muted small mt-3 mb-0"><i class="bi bi-calendar-check me-1"></i>Joined: ${new Date(dev.created_at).toLocaleDateString()}</p>`:''}
+  `;
+  new bootstrap.Modal(document.getElementById('developerModal')).show();
+}
+
 loadDevelopers();
 </script>
-
-<style>
-/* Developer Card Styling */
-.developer-card {
-    transition: all 0.3s ease;
-    border: 1px solid rgba(59, 130, 246, 0.1);
-}
-
-.developer-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 30px rgba(139, 92, 246, 0.2) !important;
-    border-color: rgba(139, 92, 246, 0.3);
-}
-
-.developer-avatar {
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-}
-
-.hover-lift {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.pulse {
-    animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
-}
-
-/* Enhanced badge styling */
-#security-badge-container .badge {
-    font-size: 0.875rem;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-}
-
-/* ===== MODAL STYLING ===== */
-
-/* Modal Dialog - Viewport Constrained */
-.modal-dialog {
-    max-height: calc(100vh - 60px);
-}
-
-/* Modal Content - Glassmorphism Effect */
-.dev-modal-content {
-    background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(59, 130, 246, 0.4);
-    border-radius: 1.25rem;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-/* Modal Header */
-.dev-modal-header {
-    background: rgba(59, 130, 246, 0.12);
-    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
-    padding: 1.5rem;
-    backdrop-filter: blur(10px);
-}
-
-.dev-modal-header .modal-title {
-    color: #fff;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
-
-/* Modal Body - Scrollable */
-.dev-modal-body {
-    padding: 2rem;
-    max-height: calc(100vh - 280px);
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
-/* Custom Scrollbar */
-.dev-modal-body::-webkit-scrollbar {
-    width: 8px;
-}
-
-.dev-modal-body::-webkit-scrollbar-track {
-    background: rgba(59, 130, 246, 0.1);
-    border-radius: 10px;
-}
-
-.dev-modal-body::-webkit-scrollbar-thumb {
-    background: rgba(59, 130, 246, 0.3);
-    border-radius: 10px;
-}
-
-.dev-modal-body::-webkit-scrollbar-thumb:hover {
-    background: rgba(59, 130, 246, 0.5);
-}
-
-/* Modal Footer */
-.dev-modal-footer {
-    background: rgba(15, 23, 42, 0.6);
-    border-top: 1px solid rgba(59, 130, 246, 0.2);
-    padding: 1.5rem;
-    backdrop-filter: blur(10px);
-}
-
-/* Details Container */
-.dev-details-container {
-    color: #e0e7ff;
-}
-
-/* Avatar Circle */
-.dev-modal-avatar {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    color: white;
-    font-weight: 700;
-    font-size: 2.5rem;
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
-}
-
-/* Border styling */
-.dev-border {
-    border-color: rgba(59, 130, 246, 0.2) !important;
-}
-
-/* Info Sections */
-.info-section {
-    background: rgba(51, 65, 85, 0.3);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 0.75rem;
-    padding: 1.25rem;
-    transition: all 0.3s ease;
-}
-
-.info-section:hover {
-    background: rgba(51, 65, 85, 0.5);
-    border-color: rgba(59, 130, 246, 0.4);
-}
-
-/* Section Title */
-.section-title {
-    color: #f1f5f9;
-    font-weight: 600;
-    font-size: 0.95rem;
-    letter-spacing: 0.02em;
-    margin: 0;
-}
-
-/* Expertise Badges */
-.badge-expertise {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    display: inline-block;
-    transition: all 0.3s ease;
-}
-
-.badge-expertise:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-/* Status Badges */
-.badge-online {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    padding: 0.4rem 1rem;
-    border-radius: 0.5rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-.badge-offline {
-    background: linear-gradient(135deg, #6b7280, #4b5563);
-    color: white;
-    padding: 0.4rem 1rem;
-    border-radius: 0.5rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-/* Metrics Grid */
-.metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 1rem;
-}
-
-/* Metric Item */
-.metric-item {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05));
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 0.75rem;
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    transition: all 0.3s ease;
-}
-
-.metric-item:hover {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.1));
-    border-color: rgba(59, 130, 246, 0.4);
-    transform: translateY(-2px);
-}
-
-/* Metric Icon */
-.metric-icon {
-    font-size: 1.5rem;
-    color: #60a5fa;
-    min-width: 32px;
-    text-align: center;
-}
-
-/* Metric Content */
-.metric-content {
-    flex: 1;
-}
-
-.metric-label {
-    font-size: 0.75rem;
-    color: #94a3b8;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-
-.metric-value {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #f1f5f9;
-}
-
-/* Buttons */
-.btn-primary-gradient {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    border: none;
-    color: white;
-    font-weight: 600;
-    padding: 0.5rem 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.btn-primary-gradient:hover {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
-    color: white;
-}
-
-/* Close Button */
-.btn-close-white {
-    filter: brightness(0.8);
-}
-
-.btn-close-white:focus {
-    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
-}
-
-/* Outline Button */
-.btn-outline-light {
-    color: #e0e7ff;
-    border-color: rgba(224, 231, 255, 0.3);
-    transition: all 0.3s ease;
-}
-
-.btn-outline-light:hover {
-    background: rgba(224, 231, 255, 0.1);
-    border-color: rgba(224, 231, 255, 0.6);
-    color: #fff;
-}
-
-/* Modal Backdrop */
-.modal-backdrop {
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(8px);
-}
-
-/* Prevent body scroll when modal is open */
-body.modal-open {
-    overflow: hidden;
-}
-</style>
 {% endblock %}

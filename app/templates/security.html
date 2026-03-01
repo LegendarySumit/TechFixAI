@@ -1,123 +1,97 @@
-{% extends "base.html" %}
-
+﻿{% extends "base.html" %}
 {% block title %}Security - TechFixAI{% endblock %}
 
+{% block extra_css %}
+<style>
+.sec-hero{padding:4.5rem 0 2.5rem;text-align:center;position:relative;overflow:hidden}
+.sec-hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(ellipse 800px 400px at 50% 0%,rgba(16,185,129,.06),transparent);pointer-events:none}
+.sec-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:99px;font-size:.78rem;font-weight:600;color:#6ee7b7;letter-spacing:.05em;text-transform:uppercase;margin-bottom:1.5rem}
+.sec-hero h1{font-size:clamp(1.9rem,5vw,3rem);font-weight:800;letter-spacing:-.5px;margin-bottom:1rem}
+.sec-hero h1 span{background:linear-gradient(135deg,#6ee7b7,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sec-hero p{color:#8899bb;max-width:580px;margin:0 auto;font-size:1rem;line-height:1.8}
+.sec-section{padding:2.5rem 0;border-top:1px solid rgba(99,102,241,.08)}
+.sec-hd{font-size:1.5rem;font-weight:800;letter-spacing:-.3px;margin-bottom:.4rem}
+.sec-hd span{background:linear-gradient(135deg,#6ee7b7,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sec-sub{color:#8899bb;font-size:.88rem;margin-bottom:2rem}
+.sec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem}
+.sec-card{background:rgba(13,27,46,.7);border:1px solid rgba(99,102,241,.12);border-radius:16px;padding:1.75rem;backdrop-filter:blur(10px);transition:all .2s}
+.sec-card:hover{border-color:rgba(16,185,129,.25);transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.2)}
+.sec-card-icon{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(34,211,238,.1));border:1px solid rgba(16,185,129,.2);display:flex;align-items:center;justify-content:center;font-size:1.25rem;color:#6ee7b7;margin-bottom:1rem}
+.sec-card h4{font-size:.95rem;font-weight:700;margin-bottom:.5rem;color:#c7d2fe}
+.sec-card p{font-size:.82rem;color:#6b7fa3;line-height:1.7;margin:0}
+.compliance-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.compliance-item{display:flex;align-items:center;gap:.75rem;background:rgba(13,27,46,.7);border:1px solid rgba(16,185,129,.12);border-radius:12px;padding:1rem 1.25rem}
+.c-check{width:28px;height:28px;border-radius:50%;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.c-check i{color:#6ee7b7;font-size:.8rem}
+.c-name{font-size:.85rem;font-weight:600;color:#c7d2fe}
+.c-desc{font-size:.72rem;color:#4a5f7a;display:block}
+.trust-bar{background:rgba(13,27,46,.5);border:1px solid rgba(16,185,129,.12);border-radius:16px;padding:2rem;text-align:center;margin-top:2rem}
+.trust-bar p{color:#6b7fa3;font-size:.85rem;margin:0}
+.trust-bar strong{color:#6ee7b7}
+@media(max-width:900px){.sec-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.sec-grid{grid-template-columns:1fr}.compliance-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <div class="row">
-        <div class="col-lg-10 mx-auto">
-            <!-- Header -->
-            <div class="mb-5">
-                <h1 class="display-5 fw-bold mb-3">
-                    <i class="bi bi-shield-check text-success me-2"></i>Security & Compliance
-                </h1>
-                <p class="lead text-muted">We take security seriously. Here's how we protect your data.</p>
-            </div>
+<section class="sec-hero">
+  <div class="container">
+    <div class="sec-badge"><i class="bi bi-shield-check"></i> Security First</div>
+    <h1>Your data is<br><span>protected by design</span></h1>
+    <p>We've built TechFixAI with security at every layer — from data in transit to data at rest, and everything in between.</p>
+  </div>
+</section>
 
-            <!-- Security Features -->
-            <div class="row g-4 mb-5">
-                <div class="col-md-6">
-                    <div class="card bg-dark border-success p-4">
-                        <h5 class="card-title text-success mb-3">
-                            <i class="bi bi-lock-fill me-2"></i>Encryption
-                        </h5>
-                        <ul class="list-unstyled text-muted small">
-                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>AES-256-GCM for data at rest</li>
-                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>TLS 1.3 for data in transit</li>
-                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>End-to-end encryption option</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card bg-dark border-info p-4">
-                        <h5 class="card-title text-info mb-3">
-                            <i class="bi bi-person-check me-2"></i>Authentication
-                        </h5>
-                        <ul class="list-unstyled text-muted small">
-                            <li class="mb-2"><i class="bi bi-check-circle text-info me-2"></i>API Key authentication</li>
-                            <li class="mb-2"><i class="bi bi-check-circle text-info me-2"></i>OAuth 2.0 support</li>
-                            <li class="mb-2"><i class="bi bi-check-circle text-info me-2"></i>Multi-factor authentication ready</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Compliance -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-4">Compliance Standards</h3>
-                <div class="list-group list-group-flush bg-transparent">
-                    <div class="list-group-item bg-transparent border-subtle py-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">
-                                    <i class="bi bi-check-circle text-success me-2"></i>GDPR
-                                </h6>
-                                <p class="text-muted small mb-0">General Data Protection Regulation compliance</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="list-group-item bg-transparent border-subtle py-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">
-                                    <i class="bi bi-check-circle text-success me-2"></i>ISO 27001
-                                </h6>
-                                <p class="text-muted small mb-0">Information security management</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="list-group-item bg-transparent border-subtle py-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">
-                                    <i class="bi bi-check-circle text-success me-2"></i>SOC 2 Type II
-                                </h6>
-                                <p class="text-muted small mb-0">Service Organization Control audit</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Data Protection -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-4">Data Protection</h3>
-                <div class="alert alert-dark border-primary">
-                    <h6 class="text-primary mb-3"><i class="bi bi-shield-check me-2"></i>How We Protect Your Data</h6>
-                    <ul class="text-muted small mb-0">
-                        <li class="mb-2">All audio files are encrypted immediately upon upload</li>
-                        <li class="mb-2">Automatic deletion of audio files after 30 days (configurable)</li>
-                        <li class="mb-2">Regular security audits and penetration testing</li>
-                        <li class="mb-2">Role-based access control (RBAC) for all users</li>
-                        <li class="mb-2">Comprehensive audit logs for all data access</li>
-                        <li class="mb-2">Data residency options available</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Incident Response -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-4">Incident Response</h3>
-                <p class="text-muted">Security is a shared responsibility. We maintain:</p>
-                <div class="list-group list-group-flush bg-transparent">
-                    <div class="list-group-item bg-transparent border-subtle text-muted small py-2">
-                        <i class="bi bi-arrow-right text-primary me-2"></i>24/7 security monitoring
-                    </div>
-                    <div class="list-group-item bg-transparent border-subtle text-muted small py-2">
-                        <i class="bi bi-arrow-right text-primary me-2"></i>Rapid incident response protocols
-                    </div>
-                    <div class="list-group-item bg-transparent border-subtle text-muted small py-2">
-                        <i class="bi bi-arrow-right text-primary me-2"></i>Transparent breach notification
-                    </div>
-                </div>
-            </div>
-
-            <!-- Report Security Issue -->
-            <div class="alert alert-warning border-warning bg-dark">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                <strong>Found a security issue?</strong> Please email <a href="mailto:security@techfixai.com" class="alert-link">security@techfixai.com</a> instead of filing a public issue.
-            </div>
-        </div>
+<section class="sec-section">
+  <div class="container">
+    <h2 class="sec-hd"><span>Security</span> Features</h2>
+    <p class="sec-sub">Enterprise-grade protections built into the platform</p>
+    <div class="sec-grid">
+      <div class="sec-card">
+        <div class="sec-card-icon"><i class="bi bi-lock-fill"></i></div>
+        <h4>End-to-End Encryption</h4>
+        <p>All data in transit is encrypted with TLS 1.3. Audio uploads and ticket data are encrypted at rest using AES-256.</p>
+      </div>
+      <div class="sec-card">
+        <div class="sec-card-icon"><i class="bi bi-person-badge"></i></div>
+        <h4>JWT Authentication</h4>
+        <p>Stateless authentication with signed JSON Web Tokens. Sessions expire automatically and tokens are invalidated on logout.</p>
+      </div>
+      <div class="sec-card">
+        <div class="sec-card-icon"><i class="bi bi-diagram-3"></i></div>
+        <h4>Role-Based Access</h4>
+        <p>Fine-grained permissions separate what managers, developers, and workers can see and do within the platform.</p>
+      </div>
+      <div class="sec-card">
+        <div class="sec-card-icon"><i class="bi bi-clock-history"></i></div>
+        <h4>Audit Logging</h4>
+        <p>Every ticket creation, update, and access is logged with timestamp and user context for full accountability.</p>
+      </div>
+      <div class="sec-card">
+        <div class="sec-card-icon"><i class="bi bi-shield-shaded"></i></div>
+        <h4>Input Validation</h4>
+        <p>All API inputs are validated with strict schemas. Audio files are scanned before processing to prevent malicious uploads.</p>
+      </div>
+      <div class="sec-card">
+        <div class="sec-card-icon"><i class="bi bi-database-lock"></i></div>
+        <h4>Data Isolation</h4>
+        <p>Each organization's data is logically isolated. Queries are scoped to prevent cross-tenant data access.</p>
+      </div>
     </div>
-</div>
+  </div>
+</section>
+
+<section class="sec-section">
+  <div class="container">
+    <h2 class="sec-hd"><span>Compliance</span> Standards</h2>
+    <p class="sec-sub">Built to meet industry requirements</p>
+    <div class="compliance-grid">
+      <div class="compliance-item"><div class="c-check"><i class="bi bi-check"></i></div><div><span class="c-name">GDPR</span><span class="c-desc">EU data protection regulation</span></div></div>
+      <div class="compliance-item"><div class="c-check"><i class="bi bi-check"></i></div><div><span class="c-name">ISO 27001</span><span class="c-desc">Information security management</span></div></div>
+      <div class="compliance-item"><div class="c-check"><i class="bi bi-check"></i></div><div><span class="c-name">SOC 2 Type II</span><span class="c-desc">Security &amp; availability controls</span></div></div>
+      <div class="compliance-item"><div class="c-check"><i class="bi bi-check"></i></div><div><span class="c-name">OWASP Top 10</span><span class="c-desc">Web application security</span></div></div>
+    </div>
+    <div class="trust-bar"><p>Questions about our security practices? Contact us at <strong>security@techfixai.com</strong></p></div>
+  </div>
+</section>
 {% endblock %}

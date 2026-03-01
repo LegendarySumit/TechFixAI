@@ -10,10 +10,32 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.requests import Request as StarletteRequest
 
 from app.core.config import settings
-from app.api import voice, ticket, admin, web, developer
+from app.api import voice, ticket, admin, web, developer, auth
 from scheduler import start_cleanup_scheduler
+
+
+class UserSessionMiddleware(BaseHTTPMiddleware):
+    """Attach current user to request.state on every request."""
+    async def dispatch(self, request: StarletteRequest, call_next):
+        request.state.current_user = None
+        email = request.cookies.get("user_session")
+        if email:
+            from app.db.session import SessionLocal
+            from app.models.user import User
+            db = SessionLocal()
+            try:
+                user = db.query(User).filter(
+                    User.email == email, User.is_active == True
+                ).first()
+                request.state.current_user = user
+            finally:
+                db.close()
+        return await call_next(request)
 
 
 @asynccontextmanager
@@ -46,6 +68,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(UserSessionMiddleware)
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY or "techfixai-session-secret")
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -55,6 +79,7 @@ app.include_router(voice.router, prefix="/api/voice", tags=["voice"])
 app.include_router(ticket.router, prefix="/api/tickets", tags=["tickets"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(developer.router, prefix="/api/developers", tags=["developers"])
+app.include_router(auth.router, tags=["auth"])
 app.include_router(web.router, tags=["web"])  # Web UI routes
 
 

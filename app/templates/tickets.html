@@ -3,6 +3,15 @@
 {% block title %}Tickets - Voice-to-Ticket AI{% endblock %}
 
 {% block content %}
+<div class="page-bg-wrap">
+<div class="page-bg-layer">
+    <canvas id="tickets-canvas" aria-hidden="true"></canvas>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+    <div class="gradient-orb orb-4"></div>
+    <div class="gradient-orb orb-5"></div>
+</div>
 <div class="container py-4">
     <div class="mb-4">
         <h2><i class="bi bi-ticket-perforated"></i> Support Tickets</h2>
@@ -121,30 +130,27 @@ function displayTickets(tickets) {
     }
     
     container.innerHTML = tickets.map(ticket => `
-        <div class="card mb-3 shadow-sm">
+        <div class="card mb-3 shadow-sm ticket-card">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="flex-grow-1">
-                        <h5 class="card-title mb-2">
-                            <a href="/tickets/${ticket.ticket_number}" class="text-decoration-none">
-                                ${ticket.title}
-                            </a>
-                        </h5>
-                        <div class="mb-2">
-                            <span class="badge bg-${getPriorityColor(ticket.priority)}">${ticket.priority}</span>
-                            <span class="badge bg-${getStatusColor(ticket.status)} ms-1">${ticket.status}</span>
-                            ${ticket.technical_area ? `<span class="badge bg-secondary ms-1">${ticket.technical_area}</span>` : ''}
-                        </div>
-                        <p class="text-muted mb-2">
-                            <small>
-                                ${ticket.assigned_to ? `<i class="bi bi-person"></i> ${ticket.assigned_to}` : '<i class="bi bi-person-x"></i> Unassigned'}
-                            </small>
-                        </p>
-                    </div>
-                    <div class="text-end">
-                        <small class="text-muted d-block">${ticket.ticket_number}</small>
-                        <small class="text-muted">${new Date(ticket.created_at).toLocaleDateString()}</small>
-                    </div>
+                <div class="ticket-card-meta">
+                    <span class="ticket-number-badge">${ticket.ticket_number}</span>
+                    <span class="text-muted" style="font-size:.75rem;">${new Date(ticket.created_at).toLocaleDateString()}</span>
+                </div>
+                <h5 class="card-title mb-2 mt-2">
+                    <a href="/tickets/${ticket.ticket_number}" class="text-decoration-none" style="color:var(--text-primary);">
+                        ${ticket.title}
+                    </a>
+                </h5>
+                <div class="mb-2">
+                    <span class="badge bg-${getPriorityColor(ticket.priority)}">${ticket.priority}</span>
+                    <span class="badge bg-${getStatusColor(ticket.status)} ms-1">${ticket.status}</span>
+                    ${ticket.technical_area ? `<span class="badge bg-secondary ms-1">${ticket.technical_area}</span>` : ''}
+                </div>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-2">
+                    <p class="text-muted mb-0">
+                        <small>${ticket.assigned_to ? `<i class="bi bi-person"></i> ${ticket.assigned_to}` : '<i class="bi bi-person-x"></i> Unassigned'}</small>
+                    </p>
+                    <button class="btn btn-sm btn-outline-danger" style="font-size:.72rem;padding:.2rem .6rem;border-radius:7px;" onclick="deleteTicket('${ticket.ticket_number}')" title="Delete ticket"><i class="bi bi-trash3"></i> Delete</button>
                 </div>
             </div>
         </div>
@@ -172,6 +178,17 @@ function getStatusColor(status) {
     return colors[status] || 'secondary';
 }
 
+async function deleteTicket(ticketNumber) {
+    if (!confirm(`Delete ticket ${ticketNumber}?\nThis cannot be undone.`)) return;
+    try {
+        const res = await fetch(`/api/tickets/${ticketNumber}`, { method: 'DELETE' });
+        if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Delete failed'); }
+        loadTickets();
+    } catch(e) {
+        alert('Error: ' + e.message);
+    }
+}
+
 function updatePagination(total) {
     // Pagination logic here if needed
     const totalPages = Math.ceil(total / pageSize);
@@ -180,5 +197,23 @@ function updatePagination(total) {
 
 // Load tickets on page load
 loadTickets();
+</script>
+</div><!-- /page-bg-wrap -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  const c=document.getElementById('tickets-canvas');if(!c)return;
+  const ctx=c.getContext('2d');let W,H,pts=[];
+  const N=90,CONN=155;
+  function resize(){W=c.width=c.offsetWidth;H=c.height=c.offsetHeight;}
+  function Pt(){this.x=Math.random()*W;this.y=Math.random()*H;this.vx=(Math.random()-.5)*.35;this.vy=(Math.random()-.5)*.35;this.r=Math.random()*1.4+.7;this.a=Math.random()*.45+.18;}
+  Pt.prototype.move=function(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>W)this.vx*=-1;if(this.y<0||this.y>H)this.vy*=-1;};
+  function init(){resize();pts=Array.from({length:N},()=>new Pt());}
+  function draw(){ctx.clearRect(0,0,W,H);for(let i=0;i<pts.length;i++){const p=pts[i];p.move();ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(129,140,248,'+p.a+')';ctx.fill();for(let j=i+1;j<pts.length;j++){const q=pts[j],dx=p.x-q.x,dy=p.y-q.y,d=Math.sqrt(dx*dx+dy*dy);if(d<CONN){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle='rgba(99,102,241,'+(0.13*(1-d/CONN))+')';ctx.lineWidth=.6;ctx.stroke();}}}requestAnimationFrame(draw);}
+  window.addEventListener('resize',()=>{resize();pts.forEach(p=>{p.x=Math.random()*W;p.y=Math.random()*H;});},{passive:true});
+  init();draw();
+})();
 </script>
 {% endblock %}

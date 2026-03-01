@@ -1,121 +1,108 @@
-{% extends "base.html" %}
-
+﻿{% extends "base.html" %}
 {% block title %}Documentation - TechFixAI{% endblock %}
 
+{% block extra_css %}
+<style>
+.docs-hero{padding:4rem 0 2rem;text-align:center;position:relative;overflow:hidden}
+.docs-hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(99,102,241,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.04) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
+.docs-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:99px;font-size:.78rem;font-weight:600;color:#818cf8;letter-spacing:.05em;text-transform:uppercase;margin-bottom:1.25rem}
+.docs-hero h1{font-size:clamp(1.9rem,4.5vw,2.8rem);font-weight:800;letter-spacing:-.5px;margin-bottom:.9rem}
+.docs-hero h1 span{background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.docs-hero p{color:#8899bb;max-width:540px;margin:0 auto;font-size:.98rem;line-height:1.75}
+.docs-layout{display:grid;grid-template-columns:220px 1fr;gap:2.5rem;padding:2rem 0 3rem;align-items:start}
+.docs-sidebar{position:sticky;top:90px}
+.docs-nav-group{margin-bottom:1.75rem}
+.docs-nav-group-label{font-size:.72rem;font-weight:700;color:#4a5f7a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.6rem;padding:0 .5rem}
+.docs-nav-link{display:block;padding:.45rem .75rem;border-radius:8px;font-size:.84rem;color:#6b7fa3;text-decoration:none;transition:all .15s;font-weight:500;border-left:2px solid transparent}
+.docs-nav-link:hover{color:#c7d2fe;background:rgba(99,102,241,.07);border-color:rgba(99,102,241,.3)}
+.docs-nav-link.active{color:#818cf8;background:rgba(99,102,241,.1);border-color:#6366f1;font-weight:600}
+.docs-content{min-width:0}
+.docs-section{margin-bottom:2.25rem}
+.docs-section h2{font-size:1.45rem;font-weight:800;letter-spacing:-.3px;margin-bottom:.4rem;padding-top:1rem}
+.docs-section h2 span{background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.docs-section-sub{color:#8899bb;font-size:.88rem;margin-bottom:1.5rem}
+.qs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:1rem;margin-bottom:2rem}
+.qs-card{background:rgba(13,27,46,.7);border:1px solid rgba(99,102,241,.12);border-radius:13px;padding:1.25rem;cursor:pointer;text-decoration:none;display:block;transition:all .2s}
+.qs-card:hover{border-color:rgba(99,102,241,.3);transform:translateY(-2px);background:rgba(13,27,46,.9)}
+.qs-card-icon{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(34,211,238,.08));border:1px solid rgba(99,102,241,.18);display:flex;align-items:center;justify-content:center;font-size:1rem;color:#818cf8;margin-bottom:.75rem;flex-shrink:0}
+.qs-card h5{font-size:.88rem;font-weight:700;color:#c7d2fe;margin-bottom:.3rem}
+.qs-card p{font-size:.77rem;color:#6b7fa3;margin:0;line-height:1.5}
+.step-list{list-style:none;counter-reset:step}
+.step-list li{counter-increment:step;display:flex;gap:1rem;margin-bottom:1rem;padding:1rem 1.25rem;background:rgba(13,27,46,.5);border:1px solid rgba(99,102,241,.1);border-radius:12px;align-items:flex-start}
+.step-list li::before{content:counter(step);min-width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:.72rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.1rem}
+.step-list li div{font-size:.875rem;color:#8899bb;line-height:1.6}
+.step-list li strong{color:#c7d2fe;font-weight:600;display:block;margin-bottom:.2rem}
+.api-block{background:rgba(7,17,31,.8);border:1px solid rgba(99,102,241,.12);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1rem;font-family:'JetBrains Mono',monospace}
+.api-method{display:inline-block;padding:.2rem .6rem;border-radius:5px;font-size:.72rem;font-weight:700;letter-spacing:.05em;margin-right:.75rem}
+.method-post{background:rgba(139,92,246,.2);color:#c4b5fd;border:1px solid rgba(139,92,246,.3)}
+.method-get{background:rgba(34,211,238,.15);color:#67e8f9;border:1px solid rgba(34,211,238,.25)}
+.api-path{font-size:.88rem;color:#c7d2fe;font-family:'JetBrains Mono',monospace}
+.api-desc{font-size:.8rem;color:#6b7fa3;margin-top:.5rem;font-family:'Inter',sans-serif}
+@media(max-width:768px){.docs-layout{grid-template-columns:1fr}.docs-sidebar{display:none}}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <div class="row">
-        <div class="col-lg-10 mx-auto">
-            <!-- Header -->
-            <div class="mb-5">
-                <h1 class="display-5 fw-bold mb-3">
-                    <i class="bi bi-book-fill text-primary me-2"></i>Documentation
-                </h1>
-                <p class="lead text-muted">Complete API reference and user guides for TechFixAI</p>
-            </div>
+<section class="docs-hero">
+  <div class="container">
+    <div class="docs-badge"><i class="bi bi-book"></i> Documentation</div>
+    <h1>Build with <span>TechFixAI</span></h1>
+    <p>Everything you need to integrate and extend TechFixAI's AI-powered ticket automation platform.</p>
+  </div>
+</section>
 
-            <!-- Quick Links -->
-            <div class="row g-3 mb-5">
-                <div class="col-md-6">
-                    <div class="card bg-dark border-primary p-4 h-100">
-                        <h5 class="card-title text-primary mb-2">
-                            <i class="bi bi-rocket me-2"></i>Getting Started
-                        </h5>
-                        <p class="card-text text-muted small mb-3">
-                            Learn how to upload audio files, process tickets, and manage your workflow.
-                        </p>
-                        <a href="/#how-it-works" class="btn btn-sm btn-outline-primary">View Guide →</a>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card bg-dark border-success p-4 h-100">
-                        <h5 class="card-title text-success mb-2">
-                            <i class="bi bi-code-square me-2"></i>API Reference
-                        </h5>
-                        <p class="card-text text-muted small mb-3">
-                            Integrate TechFixAI into your applications using our REST API.
-                        </p>
-                        <a href="https://github.com/LegendarySumit/TechFixAI#api-endpoints" target="_blank" class="btn btn-sm btn-outline-success">View API →</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Key Features -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-4">Key Features</h3>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="d-flex gap-3 mb-3">
-                            <div class="flex-shrink-0">
-                                <i class="bi bi-mic-fill text-info" style="font-size: 1.5rem;"></i>
-                            </div>
-                            <div>
-                                <h6 class="fw-semibold">Speech-to-Text (STT)</h6>
-                                <p class="text-muted small">Japanese audio transcription using Groq/OpenAI Whisper API</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex gap-3 mb-3">
-                            <div class="flex-shrink-0">
-                                <i class="bi bi-translate text-success" style="font-size: 1.5rem;"></i>
-                            </div>
-                            <div>
-                                <h6 class="fw-semibold">Auto Translation</h6>
-                                <p class="text-muted small">Context-aware Japanese to English translation with LLM</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex gap-3 mb-3">
-                            <div class="flex-shrink-0">
-                                <i class="bi bi-person-check text-warning" style="font-size: 1.5rem;"></i>
-                            </div>
-                            <div>
-                                <h6 class="fw-semibold">Smart Assignment</h6>
-                                <p class="text-muted small">Automatic ticket routing to best-fit developers</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex gap-3 mb-3">
-                            <div class="flex-shrink-0">
-                                <i class="bi bi-shield-check text-danger" style="font-size: 1.5rem;"></i>
-                            </div>
-                            <div>
-                                <h6 class="fw-semibold">Audit Trail</h6>
-                                <p class="text-muted small">Complete history of every decision and action</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Supported Platforms -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-4">Supported Platforms</h3>
-                <div class="list-group list-group-flush bg-transparent">
-                    <div class="list-group-item bg-transparent border-subtle text-muted small">
-                        <i class="bi bi-check-circle text-success me-2"></i> Web Browser (Chrome, Firefox, Safari, Edge)
-                    </div>
-                    <div class="list-group-item bg-transparent border-subtle text-muted small">
-                        <i class="bi bi-check-circle text-success me-2"></i> REST API (JSON)
-                    </div>
-                    <div class="list-group-item bg-transparent border-subtle text-muted small">
-                        <i class="bi bi-check-circle text-success me-2"></i> Python SDK (in development)
-                    </div>
-                    <div class="list-group-item bg-transparent border-subtle text-muted small">
-                        <i class="bi bi-check-circle text-success me-2"></i> Node.js SDK (in development)
-                    </div>
-                </div>
-            </div>
-
-            <!-- Need Help? -->
-            <div class="alert alert-info border-info bg-dark">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong>Need Help?</strong> Visit our <a href="mailto:support@techfixai.com" class="alert-link">Support Center</a> or check the <a href="https://github.com/LegendarySumit/TechFixAI" target="_blank" class="alert-link">GitHub Repository</a>
-            </div>
+<div class="container">
+  <div class="docs-layout">
+    <aside class="docs-sidebar">
+      <div class="docs-nav-group">
+        <div class="docs-nav-group-label">Getting Started</div>
+        <a href="#quickstart" class="docs-nav-link active">Quick Start</a>
+        <a href="#setup" class="docs-nav-link">Setup Guide</a>
+      </div>
+      <div class="docs-nav-group">
+        <div class="docs-nav-group-label">API Reference</div>
+        <a href="#api-auth" class="docs-nav-link">Authentication</a>
+        <a href="#api-tickets" class="docs-nav-link">Tickets</a>
+        <a href="#api-upload" class="docs-nav-link">Audio Upload</a>
+      </div>
+      <div class="docs-nav-group">
+        <div class="docs-nav-group-label">Features</div>
+        <a href="#transcription" class="docs-nav-link">Transcription</a>
+        <a href="#llm" class="docs-nav-link">AI Processing</a>
+      </div>
+    </aside>
+    <main class="docs-content">
+      <div class="docs-section" id="quickstart">
+        <h2><span>Quick Start</span></h2>
+        <p class="docs-section-sub">Jump straight in — choose your path</p>
+        <div class="qs-grid">
+          <a href="/upload" class="qs-card"><div class="qs-card-icon"><i class="bi bi-mic-fill"></i></div><h5>Upload Audio</h5><p>Submit a Japanese voice report and watch AI create a ticket</p></a>
+          <a href="/dashboard" class="qs-card"><div class="qs-card-icon"><i class="bi bi-grid-1x2-fill"></i></div><h5>View Dashboard</h5><p>Monitor all tickets, stats, and system activity</p></a>
+          <a href="/developers" class="qs-card"><div class="qs-card-icon"><i class="bi bi-people-fill"></i></div><h5>Manage Developers</h5><p>Add team members and configure auto-assignment</p></a>
+          <a href="/tickets" class="qs-card"><div class="qs-card-icon"><i class="bi bi-ticket-perforated-fill"></i></div><h5>Browse Tickets</h5><p>View, filter, and update your support queue</p></a>
         </div>
-    </div>
+      </div>
+      <div class="docs-section" id="setup">
+        <h2><span>Setup</span> Guide</h2>
+        <p class="docs-section-sub">Get TechFixAI running in minutes</p>
+        <ol class="step-list">
+          <li><div><strong>Create an account</strong>Register at /signup and verify your email address</div></li>
+          <li><div><strong>Upload a voice report</strong>Navigate to Upload and record or upload a .wav/.mp3 file in Japanese</div></li>
+          <li><div><strong>Review the ticket</strong>AI processes audio and creates a structured ticket within seconds</div></li>
+          <li><div><strong>Assign to developer</strong>Tickets are auto-assigned based on category; you can re-assign manually</div></li>
+          <li><div><strong>Track &amp; resolve</strong>Developers update ticket status; managers see live dashboard analytics</div></li>
+        </ol>
+      </div>
+      <div class="docs-section" id="api-auth">
+        <h2>API <span>Reference</span></h2>
+        <p class="docs-section-sub">Core endpoints</p>
+        <div class="api-block"><span class="api-method method-post">POST</span><span class="api-path">/api/auth/login</span><div class="api-desc">Authenticate user and receive JWT access token</div></div>
+        <div class="api-block"><span class="api-method method-post">POST</span><span class="api-path">/api/tickets/create</span><div class="api-desc">Create a new support ticket from processed audio data</div></div>
+        <div class="api-block"><span class="api-method method-get">GET</span><span class="api-path">/api/tickets</span><div class="api-desc">List all tickets with optional filters (status, severity, developer)</div></div>
+        <div class="api-block"><span class="api-method method-post">POST</span><span class="api-path">/api/upload/audio</span><div class="api-desc">Upload Japanese audio file for transcription and ticket generation</div></div>
+        <div class="api-block"><span class="api-method method-get">GET</span><span class="api-path">/api/dashboard/stats</span><div class="api-desc">Retrieve aggregate statistics for the management dashboard</div></div>
+      </div>
+    </main>
+  </div>
 </div>
 {% endblock %}

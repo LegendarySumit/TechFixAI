@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Voice-to-Ticket AI"
-    DEBUG: bool = True
+    DEBUG: bool = False  # Always default to False; set DEBUG=True in .env for local dev
     
     # Database
     DATABASE_URL: str = "sqlite:///./voice_ticket.db"
@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str = ""  # Get free key at https://console.groq.com
     OPENAI_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
+
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
     
     # Translation
     DEEPL_API_KEY: str = ""

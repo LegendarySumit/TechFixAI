@@ -48,6 +48,15 @@ ENV/
 storage/audio/*
 !storage/audio/.gitkeep
 
+# Audio / media files (extra safety net — never commit user uploads)
+*.wav
+*.mp3
+*.m4a
+*.webm
+*.ogg
+*.flac
+uploads/
+
 # Logs
 *.log
 logs/

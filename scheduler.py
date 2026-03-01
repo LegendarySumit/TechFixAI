@@ -4,7 +4,7 @@ Runs automatic data deletion based on retention policy.
 """
 
 import os
-import asyncio
+import time
 import threading
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -69,12 +69,13 @@ def cleanup_old_database_records(retention_days: int = None):
     
     from app.db.session import SessionLocal
     from app.models.conversation import Conversation
+    from app.models.ticket import Ticket
     
     cutoff_datetime = datetime.utcnow() - timedelta(days=retention_days)
     
     db = SessionLocal()
     try:
-        # Find and delete old conversations
+        # Find old conversations
         old_conversations = db.query(Conversation).filter(
             Conversation.created_at < cutoff_datetime
         ).all()
@@ -82,6 +83,9 @@ def cleanup_old_database_records(retention_days: int = None):
         deleted_count = len(old_conversations)
         
         for conversation in old_conversations:
+            # Must delete linked ticket first (it holds the FK to conversations)
+            if conversation.ticket:
+                db.delete(conversation.ticket)
             db.delete(conversation)
         
         db.commit()
@@ -119,8 +123,8 @@ def start_cleanup_scheduler():
                 
                 print(f"⏰ Next cleanup scheduled in {seconds_until_midnight / 3600:.1f} hours")
                 
-                # Wait until next midnight
-                threading.Event().wait(seconds_until_midnight)
+                # Sleep until next midnight
+                time.sleep(seconds_until_midnight)
                 
                 # Run cleanup
                 print("🧹 Running scheduled data cleanup...")

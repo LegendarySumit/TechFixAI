@@ -1,132 +1,107 @@
-{% extends "base.html" %}
-
+﻿{% extends "base.html" %}
 {% block title %}Privacy Policy - TechFixAI{% endblock %}
 
+{% block extra_css %}
+<style>
+.privacy-hero{padding:4rem 0 2rem;text-align:center;position:relative;overflow:hidden}
+.privacy-hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(ellipse 600px 300px at 50% 0%,rgba(99,102,241,.05),transparent);pointer-events:none}
+.privacy-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:99px;font-size:.78rem;font-weight:600;color:#818cf8;letter-spacing:.05em;text-transform:uppercase;margin-bottom:1.25rem}
+.privacy-hero h1{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;letter-spacing:-.4px;margin-bottom:.8rem}
+.privacy-hero h1 span{background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.updated-pill{display:inline-flex;align-items:center;gap:.4rem;font-size:.78rem;color:#4a5f7a;background:rgba(13,27,46,.6);border:1px solid rgba(99,102,241,.1);border-radius:8px;padding:.35rem .75rem}
+.privacy-layout{display:grid;grid-template-columns:200px 1fr;gap:2.5rem;padding:2rem 0 3rem;align-items:start}
+.privacy-sidebar{position:sticky;top:90px}
+.priv-nav-label{font-size:.72rem;font-weight:700;color:#4a5f7a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.75rem;padding:0 .5rem}
+.priv-nav-link{display:block;padding:.42rem .75rem;border-radius:8px;font-size:.83rem;color:#6b7fa3;text-decoration:none;transition:all .15s;font-weight:500;border-left:2px solid transparent}
+.priv-nav-link:hover{color:#c7d2fe;background:rgba(99,102,241,.07);border-color:rgba(99,102,241,.3)}
+.privacy-content{min-width:0}
+.priv-section{margin-bottom:1.75rem;padding-bottom:1.75rem;border-bottom:1px solid rgba(99,102,241,.07)}
+.priv-section:last-child{border-bottom:none}
+.priv-section h2{font-size:1.2rem;font-weight:800;color:#c7d2fe;margin-bottom:.3rem;letter-spacing:-.2px;display:flex;align-items:center;gap:.6rem}
+.priv-section h2 i{font-size:1rem;color:#818cf8}
+.priv-section-num{font-size:.75rem;font-weight:700;color:#4a5f7a;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em}
+.priv-section p{font-size:.875rem;color:#8899bb;line-height:1.8;margin-bottom:.5rem}
+.priv-section ul{list-style:none;padding:0}
+.priv-section ul li{font-size:.875rem;color:#8899bb;padding:.4rem 0 .4rem 1.4rem;position:relative;line-height:1.6}
+.priv-section ul li::before{content:'';position:absolute;left:0;top:.7rem;width:6px;height:6px;border-radius:50%;background:#6366f1}
+.priv-highlight{background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.12);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;font-size:.85rem;color:#8899bb;line-height:1.7}
+.priv-highlight strong{color:#818cf8}
+@media(max-width:768px){.privacy-layout{grid-template-columns:1fr}.privacy-sidebar{display:none}}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <div class="row">
-        <div class="col-lg-10 mx-auto">
-            <!-- Header -->
-            <div class="mb-5">
-                <h1 class="display-5 fw-bold mb-3">
-                    <i class="bi bi-file-earmark-text text-primary me-2"></i>Privacy Policy
-                </h1>
-                <p class="text-muted small"><strong>Last Updated:</strong> February 2026</p>
-            </div>
+<section class="privacy-hero">
+  <div class="container">
+    <div class="privacy-badge"><i class="bi bi-file-text"></i> Legal</div>
+    <h1>Privacy <span>Policy</span></h1>
+    <div class="updated-pill"><i class="bi bi-calendar3"></i> Last updated: February 2026</div>
+  </div>
+</section>
 
-            <!-- Introduction -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-3">1. Introduction</h3>
-                <p class="text-muted">
-                    TechFixAI ("we", "us", "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, 
-                    disclose, and safeguard your information when you use our service.
-                </p>
-            </div>
-
-            <!-- Information Collection -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-3">2. Information We Collect</h3>
-                <div class="ms-3">
-                    <h6 class="fw-semibold text-primary mb-2">Personal Information:</h6>
-                    <ul class="text-muted small mb-3">
-                        <li>Name, email address, and contact information</li>
-                        <li>Account credentials and profile data</li>
-                        <li>Billing and payment information</li>
-                    </ul>
-
-                    <h6 class="fw-semibold text-primary mb-2">Usage Information:</h6>
-                    <ul class="text-muted small mb-3">
-                        <li>Audio files uploaded for transcription</li>
-                        <li>Transcribed text and translations</li>
-                        <li>Ticket data and metadata</li>
-                        <li>Log data and analytics</li>
-                    </ul>
-
-                    <h6 class="fw-semibold text-primary mb-2">Technical Information:</h6>
-                    <ul class="text-muted small">
-                        <li>IP address and browser type</li>
-                        <li>Device information and operating system</li>
-                        <li>Cookies and tracking technologies</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- How We Use Information -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-3">3. How We Use Your Information</h3>
-                <p class="text-muted">We use the information we collect to:</p>
-                <ul class="text-muted small ms-3">
-                    <li>Provide, maintain, and improve our services</li>
-                    <li>Process your transactions and send related information</li>
-                    <li>Respond to your inquiries and support requests</li>
-                    <li>Monitor and analyze trends and usage</li>
-                    <li>Detect and prevent fraudulent transactions</li>
-                    <li>Comply with legal obligations</li>
-                </ul>
-            </div>
-
-            <!-- Data Retention -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-3">4. Data Retention</h3>
-                <p class="text-muted">
-                    We retain your information for as long as necessary to provide our services. Audio files are retained for up to 30 days 
-                    (configurable) and then automatically deleted. Account data remains until you request deletion. You may request data 
-                    deletion at any time.
-                </p>
-            </div>
-
-            <!-- Data Security -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-3">5. Data Security</h3>
-                <p class="text-muted">
-                    We implement extensive security measures including AES-256-GCM encryption, TLS 1.3 protocols, regular security audits, 
-                    and role-based access controls. However, no method of transmission over the Internet is 100% secure.
-                </p>
-            </div>
-
-            <!-- User Rights -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-3">6. Your Rights</h3>
-                <p class="text-muted">Under GDPR and similar regulations, you have the right to:</p>
-                <ul class="text-muted small ms-3">
-                    <li><strong>Access:</strong> Request a copy of your personal data</li>
-                    <li><strong>Rectification:</strong> Correct inaccurate information</li>
-                    <li><strong>Erasure:</strong> Request deletion of your data ("right to be forgotten")</li>
-                    <li><strong>Portability:</strong> Receive your data in a portable format</li>
-                    <li><strong>Opt-out:</strong> Cease certain data processing activities</li>
-                </ul>
-            </div>
-
-            <!-- Third Parties -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-3">7. Third-Party Services</h3>
-                <p class="text-muted">
-                    We use third-party services for AI processing (Groq, OpenAI, Google Gemini) and infrastructure (cloud providers). 
-                    These third parties are contractually obligated to maintain data security and privacy.
-                </p>
-            </div>
-
-            <!-- Contact -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-3">8. Contact Us</h3>
-                <p class="text-muted">
-                    If you have any questions about this Privacy Policy or our privacy practices, please contact us at:
-                </p>
-                <div class="ms-3">
-                    <p class="mb-1 text-muted small">
-                        <i class="bi bi-envelope me-2 text-primary"></i>
-                        <a href="mailto:privacy@techfixai.com" class="text-primary">privacy@techfixai.com</a>
-                    </p>
-                </div>
-            </div>
-
-            <!-- Changes -->
-            <div class="alert alert-info border-info bg-dark">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong>Policy Updates:</strong> We may update this Privacy Policy from time to time. Continued use of our service constitutes 
-                acceptance of any changes.
-            </div>
-        </div>
-    </div>
+<div class="container">
+  <div class="privacy-layout">
+    <aside class="privacy-sidebar">
+      <div class="priv-nav-label">Contents</div>
+      <a href="#introduction" class="priv-nav-link">1. Introduction</a>
+      <a href="#collection" class="priv-nav-link">2. Data We Collect</a>
+      <a href="#use" class="priv-nav-link">3. How We Use Data</a>
+      <a href="#retention" class="priv-nav-link">4. Data Retention</a>
+      <a href="#security" class="priv-nav-link">5. Data Security</a>
+      <a href="#rights" class="priv-nav-link">6. Your Rights</a>
+      <a href="#contact" class="priv-nav-link">7. Contact</a>
+    </aside>
+    <main class="privacy-content">
+      <div class="priv-section" id="introduction">
+        <div class="priv-section-num">01</div>
+        <h2><i class="bi bi-info-circle"></i> Introduction</h2>
+        <p>TechFixAI ("we", "our", "us") is committed to protecting the privacy of our users. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform.</p>
+        <div class="priv-highlight">By using TechFixAI, you agree to the collection and use of information as described in this policy. <strong>We never sell your personal data.</strong></div>
+      </div>
+      <div class="priv-section" id="collection">
+        <div class="priv-section-num">02</div>
+        <h2><i class="bi bi-inbox"></i> Information We Collect</h2>
+        <p>We collect information you provide directly and information generated through use of the platform:</p>
+        <ul>
+          <li><strong style="color:#c7d2fe">Account information</strong> — name, email, username, and hashed passwords</li>
+          <li><strong style="color:#c7d2fe">Audio files</strong> — uploaded voice reports used for transcription and ticket generation</li>
+          <li><strong style="color:#c7d2fe">Ticket data</strong> — AI-generated transcriptions, translations, and issue classifications</li>
+          <li><strong style="color:#c7d2fe">Usage data</strong> — feature interactions, session timestamps, and access logs</li>
+        </ul>
+      </div>
+      <div class="priv-section" id="use">
+        <div class="priv-section-num">03</div>
+        <h2><i class="bi bi-gear"></i> How We Use Your Data</h2>
+        <p>We use collected data solely to provide and improve the TechFixAI service:</p>
+        <ul>
+          <li>Process audio files and generate structured support tickets</li>
+          <li>Authenticate users and maintain secure sessions</li>
+          <li>Provide dashboard analytics and reporting to managers</li>
+          <li>Improve AI transcription and classification accuracy</li>
+          <li>Send system notifications and operational emails</li>
+        </ul>
+      </div>
+      <div class="priv-section" id="retention">
+        <div class="priv-section-num">04</div>
+        <h2><i class="bi bi-clock-history"></i> Data Retention</h2>
+        <p>We retain your data only as long as necessary. Audio files are deleted 30 days after processing. Ticket data is retained for the life of your account. You may request deletion at any time.</p>
+      </div>
+      <div class="priv-section" id="security">
+        <div class="priv-section-num">05</div>
+        <h2><i class="bi bi-shield-check"></i> Data Security</h2>
+        <p>We implement AES-256 encryption at rest, TLS 1.3 for data in transit, and role-based access controls. However, no system is 100% secure and we encourage strong unique passwords.</p>
+      </div>
+      <div class="priv-section" id="rights">
+        <div class="priv-section-num">06</div>
+        <h2><i class="bi bi-person-check"></i> Your Rights</h2>
+        <p>Under GDPR and applicable law, you have the right to access, correct, or delete your personal data. You may also request data portability or restrict processing.</p>
+      </div>
+      <div class="priv-section" id="contact">
+        <div class="priv-section-num">07</div>
+        <h2><i class="bi bi-envelope"></i> Contact Us</h2>
+        <p>For privacy-related questions or to exercise your rights, contact us at <strong style="color:#818cf8">privacy@techfixai.com</strong>. We respond within 48 hours.</p>
+      </div>
+    </main>
+  </div>
 </div>
 {% endblock %}

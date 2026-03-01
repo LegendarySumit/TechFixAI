@@ -3,22 +3,31 @@
 {% block title %}Dashboard - TechFixAI{% endblock %}
 
 {% block content %}
+<div class="page-bg-wrap">
+<div class="page-bg-layer">
+    <canvas id="dash-canvas" aria-hidden="true"></canvas>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+    <div class="gradient-orb orb-4"></div>
+    <div class="gradient-orb orb-5"></div>
+</div>
 <!-- Dashboard Header -->
-<section class="dashboard-header py-4">
-    <div class="container-fluid px-5">
-        <div class="d-flex justify-content-between align-items-center">
+<section class="dashboard-header py-3 py-lg-4">
+    <div class="container-fluid px-3 px-lg-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-start align-items-sm-center gap-2">
             <div>
-                <h1 class="dashboard-title mb-2">
-                    <i class="bi bi-speedometer2 me-3"></i>System Dashboard
+                <h1 class="dashboard-title mb-1">
+                    <i class="bi bi-speedometer2 me-2"></i>System Dashboard
                 </h1>
-                <p class="text-muted mb-0">Real-time overview of your AI support system</p>
+                <p class="text-muted mb-0 small">Real-time overview of your AI support system</p>
             </div>
-            <div class="dashboard-time" id="current-time"></div>
+            <div class="dashboard-time flex-shrink-0" id="current-time"></div>
         </div>
     </div>
 </section>
 
-<div class="container-fluid px-5 pb-5">
+<div class="container-fluid px-3 px-lg-5 pb-5">
     <!-- Overview Stats -->
     <div class="row g-4 mb-5 mt-4">
         <div class="col-xl-3 col-md-6">
@@ -86,31 +95,15 @@
         </div>
     </div>
 
-    <!-- Analytics Section -->
-    <div class="row g-4 mb-5">
-        <div class="col-lg-6 d-flex">
-            <div class="dashboard-card w-100">
-                <div class="dashboard-card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-pie-chart me-2"></i>Ticket Status Distribution
-                    </h5>
-                </div>
-                <div class="dashboard-card-body">
-                    <div id="ticket-status-breakdown"></div>
-                </div>
+    <!-- Developer Workload -->
+    <div class="mb-5">
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <h5 class="mb-0"><i class="bi bi-people-fill me-2"></i>Developer Workload</h5>
+                <span id="workload-online-count" style="font-size:.75rem;color:#34d399;"></span>
             </div>
-        </div>
-        
-        <div class="col-lg-6 d-flex">
-            <div class="dashboard-card w-100">
-                <div class="dashboard-card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-bar-chart me-2"></i>Developer Workload
-                    </h5>
-                </div>
-                <div class="dashboard-card-body">
-                    <div id="developer-workload"></div>
-                </div>
+            <div class="dashboard-card-body">
+                <div id="developer-workload"></div>
             </div>
         </div>
     </div>
@@ -177,9 +170,6 @@ async function loadDashboard() {
         animateValue('stat-conversations', 0, data.conversations.total, 1000);
         animateValue('stat-developers', 0, data.developers.active_count, 1000);
         
-        // Display ticket status breakdown
-        displayTicketStatus(data.tickets);
-        
         // Display developer workload
         displayDeveloperWorkload(data.developers.workload);
         
@@ -214,94 +204,51 @@ function animateValue(id, start, end, duration) {
     }, stepTime);
 }
 
-function displayTicketStatus(tickets) {
-    const container = document.getElementById('ticket-status-breakdown');
-    const totalActive = tickets.open + tickets.assigned + tickets.critical_active;
-    const resolutionRate = tickets.total > 0 ? ((tickets.resolved / tickets.total) * 100).toFixed(1) : 0;
-    
-    container.innerHTML = `
-        <div class="row g-3 mb-3">
-            <div class="col-md-4">
-                <div class="status-item status-open">
-                    <div class="status-value">${tickets.open}</div>
-                    <div class="status-label">
-                        <i class="bi bi-circle-fill me-1"></i>Open
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="status-item status-assigned">
-                    <div class="status-value">${tickets.assigned}</div>
-                    <div class="status-label">
-                        <i class="bi bi-circle-fill me-1"></i>Assigned
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="status-item status-resolved">
-                    <div class="status-value">${tickets.resolved}</div>
-                    <div class="status-label">
-                        <i class="bi bi-circle-fill me-1"></i>Resolved
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row g-3">
-            <div class="col-md-4">
-                <div class="status-item status-critical">
-                    <div class="status-value">${tickets.critical_active}</div>
-                    <div class="status-label">
-                        <i class="bi bi-circle-fill me-1"></i>Critical
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="status-item status-neutral">
-                    <div class="status-value">${totalActive}</div>
-                    <div class="status-label">
-                        <i class="bi bi-circle-fill me-1"></i>Active
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="status-item status-neutral">
-                    <div class="status-value">${resolutionRate}%</div>
-                    <div class="status-label">
-                        <i class="bi bi-circle-fill me-1"></i>Resolved Rate
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
 function displayDeveloperWorkload(workload) {
     const container = document.getElementById('developer-workload');
-    
+
     if (!workload || workload.length === 0) {
         container.innerHTML = '<p class="text-muted text-center py-4">No developers found</p>';
         return;
     }
-    
-    container.innerHTML = workload.map(dev => `
-        <div class="workload-item">
-            <div class="workload-header">
+
+    const statusMeta = {
+        online:  { cls: 'wl-online',  label: 'Online'  },
+        busy:    { cls: 'wl-busy',    label: 'Busy'    },
+        offline: { cls: 'wl-offline', label: 'Offline' },
+    };
+
+    const onlineCount = workload.filter(d => d.status === 'online').length;
+    const el = document.getElementById('workload-online-count');
+    if (el) el.textContent = `${onlineCount} online now`;
+
+    container.innerHTML = `<div class="wl-grid">${workload.map(dev => {
+        const pct = Math.min((dev.active_tickets / dev.max_capacity * 100), 100);
+        const sm  = statusMeta[dev.status] || statusMeta.offline;
+        const barCls = getWorkloadClass(dev.active_tickets, dev.max_capacity);
+        return `
+        <div class="wl-card">
+            <div class="wl-card-top">
                 <div class="developer-info">
-                    <div class="developer-avatar">
-                        ${dev.name.charAt(0)}
+                    <div class="developer-avatar">${dev.name.charAt(0)}</div>
+                    <div>
+                        <div class="developer-name">${dev.name}</div>
+                        <span class="wl-status-pill ${sm.cls}">${sm.label}</span>
                     </div>
-                    <span class="developer-name">${dev.name}</span>
                 </div>
-                <span class="workload-stats">${dev.active_tickets}/${dev.max_capacity} <span class="text-muted">(${dev.utilization})</span></span>
-            </div>
-            <div class="workload-progress">
-                <div class="workload-bar ${getWorkloadClass(dev.active_tickets, dev.max_capacity)}" 
-                     style="width: ${Math.min((dev.active_tickets / dev.max_capacity * 100), 100)}%">
+                <div class="wl-ticket-count">
+                    <span class="wl-num">${dev.active_tickets}</span>
+                    <span class="wl-denom">/ ${dev.max_capacity}</span>
                 </div>
             </div>
-        </div>
-    `).join('');
+            <div class="wl-bar-wrap">
+                <div class="workload-progress">
+                    <div class="workload-bar ${barCls}" style="width:${pct}%"></div>
+                </div>
+                <span class="wl-pct">${dev.utilization}</span>
+            </div>
+        </div>`;
+    }).join('')}</div>`;
 }
 
 function getWorkloadClass(active, max) {
@@ -394,5 +341,23 @@ loadDashboard();
 // Auto-refresh every 30 seconds
 setInterval(loadDashboard, 30000);
 
+</script>
+</div><!-- /page-bg-wrap -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  const c=document.getElementById('dash-canvas');if(!c)return;
+  const ctx=c.getContext('2d');let W,H,pts=[];
+  const N=90,CONN=155;
+  function resize(){W=c.width=c.offsetWidth;H=c.height=c.offsetHeight;}
+  function Pt(){this.x=Math.random()*W;this.y=Math.random()*H;this.vx=(Math.random()-.5)*.35;this.vy=(Math.random()-.5)*.35;this.r=Math.random()*1.4+.7;this.a=Math.random()*.45+.18;}
+  Pt.prototype.move=function(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>W)this.vx*=-1;if(this.y<0||this.y>H)this.vy*=-1;};
+  function init(){resize();pts=Array.from({length:N},()=>new Pt());}
+  function draw(){ctx.clearRect(0,0,W,H);for(let i=0;i<pts.length;i++){const p=pts[i];p.move();ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(129,140,248,'+p.a+')';ctx.fill();for(let j=i+1;j<pts.length;j++){const q=pts[j],dx=p.x-q.x,dy=p.y-q.y,d=Math.sqrt(dx*dx+dy*dy);if(d<CONN){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle='rgba(99,102,241,'+(0.13*(1-d/CONN))+')';ctx.lineWidth=.6;ctx.stroke();}}}requestAnimationFrame(draw);}
+  window.addEventListener('resize',()=>{resize();pts.forEach(p=>{p.x=Math.random()*W;p.y=Math.random()*H;});},{passive:true});
+  init();draw();
+})();
 </script>
 {% endblock %}

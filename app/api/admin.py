@@ -3,7 +3,7 @@ Admin API endpoints.
 Admin visibility into the system.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -60,6 +60,7 @@ async def get_dashboard(db: Session = Depends(get_db)):
         dev_workload.append({
             "developer_id": dev.id,
             "name": dev.name,
+            "status": dev.status,
             "active_tickets": active_tickets,
             "max_capacity": dev.max_concurrent_tickets,
             "utilization": f"{(active_tickets / dev.max_concurrent_tickets * 100):.1f}%"
@@ -89,7 +90,7 @@ async def get_dashboard(db: Session = Depends(get_db)):
 async def list_all_conversations(
     status: str = None,
     skip: int = 0,
-    limit: int = 50,
+    limit: int = Query(default=50, le=200),
     db: Session = Depends(get_db)
 ):
     """
@@ -149,8 +150,8 @@ async def list_developers(db: Session = Depends(get_db)):
             "id": dev.id,
             "name": dev.name,
             "email": dev.email,
-            "skills": dev.skills,
-            "technical_areas": dev.technical_areas,
+            "expertise": dev.expertise,
+            "languages": dev.languages,
             "is_active": dev.is_active,
             "max_concurrent_tickets": dev.max_concurrent_tickets,
             "stats": {

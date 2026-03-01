@@ -3,8 +3,10 @@ Developer API endpoints.
 View and manage developers.
 """
 
+from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -13,6 +15,19 @@ from app.models.developer import Developer
 from app.models.ticket import Ticket, TicketStatus
 
 router = APIRouter()
+
+
+class DeveloperCreate(BaseModel):
+    name: str
+    email: str
+    expertise: Optional[str] = None
+    languages: Optional[str] = None
+    status: Optional[str] = "online"
+    max_concurrent_tickets: Optional[int] = 5
+
+
+class StatusUpdate(BaseModel):
+    status: str  # online | busy | offline
 
 
 @router.get("/")
@@ -119,3 +134,73 @@ async def get_developer(
         ],
         "created_at": developer.created_at
     }
+
+
+@router.post("/")
+async def create_developer(
+    payload: DeveloperCreate,
+    db: Session = Depends(get_db)
+):
+    """Create a new developer."""
+    existing = db.query(Developer).filter(Developer.email == payload.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    allowed_statuses = ["online", "busy", "offline"]
+    status = payload.status if payload.status in allowed_statuses else "online"
+
+    dev = Developer(
+        name=payload.name,
+        email=payload.email,
+        expertise=payload.expertise,
+        languages=payload.languages,
+        status=status,
+        max_concurrent_tickets=payload.max_concurrent_tickets or 5,
+    )
+    db.add(dev)
+    db.commit()
+    db.refresh(dev)
+    return {"id": dev.id, "name": dev.name, "email": dev.email, "status": dev.status}
+
+
+@router.patch("/{developer_id}/status")
+async def update_developer_status(
+    developer_id: int,
+    payload: StatusUpdate,
+    db: Session = Depends(get_db)
+):
+    """Update a developer's availability status."""
+    dev = db.query(Developer).filter(Developer.id == developer_id).first()
+    if not dev:
+        raise HTTPException(status_code=404, detail="Developer not found")
+
+    allowed = ["online", "busy", "offline"]
+    if payload.status not in allowed:
+        raise HTTPException(status_code=400, detail=f"Status must be one of {allowed}")
+
+    dev.status = payload.status
+    dev.updated_at = datetime.utcnow()
+    db.commit()
+    return {"id": dev.id, "status": dev.status}
+
+
+@router.delete("/{developer_id}")
+async def delete_developer(
+    developer_id: int,
+    db: Session = Depends(get_db)
+):
+    """Remove a developer (only if they have no active tickets)."""
+    dev = db.query(Developer).filter(Developer.id == developer_id).first()
+    if not dev:
+        raise HTTPException(status_code=404, detail="Developer not found")
+
+    active = db.query(Ticket).filter(
+        Ticket.assigned_developer_id == developer_id,
+        Ticket.status.in_([TicketStatus.ASSIGNED, TicketStatus.IN_PROGRESS])
+    ).count()
+    if active > 0:
+        raise HTTPException(status_code=400, detail=f"Cannot delete developer with {active} active ticket(s)")
+
+    db.delete(dev)
+    db.commit()
+    return {"deleted": developer_id}

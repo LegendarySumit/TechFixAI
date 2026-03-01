@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Voice to Ticket - TechFixAI{% endblock %}
 
@@ -7,9 +7,21 @@
 /* Main Container */
 .voice-ticket-container {
     min-height: 100vh;
-    background: linear-gradient(135deg, #0b1220 0%, #1a2332 100%);
+    background: var(--bg-base);
     padding: 2rem 0;
+    position: relative;
+    overflow: hidden;
 }
+.voice-ticket-container::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background-image: radial-gradient(circle, rgba(148,163,184,.11) 1px, transparent 1px);
+    background-size: 28px 28px;
+    animation: dotDrift 18s linear infinite;
+    -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 45%, #000 20%, transparent 100%);
+    mask-image: radial-gradient(ellipse 85% 75% at 50% 45%, #000 20%, transparent 100%);
+}
+.voice-ticket-container > .container { position: relative; z-index: 1; }
+#upload-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; opacity: .5; }
 
 /* Header */
 .voice-header {
@@ -47,7 +59,7 @@
 /* Step 1: Record/Upload Interface */
 .upload-card {
     background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 1px solid rgba(99, 102, 241, 0.3);
     border-radius: 1rem;
     padding: 2rem;
 }
@@ -61,7 +73,7 @@
 
 .tab-btn {
     background: rgba(51, 65, 85, 0.5);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 1px solid rgba(99, 102, 241, 0.3);
     color: #94a3b8;
     padding: 0.75rem 2rem;
     border-radius: 0.5rem;
@@ -72,9 +84,9 @@
 }
 
 .tab-btn.active {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
     color: #fff;
-    border-color: #3b82f6;
+    border-color: #6366f1;
 }
 
 .tab-content {
@@ -87,7 +99,7 @@
 
 /* Drag and Drop Zone */
 .drag-drop-zone {
-    border: 2px dashed rgba(59, 130, 246, 0.5);
+    border: 2px dashed rgba(99, 102, 241, 0.5);
     border-radius: 1rem;
     padding: 3rem 2rem;
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.5), rgba(30, 58, 138, 0.2));
@@ -104,14 +116,14 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="dots" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="30" cy="30" r="2" fill="rgba(59,130,246,0.1)"/></pattern></defs><rect width="60" height="60" fill="url(%23dots)"/></svg>');
+    background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="dots" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="30" cy="30" r="2" fill="rgba(99, 102, 241,0.1)"/></pattern></defs><rect width="60" height="60" fill="url(%23dots)"/></svg>');
     pointer-events: none;
 }
 
 .drag-drop-zone:hover {
-    border-color: rgba(59, 130, 246, 0.8);
+    border-color: rgba(99, 102, 241, 0.8);
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 58, 138, 0.3));
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
 }
 
 .drag-drop-zone.dragover {
@@ -128,7 +140,7 @@
 
 .drag-drop-icon {
     font-size: 4rem;
-    color: #3b82f6;
+    color: #6366f1;
     transition: all 0.3s ease;
     display: inline-block;
 }
@@ -195,7 +207,7 @@
 /* Step 2: Transcription Edit */
 .transcription-card {
     background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 1px solid rgba(99, 102, 241, 0.3);
     border-radius: 1rem;
     padding: 2rem;
 }
@@ -212,7 +224,7 @@
 .transcription-textarea {
     width: 100%;
     background: rgba(30, 41, 59, 0.8);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 1px solid rgba(99, 102, 241, 0.3);
     color: #fff;
     padding: 1.5rem;
     border-radius: 0.75rem;
@@ -224,8 +236,8 @@
 
 .transcription-textarea:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .edit-hint {
@@ -305,7 +317,7 @@
     height: 300px;
     margin: 2rem auto;
     border-radius: 50%;
-    border: 3px solid rgba(59, 130, 246, 0.3);
+    border: 3px solid rgba(99, 102, 241, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -320,8 +332,8 @@
 }
 
 .process-circle.analyzing {
-    border-color: rgba(59, 130, 246, 0.8);
-    box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+    border-color: rgba(99, 102, 241, 0.8);
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.4);
 }
 
 .process-icon {
@@ -334,7 +346,7 @@
 }
 
 .process-icon.analyze {
-    color: #3b82f6;
+    color: #6366f1;
     font-size: 6rem;
     font-weight: 700;
 }
@@ -353,12 +365,12 @@
 
 .process-subtitle {
     font-size: 1.2rem;
-    color: #3b82f6;
+    color: #6366f1;
 }
 
 .workflow-steps {
     background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.2);
     border-radius: 1rem;
     padding: 2rem;
     margin-top: 3rem;
@@ -374,7 +386,7 @@
 }
 
 .workflow-step.active {
-    background: rgba(59, 130, 246, 0.1);
+    background: rgba(99, 102, 241, 0.1);
 }
 
 .workflow-step.completed {
@@ -395,7 +407,7 @@
 }
 
 .step-number.active {
-    background: #3b82f6;
+    background: #6366f1;
     color: #fff;
     animation: pulse-step 1.5s ease-in-out infinite;
 }
@@ -406,8 +418,8 @@
 }
 
 @keyframes pulse-step {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-    50% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+    50% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
 }
 
 .step-text {
@@ -452,7 +464,7 @@
 
 .ticket-card {
     background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 1px solid rgba(99, 102, 241, 0.3);
     border-radius: 1rem;
     padding: 2rem;
 }
@@ -490,7 +502,7 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -504,7 +516,7 @@
     width: 16px;
     height: 16px;
     background: #22c55e;
-    border: 3px solid #0b1220;
+    border: 3px solid #04091a;
     border-radius: 50%;
     position: absolute;
     bottom: 0;
@@ -518,7 +530,7 @@
 }
 
 .connect-btn {
-    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    background: linear-gradient(135deg, #06b6d4, #6366f1);
     border: none;
     color: #fff;
     font-size: 1.3rem;
@@ -533,12 +545,12 @@
 
 .connect-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
 }
 
 /* Buttons */
 .btn-primary-custom {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
     border: none;
     color: #fff;
     padding: 0.875rem 2rem;
@@ -551,7 +563,7 @@
 
 .btn-primary-custom:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
 }
 
 .btn-secondary-custom {
@@ -570,11 +582,112 @@
     background: rgba(100, 116, 139, 0.5);
     color: #fff;
 }
+
+/* ── Chat modal voice components ─────────────────────── */
+.chat-mic-btn-modal {
+    background: rgba(99, 102, 241, 0.12) !important;
+    border: 1.5px solid rgba(99, 102, 241, 0.35) !important;
+    color: #818cf8;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+.chat-mic-btn-modal:hover { background: rgba(99,102,241,.22) !important; color: #a5b4fc; }
+.chat-mic-btn-modal.recording {
+    background: rgba(239,68,68,.18) !important;
+    border-color: rgba(239,68,68,.5) !important;
+    color: #f87171 !important;
+    animation: modal-mic-pulse 1.2s ease-in-out infinite;
+}
+@keyframes modal-mic-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.4); }
+    50%      { box-shadow: 0 0 0 7px rgba(239,68,68,0); }
+}
+.chat-voice-bar-modal {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.45rem 0.875rem;
+    border-radius: 8px;
+    background: rgba(239,68,68,.07);
+    border: 1px solid rgba(239,68,68,.25);
+    margin-bottom: 0.5rem;
+    color: #fca5a5;
+    font-size: 0.82rem;
+}
+.modal-v-pulse {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #ef4444; flex-shrink: 0;
+    animation: v-dot 0.9s ease-in-out infinite alternate;
+}
+@keyframes v-dot {
+    from { opacity:1; transform:scale(1); }
+    to   { opacity:.2; transform:scale(.65); }
+}
+.chat-processing-modal {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.875rem;
+    border-radius: 8px;
+    background: rgba(99,102,241,.07);
+    border: 1px solid rgba(99,102,241,.2);
+    margin-bottom: 0.5rem;
+    font-size: 0.82rem;
+    color: #818cf8;
+}
+.chat-processing-modal .spinner-border { width:.85rem; height:.85rem; border-width:2px; }
+.chat-preview-modal {
+    display: none;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(99,102,241,.2);
+    margin-bottom: 0.5rem;
+}
+.preview-modal-jp {
+    padding: 0.5rem 0.875rem;
+    background: rgba(99,102,241,.07);
+    border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.preview-modal-en {
+    padding: 0.5rem 0.875rem;
+    background: rgba(16,185,129,.06);
+    border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.preview-modal-label {
+    font-size: 0.66rem; text-transform: uppercase;
+    letter-spacing: 0.07em; color: #6b7280; margin-bottom: 0.15rem;
+}
+.preview-modal-actions {
+    padding: 0.45rem 0.875rem;
+    display: flex; gap: 0.5rem;
+    background: rgba(4,9,26,.7);
+}
+.chat-lang-bar { display:flex; gap:.3rem; margin-top:.4rem; }
+.chat-lang-btn {
+    font-size:.67rem; padding:.16rem .5rem; border-radius:20px;
+    border:1px solid rgba(99,102,241,.3); background:transparent;
+    color:#9ca3af; cursor:pointer; transition:all .15s ease; line-height:1.5;
+}
+.chat-lang-btn.active { background:rgba(99,102,241,.22); border-color:rgba(99,102,241,.5); color:#a5b4fc; }
+.chat-lang-btn:hover:not(.active) { background:rgba(99,102,241,.1); color:#e5e7eb; }
+.chat-jp-note {
+    font-size:.72rem; color:#6b7280; margin-top:.3rem; font-style:italic; line-height:1.4;
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="voice-ticket-container">
+    <!-- Background animation (mirrors hero) -->
+    <canvas id="upload-canvas" aria-hidden="true"></canvas>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+    <div class="gradient-orb orb-4"></div>
+    <div class="gradient-orb orb-5"></div>
     <div class="container">
         <!-- Header -->
         <div class="voice-header">
@@ -627,7 +740,7 @@
                                         <h5 class="text-white mt-3 mb-2">Drag and drop your audio file here</h5>
                                         <p class="text-muted mb-3">or click to browse</p>
                                         <input type="file" class="form-control d-none" id="audioFileInput" accept="audio/*" onchange="handleFileSelect(this)">
-                                        <small class="text-muted">MP3, WAV, M4A, WebM • Max 100MB</small>
+                                        <small class="text-muted">MP3, WAV, M4A, WebM &bull; Max 100MB</small>
                                     </div>
                                 </div>
 
@@ -658,7 +771,7 @@
                             <div id="confidenceContainer" class="confidence-container mt-3" style="display: none;">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
-                                        <strong>📊 Transcription Quality</strong>
+                                        <strong><i class="bi bi-soundwave"></i> Transcription Quality</strong>
                                         <p class="small text-muted mb-0">Quality based on text analysis</p>
                                     </div>
                                     <div class="text-end">
@@ -676,7 +789,7 @@
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="confirmTranscription" style="cursor: pointer;">
                                     <label class="form-check-label" for="confirmTranscription" style="cursor: pointer; user-select: none;">
-                                        <strong class="text-success">✓ I confirm the transcription is correct</strong>
+                                        <strong class="text-success"><i class="bi bi-check-lg"></i> I confirm the transcription is correct</strong>
                                         <div class="small text-muted mt-1">By checking this, you're confirming this transcription accurately captures what was said. The system will proceed regardless of confidence score.</div>
                                     </label>
                                 </div>
@@ -807,9 +920,9 @@
 <!-- Chat Modal -->
 <div id="chatModal" class="modal fade" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content" style="background: linear-gradient(135deg, #0b1220 0%, #1a2332 100%); border: 1px solid rgba(59, 130, 246, 0.3);">
+        <div class="modal-content" style="background: linear-gradient(135deg, #04091a 0%, #0d1b2e 100%); border: 1px solid rgba(99, 102, 241, 0.3);">
             <!-- Chat Header -->
-            <div class="modal-header" style="border-bottom: 1px solid rgba(59, 130, 246, 0.2);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(99, 102, 241, 0.2);">
                 <div class="d-flex align-items-center" style="width: 100%;">
                     <div class="dev-avatar me-3" style="width: 56px; height: 56px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">
                         <span id="chatDevInitials">DY</span>
@@ -831,14 +944,51 @@
             </div>
             
             <!-- Chat Footer -->
-            <div style="border-top: 1px solid rgba(59, 130, 246, 0.2); padding: 1rem; display: flex; gap: 0.5rem;">
-                <input type="text" id="chatInput" class="form-control" 
-                       style="background: rgba(51, 65, 85, 0.5); border: 1px solid rgba(59, 130, 246, 0.3); color: #e2e8f0;" 
-                       placeholder="Type your message..." 
-                       onkeypress="handleChatKeyPress(event)">
-                <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none;" onclick="sendChatMessage()">
-                    <i class="bi bi-send-fill"></i>
-                </button>
+            <div style="border-top: 1px solid rgba(99, 102, 241, 0.2); padding: 1rem;">
+
+                <!-- Recording bar (hidden by default) -->
+                <div class="chat-voice-bar-modal" id="chatVoiceBar">
+                    <div class="modal-v-pulse"></div>
+                    <span style="flex:1">Recording…</span>
+                    <span id="chatVoiceTimer" style="font-variant-numeric:tabular-nums">0:00</span>
+                    <button class="btn btn-sm" style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.4);color:#f87171;border-radius:6px;padding:.2rem .6rem;" onclick="stopChatVoice()">Stop</button>
+                </div>
+
+                <!-- Processing bar (hidden by default) -->
+                <div class="chat-processing-modal" id="chatProcessingBar">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <span id="chatProcessingText">Processing…</span>
+                </div>
+
+                <!-- Translation preview (hidden by default) -->
+                <div class="chat-preview-modal" id="chatPreviewBox">
+                    <div class="preview-modal-jp">
+                        <div class="preview-modal-label">Japanese (original)</div>
+                        <div id="chatPreviewJp" style="color:#e2e8f0;font-size:.9rem"></div>
+                    </div>
+                    <div class="preview-modal-en">
+                        <div class="preview-modal-label">English (will be sent)</div>
+                        <div id="chatPreviewEn" style="color:#d1fae5;font-size:.9rem"></div>
+                    </div>
+                    <div class="preview-modal-actions">
+                        <button class="btn btn-sm btn-success flex-grow-1" onclick="sendChatTranslated()"><i class="bi bi-send-fill me-1"></i>Send</button>
+                        <button class="btn btn-sm" style="background:rgba(100,116,139,.3);color:#94a3b8;border:none;" onclick="cancelChatPreview()"><i class="bi bi-x"></i></button>
+                    </div>
+                </div>
+
+                <!-- Input row -->
+                <div id="chatInputRow" style="display:flex;gap:0.5rem;">
+                    <button class="chat-mic-btn-modal" id="chatMicBtn" onclick="toggleChatVoice()" title="Record in Japanese">
+                        <i class="bi bi-mic-fill"></i>
+                    </button>
+                    <input type="text" id="chatInput" class="form-control"
+                           style="background:rgba(51,65,85,.5);border:1px solid rgba(99,102,241,.3);color:#e2e8f0;"
+                           placeholder="Type or record in Japanese…"
+                           onkeypress="handleChatKeyPress(event)">
+                    <button class="btn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;" onclick="sendChatMessage()">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -849,6 +999,53 @@
 {% block extra_js %}
 <script src="/static/js/voice-recorder.js"></script>
 <script src="/static/js/ui-components.js"></script>
+<script>
+/* Upload page particle canvas */
+(function(){
+  const canvas = document.getElementById('upload-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  const N = 90, CONN = 155;
+  function resize(){
+    W = canvas.width  = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+  function Particle(){
+    this.x  = Math.random()*W;
+    this.y  = Math.random()*H;
+    this.vx = (Math.random()-.5)*.35;
+    this.vy = (Math.random()-.5)*.35;
+    this.r  = Math.random()*1.4+.7;
+    this.a  = Math.random()*.45+.18;
+  }
+  Particle.prototype.step = function(){
+    this.x += this.vx; this.y += this.vy;
+    if(this.x<0||this.x>W) this.vx*=-1;
+    if(this.y<0||this.y>H) this.vy*=-1;
+  };
+  function init(){ resize(); particles = Array.from({length:N}, ()=>new Particle()); }
+  function frame(){
+    ctx.clearRect(0,0,W,H);
+    for(let i=0;i<particles.length;i++){
+      const p=particles[i]; p.step();
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(129,140,248,'+p.a+')'; ctx.fill();
+      for(let j=i+1;j<particles.length;j++){
+        const q=particles[j], dx=p.x-q.x, dy=p.y-q.y, d=Math.sqrt(dx*dx+dy*dy);
+        if(d<CONN){
+          ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
+          ctx.strokeStyle='rgba(99,102,241,'+(0.13*(1-d/CONN))+')';
+          ctx.lineWidth=.6; ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  window.addEventListener('resize',()=>{resize();particles.forEach(p=>{p.x=Math.random()*W;p.y=Math.random()*H;});},{passive:true});
+  init(); frame();
+})();
+</script>
 <script>
 // Global variables
 let currentStep = 1;
@@ -904,23 +1101,23 @@ function displayConfidenceScore(confidence, qualityStatus, needsClarity) {
     if (needsClarity) {
         confidenceMessage.className = `confidence-message low`;
         confidenceMessage.innerHTML = `
-            <strong>🔍 Transcription Quality Below Target</strong><br>
+            <strong><i class="bi bi-search"></i> Transcription Quality Below Target</strong><br>
             The transcribed text has a quality score of ${percentage}%. Check the confirmation box below to override and proceed with this transcription.
         `;
     } else if (qualityStatus === 'high') {
         confidenceMessage.className = `confidence-message high`;
         confidenceMessage.innerHTML = `
-            <strong>✨ Excellent transcription quality!</strong> (${percentage}%) This transcription is accurate and ready for processing.
+            <strong><i class="bi bi-stars"></i> Excellent transcription quality!</strong> (${percentage}%) This transcription is accurate and ready for processing.
         `;
     } else if (qualityStatus === 'medium') {
         confidenceMessage.className = `confidence-message medium`;
         confidenceMessage.innerHTML = `
-            <strong>⚡ Good transcription quality</strong> (${percentage}%). Your transcription should work well, or check the confirmation box to proceed.
+            <strong><i class="bi bi-lightning-charge-fill"></i> Good transcription quality</strong> (${percentage}%). Your transcription should work well, or check the confirmation box to proceed.
         `;
     } else {
         confidenceMessage.className = `confidence-message low`;
         confidenceMessage.innerHTML = `
-            <strong>⚠️ Low transcription quality</strong> (${percentage}%). Please review the text above or check the confirmation box to proceed anyway.
+            <strong><i class="bi bi-exclamation-triangle-fill"></i> Low transcription quality</strong> (${percentage}%). Please review the text above or check the confirmation box to proceed anyway.
         `;
     }
 }
@@ -1154,7 +1351,7 @@ async function proceedToTranslation() {
             }
         }
     } else {
-        console.log('✓ Transcription confirmed by user - proceeding regardless of quality score');
+        console.log('<i class="bi bi-check-lg"></i> Transcription confirmed by user - proceeding regardless of quality score');
     }
     
     // Move to step 3 (processing)
@@ -1166,20 +1363,9 @@ async function proceedToTranslation() {
 
 // Step 3: Process ticket creation (poll backend for progress)
 async function processTicketCreation() {
-    // Quick check if already complete
-    try {
-        const quickCheck = await fetch(`/api/voice/status/${currentConversationId}`);
-        const quickData = await quickCheck.json();
-        
-        if (quickData.status === 'completed' && quickData.ticket && quickData.ticket.assigned_developer) {
-            console.log('✅ Processing already complete, showing results immediately');
-            showSuccessScreen(quickData);
-            return;
-        }
-    } catch (error) {
-        console.log('Quick check failed, proceeding with normal flow');
-    }
-    
+    // Reset all workflow steps to pending so they animate cleanly every time
+    for (let i = 1; i <= 4; i++) updateWorkflowStep(i, 'pending');
+
     const processingStates = [
         { 
             icon: 'lock-fill', 
@@ -1218,7 +1404,7 @@ async function processTicketCreation() {
             subtitle: 'Finding Best Match', 
             state: 'analyzing', 
             stepNum: 4,
-            checkStatus: (data) => data.ticket && data.ticket.assigned_developer
+            checkStatus: (data) => data.status === 'completed' || (data.ticket && data.ticket.assigned_developer)
         }
     ];
     
@@ -1240,6 +1426,12 @@ async function processTicketCreation() {
             if (data.status === 'failed') {
                 alert('Processing failed. Please try again.');
                 createNewTicket();
+                return;
+            }
+            
+            // Terminal completion shortcut: if backend is done, animate remaining steps then show result
+            if (data.status === 'completed' && data.ticket) {
+                await playRemainingStepsAndShowSuccess(processingStates, currentStateIndex, data);
                 return;
             }
             
@@ -1315,6 +1507,23 @@ function updateProcessingUI(state) {
     document.getElementById('processSubtitle').textContent = state.subtitle;
 }
 
+// Animate through all 4 steps with visible dwell time, then show success
+async function playRemainingStepsAndShowSuccess(processingStates, fromIndex, finalData) {
+    const stepDwell = 1500; // ms each step stays visible — always shown even if backend already done
+
+    for (let i = fromIndex; i < processingStates.length; i++) {
+        const state = processingStates[i];
+        updateProcessingUI(state);
+        if (state.stepNum) updateWorkflowStep(state.stepNum, 'active');
+        await sleep(stepDwell);
+        if (state.stepNum) updateWorkflowStep(state.stepNum, 'completed');
+    }
+
+    // Brief pause so last step's green tick is visible before transition
+    await sleep(600);
+    showSuccessScreen(finalData);
+}
+
 function updateWorkflowStep(stepNum, state) {
     const step = document.getElementById(`workflowStep${stepNum}`);
     if (!step) return;
@@ -1378,80 +1587,248 @@ function showSuccessScreen(data) {
     document.getElementById('detectedLanguage').textContent = 'Japanese';
     
     // Populate developer details
-    if (developer) {
-        const initials = developer.name ? developer.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'HY';
+    if (developer && developer.name) {
+        const initials = developer.name.split(' ').map(n => n[0]).join('').toUpperCase();
         document.getElementById('devInitials').textContent = initials;
         document.getElementById('devName').textContent = developer.name;
         document.getElementById('devExpertise').textContent = developer.expertise || developer.languages || 'Technical Expert';
-        
         // For chat modal
         document.getElementById('chatDevInitials').textContent = initials;
         document.getElementById('chatDevName').textContent = developer.name;
+    } else {
+        document.getElementById('devInitials').textContent = 'TM';
+        document.getElementById('devName').textContent = 'Team Member';
+        document.getElementById('devExpertise').textContent = 'Will be assigned shortly';
+        document.getElementById('chatDevInitials').textContent = 'TM';
+        document.getElementById('chatDevName').textContent = 'Support Team';
     }
     
     // Show step 4
     showStep(4);
 }
 
-// Chat functions
+// ── Chat state ──────────────────────────────────────────────────────────────────────────────────
+let chatVoiceRecorder = null;
+let chatVoiceTimerInt = null;
+let chatVoiceSeconds  = 0;
+let chatPendingTrans  = null; // { jpText, enText }
+let chatMsgList       = [];   // track bubbles for bilingual toggle
+
+// ── Open modal ──────────────────────────────────────────────────────────────────────────────
 function openChat() {
+    chatMsgList = [];
+    document.getElementById('chatMessages').innerHTML = '';
     const chatModal = new bootstrap.Modal(document.getElementById('chatModal'));
     chatModal.show();
-    
-    // Add welcome message
     addChatMessage('developer', 'Hello! I\'ve received your ticket and will start working on it right away. How can I assist you?', true);
 }
 
-function handleChatKeyPress(event) {
-    if (event.key === 'Enter') {
-        sendChatMessage();
-    }
+// ── Input row helpers ──────────────────────────────────────────────────────────────────────
+function setChatInputEnabled(on) {
+    const row = document.getElementById('chatInputRow');
+    row.style.opacity = on ? '1' : '0.45';
+    row.style.pointerEvents = on ? 'auto' : 'none';
 }
 
+// ── Keyboard enter ────────────────────────────────────────────────────────────────────────
+function handleChatKeyPress(event) {
+    if (event.key === 'Enter') sendChatMessage();
+}
+
+// ── Text send ───────────────────────────────────────────────────────────────────────────────
 function sendChatMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
-    
     if (!message) return;
-    
     addChatMessage('user', message);
     input.value = '';
-    
-    // Simulate developer response (in production, this would be real-time)
+    simulateChatDevResponse();
+}
+
+// ── Voice recording ───────────────────────────────────────────────────────────────────────────
+function toggleChatVoice() {
+    if (chatVoiceRecorder && chatVoiceRecorder.isCurrentlyRecording()) {
+        stopChatVoice();
+        return;
+    }
+    chatVoiceRecorder = new VoiceRecorderService();
+    chatVoiceRecorder.startRecording().then(started => {
+        if (!started) {
+            alert('Microphone access denied.');
+            chatVoiceRecorder = null;
+            return;
+        }
+        document.getElementById('chatVoiceBar').style.display = 'flex';
+        setChatInputEnabled(false);
+        document.getElementById('chatMicBtn').classList.add('recording');
+        chatVoiceSeconds = 0;
+        document.getElementById('chatVoiceTimer').textContent = '0:00';
+        chatVoiceTimerInt = setInterval(() => {
+            chatVoiceSeconds++;
+            const m = Math.floor(chatVoiceSeconds / 60);
+            const s = chatVoiceSeconds % 60;
+            document.getElementById('chatVoiceTimer').textContent =
+                `${m}:${s.toString().padStart(2,'0')}`;
+        }, 1000);
+    });
+}
+
+async function stopChatVoice() {
+    if (!chatVoiceRecorder) return;
+    clearInterval(chatVoiceTimerInt);
+    document.getElementById('chatVoiceBar').style.display = 'none';
+    document.getElementById('chatMicBtn').classList.remove('recording');
+
+    const result = await chatVoiceRecorder.stopRecording();
+    chatVoiceRecorder = null;
+
+    if (!result || !result.blob) { setChatInputEnabled(true); return; }
+
+    showChatProc('Uploading audio…');
+    setChatInputEnabled(false);
+    try {
+        const fd = new FormData();
+        fd.append('audio', result.blob, 'chat-voice.webm');
+        const upResp = await fetch('/api/voice/upload', { method: 'POST', body: fd });
+        if (!upResp.ok) throw new Error('upload failed');
+        const { conversation_id } = await upResp.json();
+
+        showChatProc('Transcribing & translating…');
+        const st = await pollChatVoice(conversation_id);
+
+        hideChatProc();
+        setChatInputEnabled(true);
+        showChatPreview(
+            st.japanese_transcript  || '',
+            st.english_translation  || st.japanese_transcript || ''
+        );
+    } catch(e) {
+        console.error('chat voice error', e);
+        hideChatProc();
+        setChatInputEnabled(true);
+        alert('Could not process audio. Please try again.');
+    }
+}
+
+async function pollChatVoice(convId, max = 30) {
+    for (let i = 0; i < max; i++) {
+        await new Promise(r => setTimeout(r, 1500));
+        try {
+            const r = await fetch(`/api/voice/status/${convId}`);
+            if (!r.ok) continue;
+            const d = await r.json();
+            if (d.status === 'completed' || d.status === 'error') return d;
+        } catch(_){}
+    }
+    throw new Error('timed out');
+}
+
+function showChatProc(txt) {
+    document.getElementById('chatProcessingText').textContent = txt;
+    document.getElementById('chatProcessingBar').style.display = 'flex';
+}
+function hideChatProc() {
+    document.getElementById('chatProcessingBar').style.display = 'none';
+}
+
+// ── Translation preview ──────────────────────────────────────────────────────────────────────
+function showChatPreview(jpText, enText) {
+    chatPendingTrans = { jpText, enText };
+    document.getElementById('chatPreviewJp').textContent = jpText || '(empty)';
+    document.getElementById('chatPreviewEn').textContent = enText || '(empty)';
+    document.getElementById('chatPreviewBox').style.display = 'block';
+}
+function cancelChatPreview() {
+    chatPendingTrans = null;
+    document.getElementById('chatPreviewBox').style.display = 'none';
+}
+function sendChatTranslated() {
+    if (!chatPendingTrans) return;
+    const { jpText, enText } = chatPendingTrans;
+    chatPendingTrans = null;
+    document.getElementById('chatPreviewBox').style.display = 'none';
+    addChatMessage('user', enText, false, jpText);
+    simulateChatDevResponse();
+}
+
+// ── Simulated bilingual dev response ─────────────────────────────────────────────────────────
+function simulateChatDevResponse() {
     setTimeout(() => {
-        addChatMessage('developer', 'Thanks for the additional info. I\'m looking into it now.');
+        const responses = [
+            "I'm looking into this issue now.",
+            "Can you provide more details about when this error occurs?",
+            "I've identified the root cause and I'm working on a fix.",
+            "The issue has been resolved. Please verify on your end.",
+            "I'll need to escalate this to the senior team."
+        ];
+        const text = responses[Math.floor(Math.random() * responses.length)];
+        addChatMessage('developer', text);
     }, 2000);
 }
 
-function addChatMessage(sender, text, isWelcome = false) {
+// ── Language toggle on dev bubbles ──────────────────────────────────────────────────────────────
+async function toggleChatLang(idx, lang) {
+    const msg = chatMsgList[idx];
+    if (!msg || lang === msg.currentLang) return;
+
+    if (lang === 'ja' && !msg.textJa) {
+        const bubbleText = document.querySelector(`[data-chat-idx="${idx}"] .bubble-body`);
+        if (bubbleText) bubbleText.textContent = 'Translating…';
+        try {
+            const resp = await fetch('/api/voice/translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: msg.textEn, target_lang: 'ja' })
+            });
+            const data = await resp.json();
+            msg.textJa = data.translated_text || msg.textEn;
+        } catch(e) { msg.textJa = msg.textEn; }
+    }
+
+    msg.currentLang = lang;
+    const bubble = document.querySelector(`[data-chat-idx="${idx}"]`);
+    if (!bubble) return;
+    bubble.querySelector('.bubble-body').textContent =
+        lang === 'ja' ? msg.textJa : msg.textEn;
+    bubble.querySelectorAll('.chat-lang-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.lang === lang);
+    });
+}
+
+// ── Add message to #chatMessages ───────────────────────────────────────────────────────────────
+function addChatMessage(sender, text, isWelcome = false, jpOriginal = null) {
     const messagesDiv = document.getElementById('chatMessages');
     const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    
+
     if (sender === 'user') {
-        // User message (right side, blue)
-        const messageHTML = `
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-                <div style="background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 1rem; padding: 0.75rem 1rem; max-width: 70%; color: white;">
-                    <div style="font-size: 0.95rem; line-height: 1.4;">${text}</div>
-                    <small style="color: rgba(255, 255, 255, 0.7); font-size: 0.8rem; display: block; margin-top: 0.25rem;">${time}</small>
+        const esc = t => String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const html = `
+            <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+                <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:1rem;padding:.75rem 1rem;max-width:70%;color:white">
+                    <div style="font-size:.95rem;line-height:1.4">${esc(text)}</div>
+                    ${jpOriginal ? `<div class="chat-jp-note"><i class="bi bi-mic me-1"></i>${esc(jpOriginal)}</div>` : ''}
+                    <small style="color:rgba(255,255,255,.7);font-size:.8rem;display:block;margin-top:.25rem">${time}</small>
                 </div>
-            </div>
-        `;
-        messagesDiv.innerHTML += messageHTML;
+            </div>`;
+        messagesDiv.innerHTML += html;
     } else {
-        // Developer message (left side, gray)
-        const messageHTML = `
-            <div style="display: flex; justify-content: flex-start; margin-bottom: 1rem;">
-                <div style="background: rgba(71, 85, 105, 0.6); border-radius: 1rem; padding: 0.75rem 1rem; max-width: 70%; color: #e2e8f0; border: 1px solid rgba(59, 130, 246, 0.2);">
-                    <div style="font-size: 0.95rem; line-height: 1.4;">${text}</div>
-                    <small style="color: rgba(226, 232, 240, 0.6); font-size: 0.8rem; display: block; margin-top: 0.25rem;">${time}</small>
+        const idx = chatMsgList.length;
+        chatMsgList.push({ textEn: text, textJa: null, currentLang: 'en' });
+        const esc = t => String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const html = `
+            <div style="display:flex;justify-content:flex-start;margin-bottom:1rem" data-chat-idx="${idx}">
+                <div style="background:rgba(71,85,105,.6);border-radius:1rem;padding:.75rem 1rem;max-width:70%;color:#e2e8f0;border:1px solid rgba(99,102,241,.2)">
+                    <div class="bubble-body" style="font-size:.95rem;line-height:1.4">${esc(text)}</div>
+                    <small style="color:rgba(226,232,240,.6);font-size:.8rem;display:block;margin-top:.25rem">${time}</small>
+                    <div class="chat-lang-bar">
+                        <button class="chat-lang-btn active" data-lang="en" onclick="toggleChatLang(${idx},'en')">&#127468;&#127463; EN</button>
+                        <button class="chat-lang-btn" data-lang="ja" onclick="toggleChatLang(${idx},'ja')">&#127471;&#127462; JA</button>
+                    </div>
                 </div>
-            </div>
-        `;
-        messagesDiv.innerHTML += messageHTML;
+            </div>`;
+        messagesDiv.innerHTML += html;
     }
-    
-    // Auto scroll to bottom
+
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
@@ -1547,3 +1924,5 @@ function initializeDragDrop() {
 }
 </script>
 {% endblock %}
+
+

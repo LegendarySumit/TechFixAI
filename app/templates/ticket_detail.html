@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Ticket Details - TechFixAI{% endblock %}
 
@@ -29,8 +29,8 @@
 }
 
 .chat-section .card-header {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
-    border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+    border-bottom: 2px solid rgba(99, 102, 241, 0.2);
     padding: 1.5rem;
 }
 
@@ -61,19 +61,19 @@
 }
 
 .col-lg-4::-webkit-scrollbar-thumb {
-    background: rgba(59, 130, 246, 0.3);
+    background: rgba(99, 102, 241, 0.3);
     border-radius: 3px;
 }
 
 .col-lg-4::-webkit-scrollbar-thumb:hover {
-    background: rgba(59, 130, 246, 0.5);
+    background: rgba(99, 102, 241, 0.5);
 }
 
 /* Chat container styling */
 .chat-container {
     height: 280px;
     overflow-y: auto;
-    background: linear-gradient(135deg, #0f172a 0%, #1a2332 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #0d1b2e 100%);
     border-radius: 12px;
     padding: 1.5rem;
     display: flex;
@@ -106,15 +106,15 @@
 }
 
 .chat-bubble.developer {
-    background: rgba(59, 130, 246, 0.15);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
     color: #e5e7eb;
     border-radius: 12px 12px 12px 2px;
 }
 
 .chat-bubble.user {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(59, 130, 246, 0.25));
-    border: 1px solid rgba(59, 130, 246, 0.5);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(99, 102, 241, 0.25));
+    border: 1px solid rgba(99, 102, 241, 0.5);
     color: #f0f9ff;
     border-radius: 12px 12px 2px 12px;
 }
@@ -142,8 +142,8 @@
     padding-bottom: 1.25rem;
     padding-left: 1.5rem;
     padding-right: 1.5rem;
-    border-top: 2px solid rgba(59, 130, 246, 0.2);
-    background: linear-gradient(135deg, #1a2332 0%, #0f172a 100%);
+    border-top: 2px solid rgba(99, 102, 241, 0.2);
+    background: linear-gradient(135deg, #0d1b2e 0%, #0f172a 100%);
     border-radius: 0 0 12px 12px;
 }
 
@@ -155,7 +155,7 @@
 
 .chat-input-wrapper .form-control {
     background: rgba(30, 41, 59, 0.6);
-    border: 1.5px solid rgba(59, 130, 246, 0.3);
+    border: 1.5px solid rgba(99, 102, 241, 0.3);
     color: #e5e7eb;
     border-radius: 8px;
     padding: 0.75rem 1rem;
@@ -168,23 +168,23 @@
 
 .chat-input-wrapper .form-control:focus {
     background: rgba(30, 41, 59, 0.9);
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
     outline: none;
 }
 
 .chat-input-wrapper .btn {
     border-radius: 8px;
     padding: 0.75rem 1.25rem;
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
     border: none;
     transition: all 0.2s ease;
 }
 
 .chat-input-wrapper .btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    background: linear-gradient(135deg, #4f46e5, #1d4ed8);
 }
 
 .chat-container::-webkit-scrollbar {
@@ -192,18 +192,18 @@
 }
 
 .chat-container::-webkit-scrollbar-track {
-    background: rgba(59, 130, 246, 0.05);
+    background: rgba(99, 102, 241, 0.05);
     border-radius: 4px;
 }
 
 .chat-container::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, rgba(59, 130, 246, 0.5), rgba(16, 185, 129, 0.4));
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.5), rgba(16, 185, 129, 0.4));
     border-radius: 4px;
     transition: background 0.2s ease;
 }
 
 .chat-container::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, rgba(59, 130, 246, 0.7), rgba(16, 185, 129, 0.6));
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.7), rgba(16, 185, 129, 0.6));
 }
 
 .developer-online-indicator {
@@ -259,6 +259,141 @@
     .status-actions-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* ── Voice chat mic button ───────────────────────────── */
+.chat-input-wrapper .chat-mic-btn {
+    background: rgba(99, 102, 241, 0.12) !important;
+    border: 1.5px solid rgba(99, 102, 241, 0.35) !important;
+    color: #818cf8;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+.chat-input-wrapper .chat-mic-btn:hover {
+    background: rgba(99, 102, 241, 0.22) !important;
+    color: #a5b4fc;
+    transform: translateY(-1px);
+}
+.chat-input-wrapper .chat-mic-btn.recording {
+    background: rgba(239, 68, 68, 0.18) !important;
+    border-color: rgba(239, 68, 68, 0.5) !important;
+    color: #f87171;
+    animation: mic-pulse 1.2s ease-in-out infinite;
+}
+@keyframes mic-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    50%       { box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
+}
+
+/* ── Voice recording bar ─────────────────────────────── */
+.chat-voice-bar {
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.45rem 0.875rem;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.07);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    margin-bottom: 0.75rem;
+}
+.voice-pulse-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #ef4444;
+    flex-shrink: 0;
+    animation: v-dot 0.9s ease-in-out infinite alternate;
+}
+@keyframes v-dot {
+    from { opacity: 1; transform: scale(1); }
+    to   { opacity: 0.25; transform: scale(0.65); }
+}
+
+/* ── Processing bar ──────────────────────────────────── */
+.chat-processing {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.875rem;
+    border-radius: 8px;
+    background: rgba(99, 102, 241, 0.07);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    margin-bottom: 0.75rem;
+    font-size: 0.82rem;
+    color: #818cf8;
+}
+.chat-processing .spinner-border {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-width: 2px;
+}
+
+/* ── Translation preview ─────────────────────────────── */
+.chat-translation-preview {
+    margin-bottom: 0.75rem;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+.preview-jp-block {
+    padding: 0.6rem 0.875rem;
+    background: rgba(99, 102, 241, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.preview-en-block {
+    padding: 0.6rem 0.875rem;
+    background: rgba(16, 185, 129, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.preview-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #6b7280;
+    margin-bottom: 0.2rem;
+}
+.preview-actions {
+    padding: 0.5rem 0.875rem;
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(15, 23, 42, 0.6);
+}
+
+/* ── Bilingual toggle buttons ────────────────────────── */
+.lang-toggle-bar {
+    display: flex;
+    gap: 0.3rem;
+    margin-top: 0.45rem;
+}
+.lang-btn {
+    font-size: 0.68rem;
+    padding: 0.18rem 0.55rem;
+    border-radius: 20px;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1.5;
+}
+.lang-btn.active {
+    background: rgba(99, 102, 241, 0.22);
+    border-color: rgba(99, 102, 241, 0.5);
+    color: #a5b4fc;
+}
+.lang-btn:hover:not(.active) {
+    background: rgba(99, 102, 241, 0.1);
+    color: #e5e7eb;
+}
+
+/* ── User bubble voice note ──────────────────────────── */
+.jp-original-note {
+    font-size: 0.72rem;
+    color: #6b7280;
+    margin-top: 0.3rem;
+    font-style: italic;
+    line-height: 1.4;
 }
 </style>
 {% endblock %}
@@ -372,9 +507,51 @@
 
                 <!-- Chat Input -->
                 <div class="chat-input-wrapper">
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="chat-input" 
-                               placeholder="Type your message..." 
+                    <!-- Voice Recording Bar (shown when mic is active) -->
+                    <div id="chat-voice-bar" class="chat-voice-bar" style="display:none">
+                        <div class="voice-pulse-dot"></div>
+                        <span class="flex-grow-1 small fw-semibold" style="color:#f87171">Recording…</span>
+                        <span id="chat-voice-timer" class="text-muted small me-1">0:00</span>
+                        <button class="btn btn-sm btn-danger" onclick="stopChatRecording()">
+                            <i class="bi bi-stop-fill"></i> Stop
+                        </button>
+                    </div>
+
+                    <!-- Processing status bar (shown while uploading / transcribing) -->
+                    <div id="chat-processing-bar" class="chat-processing" style="display:none">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <span id="chat-processing-text">Processing audio…</span>
+                    </div>
+
+                    <!-- Translation preview (shown after transcription; user confirms before sending) -->
+                    <div id="chat-translation-preview" class="chat-translation-preview" style="display:none">
+                        <div class="preview-jp-block">
+                            <div class="preview-label">🎌 Japanese (original)</div>
+                            <div id="preview-jp" class="text-light small"></div>
+                        </div>
+                        <div class="preview-en-block">
+                            <div class="preview-label">🇬🇧 English (will be sent)</div>
+                            <div id="preview-en" class="text-light small fw-medium"></div>
+                        </div>
+                        <div class="preview-actions">
+                            <button class="btn btn-sm btn-primary flex-grow-1" onclick="sendTranslatedMessage()">
+                                <i class="bi bi-send-fill me-1"></i>Send
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="cancelPreview()">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main input row -->
+                    <div class="input-group" id="chat-input-row">
+                        <button class="chat-mic-btn" id="chat-mic-btn"
+                                onclick="toggleChatRecording()"
+                                title="Speak in Japanese — message will be sent in English">
+                            <i class="bi bi-mic-fill" id="chat-mic-icon"></i>
+                        </button>
+                        <input type="text" class="form-control" id="chat-input"
+                               placeholder="Type or 🎤 speak in Japanese…"
                                onkeypress="if(event.key==='Enter') sendMessage()">
                         <button class="btn btn-primary" onclick="sendMessage()">
                             <i class="bi bi-send-fill"></i>
@@ -400,10 +577,18 @@
 </div>
 
 <script src="/static/js/ui-components.js"></script>
+<script src="/static/js/voice-recorder.js"></script>
 <script>
+// ── State ────────────────────────────────────────────────────────────────
 let currentTicketNumber = window.location.pathname.split('/').pop();
 let chatMessages = [];
 let developerInfo = null;
+
+// Voice recording state
+let chatVoiceRecorder = null;
+let chatVoiceTimerInterval = null;
+let chatVoiceSeconds = 0;
+let pendingTranslation = null;
 
 async function loadTicketDetails() {
     try {
@@ -458,60 +643,79 @@ function updateDeveloperCard(developer) {
 function sendMessage() {
     const input = document.getElementById('chat-input');
     const message = input.value.trim();
-    
     if (!message) return;
-    
-    // Add user message
+
     chatMessages.push({
         sender: 'You',
-        message: message,
+        message,
         timestamp: new Date().toISOString(),
         isUser: true
     });
-    
+
     renderChatMessages();
     input.value = '';
-    
-    // Simulate developer response (replace with actual API call)
-    setTimeout(() => {
-        const responses = [
-            "I'm looking into this issue now.",
-            "Can you provide more details about when this error occurs?",
-            "I've identified the root cause and working on a fix.",
-            "The issue has been resolved. Please verify on your end.",
-            "I'll need to escalate this to the senior team."
-        ];
-        
-        chatMessages.push({
-            sender: developerInfo ? developerInfo.name : 'Developer',
-            message: responses[Math.floor(Math.random() * responses.length)],
-            timestamp: new Date().toISOString(),
-            isUser: false
-        });
-        
-        renderChatMessages();
-    }, 2000);
+    simulateDeveloperResponse();
 }
 
 function renderChatMessages() {
     const container = document.getElementById('chat-messages');
-    
+
     if (chatMessages.length === 0) {
         container.innerHTML = `
             <div class="text-center text-muted py-5">
                 <i class="bi bi-chat-square-text display-4"></i>
                 <p class="mt-2">Start a conversation with the developer</p>
-            </div>
-        `;
+            </div>`;
         return;
     }
-    
-    container.innerHTML = chatMessages.map(msg => 
-        window.createMessageBubble(msg.message, msg.sender, msg.timestamp, msg.isUser)
-    ).join('');
-    
-    // Scroll to bottom
+
+    container.innerHTML = chatMessages.map((msg, i) => {
+        if (msg.isUser)    return renderUserBubble(msg, i);
+        if (msg.bilingual) return renderBilingualDevBubble(msg, i);
+        return window.createMessageBubble(msg.message, msg.sender, msg.timestamp, false);
+    }).join('');
+
     container.scrollTop = container.scrollHeight;
+}
+
+function renderUserBubble(msg, i) {
+    const timeStr = formatTime(msg.timestamp);
+    const avatar = (msg.sender || 'Y').charAt(0).toUpperCase();
+    return `
+        <div class="chat-message user" data-msg-index="${i}">
+            <div class="chat-bubble user">
+                <p class="mb-1" style="line-height:1.5">${escHtml(msg.message)}</p>
+                ${msg.fromVoice && msg.originalJa
+                    ? `<div class="jp-original-note"><i class="bi bi-mic me-1"></i>${escHtml(msg.originalJa)}</div>`
+                    : ''}
+                ${timeStr ? `<div class="chat-timestamp">${timeStr}</div>` : ''}
+            </div>
+            <div class="rounded-circle bg-info d-flex align-items-center justify-content-center
+                        text-white fw-bold ms-2"
+                 style="width:28px;height:28px;flex-shrink:0;font-size:.75rem">${avatar}</div>
+        </div>`;
+}
+
+function renderBilingualDevBubble(msg, i) {
+    const timeStr = formatTime(msg.timestamp);
+    const avatar  = (msg.sender || 'D').charAt(0).toUpperCase();
+    const displayText = (msg.currentLang === 'ja' && msg.messageJa) ? msg.messageJa : msg.message;
+    const enActive = msg.currentLang === 'en' ? 'active' : '';
+    const jaActive = msg.currentLang === 'ja' ? 'active' : '';
+    return `
+        <div class="chat-message developer" data-msg-index="${i}">
+            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center
+                        text-white fw-bold me-2"
+                 style="width:28px;height:28px;flex-shrink:0;font-size:.75rem">${avatar}</div>
+            <div class="chat-bubble developer">
+                <p class="mb-1 bubble-text" style="line-height:1.5">${escHtml(displayText)}</p>
+                ${timeStr ? `<div class="chat-timestamp">${timeStr}</div>` : ''}
+                <div class="lang-toggle-bar">
+                    <button class="lang-btn ${enActive}" onclick="toggleMessageLang(${i},'en')">&#127468;&#127463; EN</button>
+                    <button class="lang-btn ${jaActive}" onclick="toggleMessageLang(${i},'ja')">&#127471;&#127462; JA</button>
+                </div>
+            </div>
+        </div>`;
 }
 
 async function updateTicketStatus(newStatus) {
@@ -521,22 +725,17 @@ async function updateTicketStatus(newStatus) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: newStatus })
         });
-        
+
         if (response.ok) {
             const data = await response.json();
-            
             if (data.will_delete) {
                 let countdown = data.delete_delay;
-                const message = `✓ Ticket status updated to ${newStatus}!\n\nTicket and associated audio will be deleted in ${countdown} seconds...`;
-                alert(message);
-                
-                // Show countdown and redirect
+                alert(`Ticket status updated to ${newStatus}!
+
+Ticket and audio will be deleted in ${countdown} seconds…`);
                 const interval = setInterval(() => {
                     countdown--;
-                    if (countdown <= 0) {
-                        clearInterval(interval);
-                        window.location.href = '/';
-                    }
+                    if (countdown <= 0) { clearInterval(interval); window.location.href = '/'; }
                 }, 1000);
             } else {
                 alert(`Ticket status updated to: ${newStatus}`);
@@ -552,16 +751,194 @@ async function updateTicketStatus(newStatus) {
 }
 
 function getPriorityColor(priority) {
-    const colors = {
-        'low': 'success',
-        'medium': 'info',
-        'high': 'warning',
-        'critical': 'danger'
-    };
-    return colors[priority] || 'secondary';
+    return { low: 'success', medium: 'info', high: 'warning', critical: 'danger' }[priority] || 'secondary';
 }
 
-// Load ticket details on page load
+// ── Voice recording ───────────────────────────────────────────────────────────────────
+async function toggleChatRecording() {
+    if (chatVoiceRecorder && chatVoiceRecorder.isCurrentlyRecording()) {
+        stopChatRecording();
+        return;
+    }
+
+    chatVoiceRecorder = new VoiceRecorderService();
+    const started = await chatVoiceRecorder.startRecording();
+    if (!started) {
+        alert('Microphone access denied. Please allow microphone access and try again.');
+        chatVoiceRecorder = null;
+        return;
+    }
+
+    document.getElementById('chat-voice-bar').style.display = 'flex';
+    setInputRowEnabled(false);
+    document.getElementById('chat-mic-btn').classList.add('recording');
+
+    chatVoiceSeconds = 0;
+    document.getElementById('chat-voice-timer').textContent = '0:00';
+    chatVoiceTimerInterval = setInterval(() => {
+        chatVoiceSeconds++;
+        const m = Math.floor(chatVoiceSeconds / 60);
+        const s = chatVoiceSeconds % 60;
+        document.getElementById('chat-voice-timer').textContent =
+            `${m}:${s.toString().padStart(2, '0')}`;
+    }, 1000);
+}
+
+async function stopChatRecording() {
+    if (!chatVoiceRecorder) return;
+
+    clearInterval(chatVoiceTimerInterval);
+    document.getElementById('chat-voice-bar').style.display = 'none';
+    document.getElementById('chat-mic-btn').classList.remove('recording');
+
+    const result = await chatVoiceRecorder.stopRecording();
+    chatVoiceRecorder = null;
+
+    if (!result || !result.blob) { setInputRowEnabled(true); return; }
+
+    showChatProcessing('Uploading audio…');
+    setInputRowEnabled(false);
+
+    try {
+        const formData = new FormData();
+        formData.append('audio', result.blob, 'chat-voice.webm');
+        const uploadResp = await fetch('/api/voice/upload', { method: 'POST', body: formData });
+        if (!uploadResp.ok) throw new Error(`Upload failed: ${uploadResp.status}`);
+        const { conversation_id } = await uploadResp.json();
+
+        showChatProcessing('Transcribing & translating…');
+        const statusData = await pollChatVoiceStatus(conversation_id);
+
+        hideChatProcessing();
+        setInputRowEnabled(true);
+        showTranslationPreview(
+            statusData.japanese_transcript || '',
+            statusData.english_translation || statusData.japanese_transcript || ''
+        );
+    } catch (err) {
+        console.error('Voice chat error:', err);
+        hideChatProcessing();
+        setInputRowEnabled(true);
+        alert('Failed to process audio. Please try again or type your message.');
+    }
+}
+
+async function pollChatVoiceStatus(convId, maxAttempts = 30) {
+    for (let i = 0; i < maxAttempts; i++) {
+        await new Promise(r => setTimeout(r, 1500));
+        try {
+            const resp = await fetch(`/api/voice/status/${convId}`);
+            if (!resp.ok) continue;
+            const data = await resp.json();
+            if (data.status === 'completed' || data.status === 'error') return data;
+        } catch (_) { /* retry */ }
+    }
+    throw new Error('Transcription timed out');
+}
+
+function showChatProcessing(text) {
+    document.getElementById('chat-processing-text').textContent = text;
+    document.getElementById('chat-processing-bar').style.display = 'flex';
+}
+function hideChatProcessing() {
+    document.getElementById('chat-processing-bar').style.display = 'none';
+}
+function setInputRowEnabled(enabled) {
+    const row = document.getElementById('chat-input-row');
+    row.style.opacity = enabled ? '1' : '0.45';
+    row.style.pointerEvents = enabled ? 'auto' : 'none';
+}
+
+// ── Translation preview ───────────────────────────────────────────────────────────────────
+function showTranslationPreview(jpText, enText) {
+    pendingTranslation = { jpText, enText };
+    document.getElementById('preview-jp').textContent = jpText || '(empty)';
+    document.getElementById('preview-en').textContent = enText || '(empty)';
+    document.getElementById('chat-translation-preview').style.display = 'block';
+}
+function cancelPreview() {
+    pendingTranslation = null;
+    document.getElementById('chat-translation-preview').style.display = 'none';
+}
+function sendTranslatedMessage() {
+    if (!pendingTranslation) return;
+    const { jpText, enText } = pendingTranslation;
+    pendingTranslation = null;
+    document.getElementById('chat-translation-preview').style.display = 'none';
+
+    chatMessages.push({
+        sender: 'You',
+        message: enText,
+        originalJa: jpText,
+        timestamp: new Date().toISOString(),
+        isUser: true,
+        fromVoice: true
+    });
+
+    renderChatMessages();
+    simulateDeveloperResponse();
+}
+
+// ── Simulated bilingual developer response ────────────────────────────────────────────────────────
+function simulateDeveloperResponse() {
+    setTimeout(() => {
+        const responses = [
+            "I'm looking into this issue now.",
+            "Can you provide more details about when this error occurs?",
+            "I've identified the root cause and I'm working on a fix.",
+            "The issue has been resolved. Please verify on your end.",
+            "I'll need to escalate this to the senior team."
+        ];
+        chatMessages.push({
+            sender: developerInfo ? developerInfo.name : 'Developer',
+            message: responses[Math.floor(Math.random() * responses.length)],
+            messageJa: null,
+            timestamp: new Date().toISOString(),
+            isUser: false,
+            bilingual: true,
+            currentLang: 'en'
+        });
+        renderChatMessages();
+    }, 2000);
+}
+
+// ── Language toggle (EN / JA) on developer bubbles ───────────────────────────────────────────────────
+async function toggleMessageLang(index, lang) {
+    const msg = chatMessages[index];
+    if (!msg || lang === msg.currentLang) return;
+
+    if (lang === 'ja' && !msg.messageJa) {
+        const el = document.querySelector(`[data-msg-index="${index}"] .bubble-text`);
+        if (el) el.textContent = 'Translating…';
+        try {
+            const resp = await fetch('/api/voice/translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: msg.message, target_lang: 'ja' })
+            });
+            const data = await resp.json();
+            msg.messageJa = data.translated_text || msg.message;
+        } catch (e) {
+            msg.messageJa = msg.message;
+        }
+    }
+
+    msg.currentLang = lang;
+    renderChatMessages();
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────────────────────
+function formatTime(ts) {
+    return ts ? new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+}
+function escHtml(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────────────────────
 loadTicketDetails();
 </script>
 {% endblock %}

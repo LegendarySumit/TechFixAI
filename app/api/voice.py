@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, BackgroundTasks
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -27,16 +28,19 @@ router = APIRouter()
 async def process_voice_pipeline(
     conversation_id: int,
     audio_file_path: str,
-    db: Session
 ):
     """
     Background task: The Golden Path.
+    Background tasks must NOT share the request's DB session (it is closed
+    by the time the task runs).  We open a fresh session here instead.
     
     1. Groq STT → Japanese text
     2. Groq Translation → English text
     3. Ticket generation
     4. Developer assignment
     """
+    from app.db.session import SessionLocal
+    db = SessionLocal()
     try:
         conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
         if not conversation:
@@ -92,9 +96,14 @@ async def process_voice_pipeline(
         
     except Exception as e:
         print(f"❌ Pipeline error: {str(e)}\n")
-        conversation.status = ConversationStatus.FAILED
-        db.commit()
+        try:
+            conversation.status = ConversationStatus.FAILED
+            db.commit()
+        except Exception:
+            db.rollback()
         raise e
+    finally:
+        db.close()
 
 
 @router.post("/upload")
@@ -155,8 +164,8 @@ async def upload_voice(
         
         image_content = await image.read()
         image_size_mb = len(image_content) / (1024 * 1024)
-        if image_size_mb > 10:  # Max 10MB for images
-            raise HTTPException(status_code=400, detail="Image too large. Max size: 10MB")
+        if image_size_mb > settings.MAX_AUDIO_SIZE_MB:  # reuse same cap as audio
+            raise HTTPException(status_code=400, detail=f"Image too large. Max size: {settings.MAX_AUDIO_SIZE_MB}MB")
         
         img_extension = image.filename.split(".")[-1] if "." in image.filename else "png"
         image_filename = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}.{img_extension}"
@@ -195,12 +204,11 @@ async def upload_voice(
         details={"audio_format": audio.content_type, "file_size_mb": file_size_mb}
     )
     
-    # Start background processing
+    # Start background processing (fresh DB session opened inside the task)
     background_tasks.add_task(
         process_voice_pipeline,
         conversation.id,
         audio_file_path,
-        db
     )
     
     return {
@@ -270,3 +278,33 @@ async def get_voice_status(
         }
     
     return response
+
+
+# ── Translation endpoint ──────────────────────────────────────────────────────
+
+class TranslateRequest(BaseModel):
+    text: str
+    target_lang: str = "ja"  # "ja" = English→Japanese, "en" = Japanese→English
+
+
+@router.post("/translate")
+async def translate_text(payload: TranslateRequest):
+    """
+    Translate text between English and Japanese.
+    - target_lang="en": Japanese → English
+    - target_lang="ja": English → Japanese
+    """
+    if not payload.text.strip():
+        raise HTTPException(status_code=400, detail="text cannot be empty")
+
+    if payload.target_lang == "en":
+        result = await translation_service.translate_technical_text(payload.text)
+    else:  # "ja" or default
+        result = await translation_service.translate_to_japanese(payload.text)
+
+    return {
+        "translated_text": result["translated_text"],
+        "original_text": result["original_text"],
+        "method": result["method"],
+        "target_lang": payload.target_lang
+    }

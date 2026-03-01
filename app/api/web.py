@@ -25,7 +25,15 @@ async def home(request: Request):
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     """Login page"""
-    return templates.TemplateResponse("login.html", {"request": request})
+    error_map = {
+        "oauth_not_configured": "Google OAuth is not configured yet. Use email/password below.",
+        "google_denied": "Google sign-in was cancelled.",
+        "oauth_failed": "Google sign-in failed. Please try again.",
+        "no_profile": "Could not retrieve your Google profile. Please try again.",
+        "no_email": "Your Google account has no verified email.",
+    }
+    error = error_map.get(request.query_params.get("error", ""), "")
+    return templates.TemplateResponse("login.html", {"request": request, "error_message": error})
 
 
 @router.post("/login", response_class=HTMLResponse)
@@ -69,7 +77,7 @@ async def login_submit(
     db.commit()
     
     # Create response and set session cookie
-    response = RedirectResponse(url="/upload", status_code=303)
+    response = RedirectResponse(url="/dashboard", status_code=303)
     
     # Simple session cookie (in production, use proper JWT or session management)
     max_age = 30 * 24 * 60 * 60 if remember else None  # 30 days if remember me
@@ -99,10 +107,8 @@ async def signup_submit(
     form_data = await request.form()
     
     email = form_data.get("email", "").strip()
-    username = form_data.get("username", "").strip()
     full_name = form_data.get("full_name", "").strip()
     password = form_data.get("password", "")
-    confirm_password = form_data.get("confirm_password", "")
     terms = form_data.get("terms")
     
     # Validate input
@@ -113,11 +119,6 @@ async def signup_submit(
     elif "@" not in email or "." not in email:
         errors.append("Please enter a valid email address")
     
-    if not username:
-        errors.append("Username is required")
-    elif len(username) < 3:
-        errors.append("Username must be at least 3 characters")
-    
     if not full_name:
         errors.append("Full name is required")
     
@@ -126,33 +127,27 @@ async def signup_submit(
     elif len(password) < 8:
         errors.append("Password must be at least 8 characters")
     
-    if password != confirm_password:
-        errors.append("Passwords do not match")
-    
     if not terms:
-        errors.append("You must agree to the terms and conditions")
+        errors.append("You must agree to the terms of service")
     
-    # Check if user already exists
-    existing_email = db.query(User).filter(User.email == email).first()
-    if existing_email:
-        errors.append("Email already registered")
-    
-    existing_username = db.query(User).filter(User.username == username).first()
-    if existing_username:
-        errors.append("Username already taken")
+    # Check if email already exists
+    if email and db.query(User).filter(User.email == email).first():
+        errors.append("An account with this email already exists")
     
     if errors:
         return templates.TemplateResponse(
             "signup.html",
-            {
-                "request": request,
-                "error_message": "; ".join(errors),
-                "email": email,
-                "username": username,
-                "full_name": full_name
-            },
+            {"request": request, "error_message": "; ".join(errors), "email": email, "full_name": full_name},
             status_code=400
         )
+    
+    # Auto-generate unique username from email prefix
+    base_username = email.split("@")[0].lower().replace(".", "_").replace("+", "_")[:20]
+    username = base_username
+    counter = 1
+    while db.query(User).filter(User.username == username).first():
+        username = f"{base_username}{counter}"
+        counter += 1
     
     # Create new user
     new_user = User(
@@ -169,7 +164,7 @@ async def signup_submit(
     db.refresh(new_user)
     
     # Create response and set session cookie
-    response = RedirectResponse(url="/upload", status_code=303)
+    response = RedirectResponse(url="/dashboard", status_code=303)
     response.set_cookie(
         key="user_session",
         value=new_user.email,
@@ -241,3 +236,8 @@ async def privacy_page(request: Request):
 async def about_page(request: Request):
     """About us page"""
     return templates.TemplateResponse("about.html", {"request": request})
+
+@router.get("/support", response_class=HTMLResponse)
+async def support_page(request: Request):
+    """Support center page"""
+    return templates.TemplateResponse("support.html", {"request": request})

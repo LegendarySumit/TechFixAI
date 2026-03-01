@@ -6,8 +6,12 @@
     <title>{% block title %}TechFix - Voice-to-Ticket AI System{% endblock %}</title>
     
     <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="/static/img/logo.svg">
+    <link rel="shortcut icon" href="/static/img/logo.svg">
     
+    <!-- Google Fonts Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -20,13 +24,13 @@
 <body>
     <!-- Navigation - Dark SaaS Theme -->
     <nav class="navbar navbar-dark navbar-expand-lg saas-navbar">
-        <div class="container-fluid px-5">
-            <a class="navbar-brand d-flex align-items-center ms-4 me-5" href="/">
-                <i class="bi bi-tools me-2"></i>
-                <span class="fw-bold brand-name">TechFixAI</span>
+        <div class="container-fluid px-3 px-lg-5">
+            <a class="navbar-brand ms-0 me-2 ms-lg-4 me-lg-5" href="/">
+                <img src="/static/img/logo.svg" width="36" height="36" alt="TechFixAI logo" style="border-radius:10px;">
+                <span class="brand-name">TechFixAI</span>
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler border-0 p-1" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" style="margin-left:auto;">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
@@ -49,17 +53,41 @@
                     </li>
                 </ul>
 
-                <ul class="navbar-nav ms-auto me-4">
-                    <li class="nav-item me-2">
-                        <a class="nav-link btn btn-outline-primary btn-sm px-3" href="/login">
-                            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                <ul class="navbar-nav ms-auto me-0 me-lg-4 d-flex flex-row align-items-center gap-2">
+                    {% if request.state.current_user %}
+                    <li class="nav-item nav-profile-wrap">
+                        <button class="nav-profile-btn" onclick="toggleProfileDropdown()">
+                            <div class="nav-avatar">{{ request.state.current_user.full_name[0] | upper if request.state.current_user.full_name else request.state.current_user.username[0] | upper }}</div>
+                            <span class="nav-username d-none d-lg-inline">{{ request.state.current_user.username }}</span>
+                            <i class="bi bi-chevron-down nav-chevron"></i>
+                        </button>
+                        <div class="profile-dropdown" id="profileDropdown">
+                            <div class="profile-dropdown-header">
+                                <div class="pdd-avatar">{{ request.state.current_user.full_name[0] | upper if request.state.current_user.full_name else request.state.current_user.username[0] | upper }}</div>
+                                <div>
+                                    <div class="pdd-name">{{ request.state.current_user.full_name or request.state.current_user.username }}</div>
+                                    <div class="pdd-email">{{ request.state.current_user.email }}</div>
+                                </div>
+                            </div>
+                            <hr class="profile-divider">
+                            <a href="/dashboard" class="profile-dropdown-item"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                            <a href="/tickets" class="profile-dropdown-item"><i class="bi bi-ticket-perforated"></i> My Tickets</a>
+                            <hr class="profile-divider">
+                            <a href="/logout" class="profile-dropdown-item text-danger"><i class="bi bi-box-arrow-right"></i> Sign Out</a>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="btn-nav-outline" href="/login">
+                            <i class="bi bi-box-arrow-in-right"></i> Sign In
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="btn btn-primary btn-sm px-3" href="/signup">
-                            <i class="bi bi-person-plus me-1"></i> Sign Up
+                        <a class="btn-nav-solid" href="/signup">
+                            <i class="bi bi-person-plus"></i> Sign Up
                         </a>
                     </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -77,9 +105,8 @@
                 <!-- Brand Section -->
                 <div class="col-lg-4 col-md-6">
                     <div class="footer-brand mb-3">
-                        <i class="bi bi-tools me-2 text-primary"></i>
-                        <span class="fw-bold fs-5">TechFix</span>
-                        <span class="text-primary ms-1">AI</span>
+                        <img src="/static/img/logo.svg" width="28" height="28" alt="TechFixAI" style="border-radius:7px;">
+                        <span>TechFix<span style="background:var(--grad-brand);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">AI</span></span>
                     </div>
                     <p class="text-muted small mb-3">
                         Transforming multilingual technical support with intelligent voice-to-ticket automation. 
@@ -160,7 +187,7 @@
                             </a>
                         </li>
                         <li class="mb-2">
-                            <a href="mailto:support@techfixai.com?subject=Support Request" title="Send us a support request">
+                            <a href="/support" title="Visit our support center">
                                 <i class="bi bi-question-circle"></i> Support
                             </a>
                         </li>
@@ -205,6 +232,34 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
     <script src="/static/js/app.js"></script>
+    <!-- Navbar scroll effect -->
+    <script>
+        (function(){
+            const nav = document.querySelector('.saas-navbar');
+            if(!nav) return;
+            const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 20);
+            window.addEventListener('scroll', onScroll, {passive:true});
+            onScroll();
+        })();
+    </script>
+    <script>
+        function toggleProfileDropdown(){
+            const btn = document.querySelector('.nav-profile-btn');
+            const dd = document.getElementById('profileDropdown');
+            if(!dd) return;
+            const isOpen = dd.classList.toggle('show');
+            btn && btn.classList.toggle('open', isOpen);
+        }
+        document.addEventListener('click', function(e){
+            const wrap = document.querySelector('.nav-profile-wrap');
+            if(wrap && !wrap.contains(e.target)){
+                const dd = document.getElementById('profileDropdown');
+                const btn = document.querySelector('.nav-profile-btn');
+                dd && dd.classList.remove('show');
+                btn && btn.classList.remove('open');
+            }
+        });
+    </script>
     
     {% block extra_js %}{% endblock %}
 </body>

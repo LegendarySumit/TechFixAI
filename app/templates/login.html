@@ -1,297 +1,184 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - TechFix AI</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    
-    <style>
-        :root {
-            --bg-primary: #0b1220;
-            --bg-secondary: #111827;
-            --bg-tertiary: #1f2937;
-            --text-primary: #e5e7eb;
-            --text-secondary: #9ca3af;
-            --accent-primary: #3b82f6;
-            --accent-danger: #ef4444;
-            --border-subtle: #1f2937;
-        }
-        
-        body {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .auth-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem 1rem;
-        }
-        
-        .auth-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-subtle);
-            border-radius: 12px;
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 420px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-        
-        .auth-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        
-        .auth-logo {
-            display: inline-flex;
-            align-items: center;
-            font-size: 1.75rem;
-            margin-bottom: 1rem;
-        }
-        
-        .auth-logo i {
-            color: var(--accent-primary);
-            font-size: 2rem;
-            margin-right: 0.5rem;
-        }
-        
-        .auth-title {
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-        
-        .auth-subtitle {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-        }
-        
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-        
-        .form-label {
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-        }
-        
-        .form-control {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-subtle);
-            color: var(--text-primary);
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-        
-        .form-control:focus {
-            background: var(--bg-tertiary);
-            border-color: var(--accent-primary);
-            color: var(--text-primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        .form-control::placeholder {
-            color: var(--text-secondary);
-        }
-        
-        .remember-forgot {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .remember-forgot .form-check {
-            margin: 0;
-        }
-        
-        .remember-forgot .form-check-label {
-            color: var(--text-secondary);
-            margin-bottom: 0;
-            font-weight: 400;
-        }
-        
-        .remember-forgot a {
-            color: var(--accent-primary);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        
-        .remember-forgot a:hover {
-            color: #2563eb;
-        }
-        
-        .btn-auth {
-            width: 100%;
-            padding: 0.875rem;
-            font-weight: 600;
-            border-radius: 8px;
-            transition: all 0.2s;
-            border: none;
-            margin-top: 0.5rem;
-        }
-        
-        .btn-auth-primary {
-            background: var(--accent-primary);
-            color: white;
-        }
-        
-        .btn-auth-primary:hover {
-            background: #2563eb;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
-        }
-        
-        .auth-divider {
-            display: flex;
-            align-items: center;
-            margin: 1.5rem 0;
-            color: var(--text-secondary);
-        }
-        
-        .auth-divider::before,
-        .auth-divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border-subtle);
-        }
-        
-        .auth-divider span {
-            padding: 0 1rem;
-            font-size: 0.85rem;
-        }
-        
-        .auth-link {
-            text-align: center;
-            margin-top: 1.5rem;
-            font-size: 0.95rem;
-        }
-        
-        .auth-link a {
-            color: var(--accent-primary);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        
-        .auth-link a:hover {
-            color: #2563eb;
-            text-decoration: underline;
-        }
-        
-        .error-message {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-        
-        .success-message {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            color: #86efac;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In - TechFixAI</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+<style>
+html,body{overflow-x:hidden}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#04091a;color:#f0f4ff;-webkit-font-smoothing:antialiased}
+.auth-split{display:flex;min-height:100vh;width:100%}
+
+/* LEFT PANEL */
+.auth-left{
+  flex:0 0 46%;position:relative;overflow:hidden;
+  background:linear-gradient(145deg,#07111f 0%,#0d1b2e 60%,#0f1f3d 100%);
+  display:flex;flex-direction:column;justify-content:center;padding:3.5rem;
+}
+.auth-left::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(99,102,241,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(99,102,241,.06) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;
+}
+.auth-left::after{
+  content:'';position:absolute;bottom:-160px;right:-160px;
+  width:420px;height:420px;border-radius:50%;
+  background:radial-gradient(circle,rgba(99,102,241,.18),transparent 70%);
+  pointer-events:none;
+}
+.auth-brand{display:flex;align-items:center;gap:.75rem;margin-bottom:3.5rem;position:relative;z-index:1}
+.auth-brand-icon{width:42px;height:42px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff;box-shadow:0 0 24px rgba(99,102,241,.4)}
+.auth-brand-name{font-size:1.4rem;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,#f0f4ff 40%,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.auth-left-heading{font-size:2.1rem;font-weight:800;line-height:1.2;letter-spacing:-.5px;margin-bottom:1rem;position:relative;z-index:1}
+.auth-left-heading span{background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.auth-left-sub{color:#8899bb;font-size:.95rem;line-height:1.7;margin-bottom:2.5rem;position:relative;z-index:1;max-width:340px}
+.auth-features{list-style:none;position:relative;z-index:1}
+.auth-features li{display:flex;align-items:flex-start;gap:.875rem;margin-bottom:1.25rem}
+.auth-feature-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;margin-top:.05rem}
+.auth-feature-icon.indigo{background:rgba(99,102,241,.15);color:#818cf8}
+.auth-feature-icon.cyan{background:rgba(6,182,212,.12);color:#22d3ee}
+.auth-feature-icon.emerald{background:rgba(16,185,129,.12);color:#34d399}
+.auth-features li strong{display:block;font-size:.875rem;font-weight:600;color:#e0e7ff;margin-bottom:.15rem}
+.auth-features li span{font-size:.8rem;color:#6b7fa3;line-height:1.5}
+.auth-left-footer{position:absolute;bottom:2rem;left:3.5rem;right:3.5rem;z-index:1;display:flex;align-items:center;gap:.5rem}
+.auth-left-footer span{font-size:.75rem;color:#4a5f7a}
+.auth-left-footer a{font-size:.75rem;color:#6b7fa3;text-decoration:none}
+.auth-left-footer a:hover{color:#818cf8}
+
+/* RIGHT PANEL */
+.auth-right{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem;background:#04091a;position:relative}
+.auth-right::before{content:'';position:absolute;top:-200px;right:-100px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.07),transparent 70%);pointer-events:none}
+.auth-form-wrap{width:100%;max-width:420px;position:relative;z-index:1}
+.auth-form-card{background:rgba(13,27,46,.7);border:1px solid rgba(99,102,241,.2);border-radius:20px;padding:2.5rem;backdrop-filter:blur(20px);box-shadow:0 24px 64px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.04)}
+.auth-form-title{font-size:1.6rem;font-weight:800;letter-spacing:-.4px;margin-bottom:.35rem}
+.auth-form-sub{font-size:.875rem;color:#8899bb;margin-bottom:2rem}
+.fld{margin-bottom:1.25rem}
+.fld label{display:block;font-size:.8rem;font-weight:600;color:#8899bb;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.5rem}
+.fld .inp-wrap{position:relative}
+.fld .inp-wrap i{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);color:#4a5f7a;font-size:.95rem;pointer-events:none}
+.fld input{width:100%;background:rgba(19,35,56,.8);border:1px solid rgba(99,102,241,.15);color:#f0f4ff;padding:.7rem 1rem .7rem 2.5rem;border-radius:10px;font-size:.9rem;font-family:'Inter',sans-serif;outline:none;transition:all .2s}
+.fld input:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.12);background:rgba(19,35,56,1)}
+.fld input::placeholder{color:#3d5070}
+.row-inline{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+.form-check-input{background-color:rgba(99,102,241,.1);border-color:rgba(99,102,241,.3)}
+.form-check-input:checked{background-color:#6366f1;border-color:#6366f1}
+.form-check-label{font-size:.82rem;color:#6b7fa3}
+.link-soft{font-size:.82rem;color:#818cf8;text-decoration:none;font-weight:500}
+.link-soft:hover{color:#a5b4fc}
+.btn-submit{width:100%;padding:.8rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:10px;color:#fff;font-size:.95rem;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:.5rem;box-shadow:0 4px 18px rgba(99,102,241,.35)}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(99,102,241,.5)}
+.btn-submit:active{transform:translateY(0)}
+.auth-sep{display:flex;align-items:center;gap:1rem;margin:1.5rem 0;color:#2d4060;font-size:.78rem;font-weight:600;letter-spacing:.05em}
+.auth-sep::before,.auth-sep::after{content:'';flex:1;height:1px;background:rgba(99,102,241,.12)}
+.btn-google{width:100%;padding:.75rem;background:#fff;border:1px solid #dadce0;border-radius:10px;color:#3c4043;font-size:.925rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:.65rem;box-shadow:0 1px 4px rgba(0,0,0,.12);margin-bottom:0;}
+.btn-google:hover{background:#f8f8f8;box-shadow:0 2px 8px rgba(0,0,0,.18);transform:translateY(-1px);color:#3c4043;}
+.btn-google svg{flex-shrink:0;}
+.msg-error{background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.25);color:#fda4af;padding:.75rem 1rem;border-radius:10px;margin-bottom:1.25rem;font-size:.85rem;display:flex;align-items:center;gap:.5rem}
+.msg-success{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);color:#6ee7b7;padding:.75rem 1rem;border-radius:10px;margin-bottom:1.25rem;font-size:.85rem;display:flex;align-items:center;gap:.5rem}
+.btn-alt{width:100%;padding:.75rem;background:transparent;border:1px solid rgba(99,102,241,.25);border-radius:10px;color:#818cf8;font-size:.9rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.btn-alt:hover{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.5);color:#a5b4fc;transform:translateY(-1px)}
+@media(max-width:768px){.auth-left{display:none}.auth-right{padding:1.5rem}}
+</style>
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-card">
-            <!-- Header -->
-            <div class="auth-header">
-                <div class="auth-logo">
-                    <i class="bi bi-tools"></i>
-                </div>
-                <h1 class="auth-title">Welcome Back</h1>
-                <p class="auth-subtitle">Sign in to your account</p>
-            </div>
-            
-            <!-- Messages -->
-            {% if error_message %}
-            <div class="error-message">
-                <i class="bi bi-exclamation-circle me-2"></i>{{ error_message }}
-            </div>
-            {% endif %}
-            
-            {% if success_message %}
-            <div class="success-message">
-                <i class="bi bi-check-circle me-2"></i>{{ success_message }}
-            </div>
-            {% endif %}
-            
-            <!-- Form -->
-            <form method="POST">
-                <!-- Email -->
-                <div class="form-group">
-                    <label for="email" class="form-label">Email Address</label>
-                    <input type="email" class="form-control" id="email" name="email" 
-                           placeholder="you@example.com" required autofocus>
-                </div>
-                
-                <!-- Password -->
-                <div class="form-group">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" 
-                           placeholder="••••••••" required>
-                </div>
-                
-                <!-- Remember & Forgot -->
-                <div class="remember-forgot">
-                    <div class="form-check">
-                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                        <label class="form-check-label" for="remember">Remember me</label>
-                    </div>
-                    <a href="#forgot" title="Forgot your password?">Forgot password?</a>
-                </div>
-                
-                <!-- Submit Button -->
-                <button type="submit" class="btn btn-auth btn-auth-primary">
-                    <i class="bi bi-box-arrow-in-right me-2"></i> Sign In
-                </button>
-            </form>
-            
-            <!-- Divider -->
-            <div class="auth-divider">
-                <span>New to TechFix AI?</span>
-            </div>
-            
-            <!-- Sign Up Link -->
-            <div class="auth-link">
-                <a href="/signup" class="btn btn-outline-primary w-100">
-                    <i class="bi bi-person-plus me-2"></i> Create Account
-                </a>
-            </div>
-        </div>
+<div class="auth-split">
+  <!-- Left Brand Panel -->
+  <div class="auth-left">
+    <div class="auth-brand">
+      <div class="auth-brand-icon"><i class="bi bi-cpu-fill"></i></div>
+      <span class="auth-brand-name">TechFixAI</span>
     </div>
+    <h2 class="auth-left-heading">AI-Powered<br>Support <span>Automation</span></h2>
+    <p class="auth-left-sub">Convert Japanese voice reports into structured support tickets instantly — no manual effort required.</p>
+    <ul class="auth-features">
+      <li>
+        <div class="auth-feature-icon indigo"><i class="bi bi-mic-fill"></i></div>
+        <div><strong>Voice-to-Ticket in seconds</strong><span>Record or upload audio, get a structured ticket automatically</span></div>
+      </li>
+      <li>
+        <div class="auth-feature-icon cyan"><i class="bi bi-translate"></i></div>
+        <div><strong>Multilingual AI Engine</strong><span>Japanese → English transcription and contextual translation</span></div>
+      </li>
+      <li>
+        <div class="auth-feature-icon emerald"><i class="bi bi-person-check"></i></div>
+        <div><strong>Smart Auto-Assignment</strong><span>Routes tickets to the best developer based on skills and load</span></div>
+      </li>
+    </ul>
+    <div class="auth-left-footer">
+      <span>© 2026 TechFixAI</span>
+      <span style="color:#2d4060">·</span>
+      <a href="/privacy">Privacy</a>
+      <span style="color:#2d4060">·</span>
+      <a href="/security">Security</a>
+    </div>
+  </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Right Form Panel -->
+  <div class="auth-right">
+    <div class="auth-form-wrap">
+      <div class="auth-form-card">
+        <h1 class="auth-form-title">Welcome back</h1>
+        <p class="auth-form-sub">Sign in to your TechFixAI account</p>
+
+        {% if error_message %}
+        <div class="msg-error"><i class="bi bi-exclamation-circle"></i>{{ error_message }}</div>
+        {% endif %}
+        {% if success_message %}
+        <div class="msg-success"><i class="bi bi-check-circle"></i>{{ success_message }}</div>
+        {% endif %}
+
+        <!-- Google OAuth -->
+        <a href="/auth/google" class="btn-google">
+          <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+          Continue with Google
+        </a>
+
+        <div class="auth-sep">or continue with email</div>
+
+        <form method="POST">
+          <div class="fld">
+            <label for="email">Email Address</label>
+            <div class="inp-wrap">
+              <i class="bi bi-envelope"></i>
+              <input type="email" id="email" name="email" placeholder="you@company.com" required autofocus>
+            </div>
+          </div>
+          <div class="fld">
+            <label for="password">Password</label>
+            <div class="inp-wrap">
+              <i class="bi bi-lock"></i>
+              <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            </div>
+          </div>
+          <div class="row-inline">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="remember" name="remember">
+              <label class="form-check-label" for="remember">Remember me</label>
+            </div>
+            <a href="#forgot" class="link-soft">Forgot password?</a>
+          </div>
+          <button type="submit" class="btn-submit">
+            <i class="bi bi-box-arrow-in-right"></i> Sign In
+          </button>
+        </form>
+
+        <div class="auth-sep">No account yet?</div>
+        <a href="/signup" class="btn-alt">
+          <i class="bi bi-person-plus"></i> Create free account
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
