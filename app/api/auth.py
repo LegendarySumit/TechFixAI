@@ -28,13 +28,15 @@ async def google_login(request: Request):
     """Redirect to Google OAuth consent screen."""
     if not settings.GOOGLE_CLIENT_ID or settings.GOOGLE_CLIENT_ID == "YOUR_CLIENT_ID_HERE":
         return RedirectResponse(url="/login?error=oauth_not_configured")
-    # Build redirect URI dynamically from the incoming request host.
-    # This automatically works on localhost AND Railway/any deployed URL
-    # without needing GOOGLE_REDIRECT_URI env var.
-    redirect_uri = str(request.url_for("google_callback"))
-    # Railway sits behind an https proxy — ensure we use https in production
-    if request.headers.get("x-forwarded-proto") == "https":
-        redirect_uri = redirect_uri.replace("http://", "https://", 1)
+    # Use fixed GOOGLE_REDIRECT_URI env var if set (recommended for Railway/production).
+    # Falls back to dynamic url_for() for local dev where no env var is needed.
+    if settings.GOOGLE_REDIRECT_URI:
+        redirect_uri = settings.GOOGLE_REDIRECT_URI
+    else:
+        redirect_uri = str(request.url_for("google_callback"))
+        # Ensure https when behind a proxy (Railway forwards x-forwarded-proto)
+        if request.headers.get("x-forwarded-proto") == "https":
+            redirect_uri = redirect_uri.replace("http://", "https://", 1)
     print(f"🔐 OAuth redirect_uri: {redirect_uri}")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
@@ -111,5 +113,11 @@ async def google_callback(request: Request):
             samesite="lax",
         )
         return response
+    except Exception as e:
+        import traceback
+        print(f"❌ OAuth DB error: {type(e).__name__}: {str(e)}")
+        print(traceback.format_exc())
+        db.rollback()
+        return RedirectResponse(url="/login?error=oauth_failed")
     finally:
         db.close()
