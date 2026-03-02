@@ -34,10 +34,11 @@ class User(Base):
 
     @classmethod
     def get_password_hash(cls, password: str) -> str:
-        return pwd_context.hash(password)
+        # bcrypt hard-limits passwords to 72 bytes; truncate to avoid ValueError
+        return pwd_context.hash(password.encode("utf-8")[:72])
 
     def verify_password(self, password: str) -> bool:
         try:
-            return pwd_context.verify(password, self.hashed_password)
+            return pwd_context.verify(password.encode("utf-8")[:72], self.hashed_password)
         except Exception:
             return False
