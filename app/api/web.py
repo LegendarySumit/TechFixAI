@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.user import User
 from app.core.config import settings
-from app.services.email_service import send_verification_email, generate_verification_token
+
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -74,26 +74,6 @@ async def login_submit(
                 {"request": request, "error_message": "Account is disabled"},
                 status_code=403
             )
-
-        # Block unverified users — but auto-verify if SMTP is not configured
-        if not user.is_verified:
-            from app.core.config import settings
-            smtp_configured = bool(settings.SMTP_HOST and settings.SMTP_USER and settings.SMTP_PASSWORD)
-            if smtp_configured:
-                return templates.TemplateResponse(
-                    "login.html",
-                    {
-                        "request": request,
-                        "error_message": "Please verify your email before logging in. Check your inbox for the verification link.",
-                        "show_resend": True,
-                        "resend_email": email,
-                    },
-                    status_code=403
-                )
-            else:
-                # SMTP not configured — auto-verify the account so they can log in
-                user.is_verified = True
-                db.commit()
 
         # Update last login
         user.last_login = datetime.utcnow()
@@ -181,51 +161,31 @@ async def signup_submit(
             username = f"{base_username}{counter}"
             counter += 1
 
-        from app.core.config import settings
-
-        smtp_configured = bool(settings.SMTP_HOST and settings.SMTP_USER and settings.SMTP_PASSWORD)
-
-        if smtp_configured:
-            # Generate verification token (expires 24 h)
-            token, expires = generate_verification_token()
-        else:
-            token, expires = None, None
-
-        # Create new user — auto-verified if SMTP not configured
+        # Create user — verified immediately, no email step
         new_user = User(
             email=email,
             username=username,
             full_name=full_name,
             hashed_password=User.get_password_hash(password),
             is_active=True,
-            is_verified=not smtp_configured,  # auto-verify when no SMTP
-            verification_token=token,
-            verification_token_expires=expires,
+            is_verified=True,
         )
 
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
 
-        if smtp_configured:
-            # Send verification email
-            send_verification_email(email, token, full_name, request)
-            return templates.TemplateResponse(
-                "verify_email_sent.html",
-                {"request": request, "email": email, "email_sent": True}
-            )
-        else:
-            # No SMTP — log the user in directly
-            new_user.last_login = datetime.utcnow()
-            db.commit()
-            response = RedirectResponse(url="/dashboard", status_code=303)
-            response.set_cookie(
-                key="user_session",
-                value=new_user.email,
-                httponly=True,
-                samesite="lax"
-            )
-            return response
+        # Log in directly
+        new_user.last_login = datetime.utcnow()
+        db.commit()
+        response = RedirectResponse(url="/dashboard", status_code=303)
+        response.set_cookie(
+            key="user_session",
+            value=new_user.email,
+            httponly=True,
+            samesite="lax"
+        )
+        return response
 
     except Exception as e:
         print(f"❌ Signup error: {type(e).__name__}: {str(e)}")
