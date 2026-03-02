@@ -42,10 +42,20 @@ class UserSessionMiddleware(BaseHTTPMiddleware):
 async def lifespan(app: FastAPI):
     """
     Manage application lifespan events.
-    Startup: Initialize background tasks
-    Shutdown: Cleanup resources
+    Startup: Initialize DB tables, create directories, start schedulers.
+    Shutdown: Cleanup resources.
     """
-    # Startup
+    # Ensure audio storage directory exists (important on Railway / fresh deploys)
+    import os
+    audio_path = settings.AUDIO_STORAGE_PATH
+    os.makedirs(audio_path, exist_ok=True)
+    print(f"📁 Audio storage: {os.path.abspath(audio_path)}")
+
+    # Create all DB tables (safe no-op if they already exist)
+    from app.db.init_db import init_db
+    init_db()
+    print("🗄️  Database tables ready")
+
     print("🚀 Starting Voice-to-Ticket AI System...")
     start_cleanup_scheduler()
     yield
