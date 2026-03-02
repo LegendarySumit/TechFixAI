@@ -50,7 +50,10 @@ class VoiceRecorderService {
     return new Promise((resolve) => {
       if (this.mediaRecorder && this.isRecording) {
         this.mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(this.audioChunks, { type: "audio/wav" });
+          // Use the actual MIME type the browser recorded with (webm/opus, ogg, etc.)
+          // Do NOT force "audio/wav" — the bytes inside are NOT wav, that breaks pydub/Groq
+          const actualMimeType = this.mediaRecorder.mimeType || "audio/webm";
+          const audioBlob = new Blob(this.audioChunks, { type: actualMimeType });
           const audioUrl = URL.createObjectURL(audioBlob);
           
           // Clean up
