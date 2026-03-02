@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.user import User
 from app.core.config import settings
+from app.services.email_service import send_verification_email, generate_verification_token
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -71,6 +72,20 @@ async def login_submit(
             return templates.TemplateResponse(
                 "login.html",
                 {"request": request, "error_message": "Account is disabled"},
+                status_code=403
+            )
+
+        # Block manual-signup users who haven't verified their email.
+        # Google OAuth users always have is_verified=True so they are never blocked.
+        if not user.is_verified:
+            return templates.TemplateResponse(
+                "login.html",
+                {
+                    "request": request,
+                    "error_message": "Please verify your email before logging in. Check your inbox for the verification link.",
+                    "show_resend": True,
+                    "resend_email": email,
+                },
                 status_code=403
             )
 
@@ -160,29 +175,36 @@ async def signup_submit(
             username = f"{base_username}{counter}"
             counter += 1
 
-        # Create new user
+        # Generate verification token (expires 24 h)
+        token, expires = generate_verification_token()
+
+        # Create new user — NOT verified yet
         new_user = User(
             email=email,
             username=username,
             full_name=full_name,
             hashed_password=User.get_password_hash(password),
             is_active=True,
-            is_verified=False
+            is_verified=False,
+            verification_token=token,
+            verification_token_expires=expires,
         )
 
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
 
-        response = RedirectResponse(url="/dashboard", status_code=303)
-        response.set_cookie(
-            key="user_session",
-            value=new_user.email,
-            max_age=None,
-            httponly=True,
-            samesite="lax"
+        # Send verification email (non-fatal if SMTP not configured)
+        email_sent = send_verification_email(email, token, full_name, request)
+
+        return templates.TemplateResponse(
+            "verify_email_sent.html",
+            {
+                "request": request,
+                "email": email,
+                "email_sent": email_sent,
+            }
         )
-        return response
 
     except Exception as e:
         print(f"❌ Signup error: {type(e).__name__}: {str(e)}")
@@ -201,6 +223,71 @@ async def logout(response: Response):
     response = RedirectResponse(url="/", status_code=303)
     response.delete_cookie("user_session")
     return response
+
+
+@router.get("/verify-email", response_class=HTMLResponse)
+async def verify_email(request: Request, token: str = "", db: Session = Depends(get_db)):
+    """Verify email address via token link."""
+    error = ""
+    if not token:
+        error = "Invalid verification link."
+    else:
+        user = db.query(User).filter(User.verification_token == token).first()
+        if not user:
+            error = "Verification link is invalid or already used."
+        elif user.verification_token_expires and datetime.utcnow() > user.verification_token_expires:
+            error = "Verification link has expired. Please request a new one."
+        else:
+            # Mark verified, clear token
+            user.is_verified = True
+            user.verification_token = None
+            user.verification_token_expires = None
+            user.last_login = datetime.utcnow()
+            db.commit()
+            # Auto-login and redirect to dashboard
+            response = RedirectResponse(url="/dashboard", status_code=303)
+            response.set_cookie(
+                key="user_session",
+                value=user.email,
+                max_age=30 * 24 * 60 * 60,
+                httponly=True,
+                samesite="lax",
+            )
+            return response
+
+    return templates.TemplateResponse(
+        "login.html",
+        {"request": request, "error_message": error or "Email verified! You can now log in."},
+    )
+
+
+@router.post("/resend-verification", response_class=HTMLResponse)
+async def resend_verification(request: Request, db: Session = Depends(get_db)):
+    """Resend verification email."""
+    try:
+        form_data = await request.form()
+        email = form_data.get("email", "").strip()
+        user = db.query(User).filter(User.email == email).first()
+
+        # Always show the same page (don't reveal if email exists)
+        if user and not user.is_verified:
+            token, expires = generate_verification_token()
+            user.verification_token = token
+            user.verification_token_expires = expires
+            db.commit()
+            send_verification_email(email, token, user.full_name or email, request)
+
+        return templates.TemplateResponse(
+            "verify_email_sent.html",
+            {"request": request, "email": email, "email_sent": True, "resent": True},
+        )
+    except Exception as e:
+        import traceback
+        print(f"❌ Resend error: {e}\n{traceback.format_exc()}")
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error_message": "Could not resend email. Please try again."},
+        )
 
 
 @router.get("/upload", response_class=HTMLResponse)

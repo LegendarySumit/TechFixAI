@@ -67,6 +67,16 @@ class Settings(BaseSettings):
     DEEPL_API_KEY: str = ""
     GOOGLE_TRANSLATE_API_KEY: str = ""
 
+    # Email / SMTP  (for verification emails)
+    # Use Gmail: SMTP_HOST=smtp.gmail.com, SMTP_PORT=587, SMTP_USER=you@gmail.com
+    # SMTP_PASSWORD = Gmail App Password (not your real password)
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    FROM_EMAIL: str = ""      # defaults to SMTP_USER if not set
+    APP_BASE_URL: str = ""    # e.g. https://techfixai.up.railway.app
+
     # Business Logic
     MAX_TICKET_TITLE_LENGTH: int = 200
     AUTO_ASSIGNMENT_ENABLED: bool = True

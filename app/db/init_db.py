@@ -31,6 +31,8 @@ def _migrate_add_missing_columns(engine):
             ("full_name",    "VARCHAR"),
             ("is_verified",  "BOOLEAN DEFAULT FALSE"),
             ("updated_at",   "TIMESTAMP"),
+            ("verification_token",          "VARCHAR"),
+            ("verification_token_expires",  "TIMESTAMP"),
         ],
         "conversations": [
             ("image_file_path", "VARCHAR"),

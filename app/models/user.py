@@ -26,6 +26,9 @@ class User(Base):
     google_id = Column(String, unique=True, nullable=True, index=True)
     picture_url = Column(String, nullable=True)
     last_login = Column(DateTime, nullable=True)
+    # Email verification — manual signup requires this before login is allowed
+    verification_token = Column(String, nullable=True, index=True)
+    verification_token_expires = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

@@ -132,6 +132,14 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#04
         {% if error_message %}
         <div class="msg-error"><i class="bi bi-exclamation-circle"></i>{{ error_message }}</div>
         {% endif %}
+        {% if show_resend %}
+        <form method="post" action="/resend-verification" style="margin-top:10px">
+          <input type="hidden" name="email" value="{{ resend_email }}">
+          <button type="submit" style="background:none;border:none;color:#38bdf8;cursor:pointer;padding:0;font-size:13px;text-decoration:underline;">
+            <i class="bi bi-envelope"></i> Resend verification email
+          </button>
+        </form>
+        {% endif %}
         {% if success_message %}
         <div class="msg-success"><i class="bi bi-check-circle"></i>{{ success_message }}</div>
         {% endif %}
