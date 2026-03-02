@@ -73,28 +73,39 @@ class STTService:
             try:
                 return await self._groq_transcribe(audio_file_path, language)
             except Exception as e:
-                print(f"❌ Groq transcription failed: {str(e)}")
-                print(f"   Falling back to next method...")
+                import traceback
+                print(f"❌ Groq transcription failed: {type(e).__name__}: {str(e)}")
+                print(traceback.format_exc())
         
         # Fallback to OpenAI Whisper API
         if self.use_openai:
             try:
                 return await self._openai_transcribe(audio_file_path, language)
             except Exception as e:
-                print(f"❌ OpenAI transcription failed: {str(e)}")
-                print(f"   Falling back to mock mode...")
+                print(f"❌ OpenAI transcription failed: {type(e).__name__}: {str(e)}")
         
-        # Final fallback to mock
-        print("⚠️ Using MOCK transcription (no API keys configured)")
+        # Final fallback to mock — log clearly so user knows
+        print("⚠️⚠️⚠️ FALLING BACK TO MOCK TRANSCRIPTION — real audio ignored")
         return await self._mock_transcribe(audio_file_path, language)
     
     async def _groq_transcribe(self, audio_file_path: str, language: str) -> dict:
         """Transcribe using Groq's Whisper API (free, very fast)."""
-        print(f"🎤 Transcribing with Groq API: {audio_file_path}")
+        file_size = os.path.getsize(audio_file_path)
+        print(f"🎤 Transcribing with Groq API: {audio_file_path} ({file_size} bytes)")
+        
+        with open(audio_file_path, "rb") as audio_file:
+            audio_bytes = audio_file.read()
+        
+        # Determine MIME type from extension
+        ext = os.path.splitext(audio_file_path)[1].lower()
+        mime_map = {".wav": "audio/wav", ".mp3": "audio/mpeg", ".m4a": "audio/m4a",
+                    ".webm": "audio/webm", ".ogg": "audio/ogg", ".mp4": "audio/mp4"}
+        mime_type = mime_map.get(ext, "audio/wav")
+        print(f"   File extension: {ext}, MIME type: {mime_type}")
         
         with open(audio_file_path, "rb") as audio_file:
             transcription = self.groq_client.audio.transcriptions.create(
-                file=(os.path.basename(audio_file_path), audio_file.read()),
+                file=(os.path.basename(audio_file_path), audio_bytes, mime_type),
                 model="whisper-large-v3",  # Most accurate model
                 language=language,
                 response_format="json"

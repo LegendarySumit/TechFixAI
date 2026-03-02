@@ -129,10 +129,13 @@ async def upload_voice(
         conversation_id: ID to track processing status
     """
     
-    # Validate audio file type
-    allowed_audio_formats = ["audio/wav", "audio/mp3", "audio/mpeg", "audio/m4a", "audio/webm"]
-    if audio.content_type not in allowed_audio_formats:
-        raise HTTPException(status_code=400, detail="Invalid audio format")
+    # Validate audio file type (check prefix to handle e.g. "audio/webm;codecs=opus")
+    allowed_audio_prefixes = ["audio/wav", "audio/mp3", "audio/mpeg", "audio/m4a",
+                               "audio/webm", "audio/ogg", "audio/mp4", "audio/x-m4a"]
+    content_type = (audio.content_type or "").lower()
+    print(f"📁 Upload content-type: {content_type}, filename: {audio.filename}")
+    if not any(content_type.startswith(p) for p in allowed_audio_prefixes):
+        raise HTTPException(status_code=400, detail=f"Invalid audio format: {content_type}")
     
     # Validate audio file size
     audio_content = await audio.read()
@@ -147,7 +150,19 @@ async def upload_voice(
     os.makedirs(settings.AUDIO_STORAGE_PATH, exist_ok=True)
     
     # Generate unique audio filename
-    file_extension = audio.filename.split(".")[-1] if "." in audio.filename else "wav"
+    # Determine correct file extension from content type or filename
+    ext_from_filename = audio.filename.split(".")[-1].lower() if "." in (audio.filename or "") else ""
+    ext_map = {
+        "audio/wav": "wav", "audio/mp3": "mp3", "audio/mpeg": "mp3",
+        "audio/m4a": "m4a", "audio/x-m4a": "m4a", "audio/mp4": "mp4",
+        "audio/webm": "webm", "audio/ogg": "ogg"
+    }
+    # Match by prefix
+    file_extension = ext_from_filename or "wav"
+    for mime_prefix, ext in ext_map.items():
+        if content_type.startswith(mime_prefix):
+            file_extension = ext
+            break
     unique_filename = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}.{file_extension}"
     audio_file_path = os.path.join(settings.AUDIO_STORAGE_PATH, unique_filename)
     
