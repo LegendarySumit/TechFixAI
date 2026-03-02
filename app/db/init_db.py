@@ -13,16 +13,78 @@ from app.models.user import User
 from app.db.session import SessionLocal
 
 
+def _migrate_add_missing_columns(engine):
+    """
+    Safely add any columns that exist in the ORM models but are missing from
+    the live DB (happens when columns are added after first deploy).
+    Uses ADD COLUMN IF NOT EXISTS (PostgreSQL) or per-column check (SQLite).
+    """
+    is_postgres = "postgresql" in str(engine.url) or "postgres" in str(engine.url)
+    is_sqlite   = "sqlite" in str(engine.url)
+
+    # Map: table → list of (column_name, column_ddl)
+    migrations = {
+        "users": [
+            ("google_id",    "VARCHAR UNIQUE"),
+            ("picture_url",  "VARCHAR"),
+            ("last_login",   "TIMESTAMP"),
+            ("full_name",    "VARCHAR"),
+            ("is_verified",  "BOOLEAN DEFAULT FALSE"),
+            ("updated_at",   "TIMESTAMP"),
+        ],
+        "conversations": [
+            ("image_file_path", "VARCHAR"),
+            ("metadata_json",   "TEXT"),
+        ],
+    }
+
+    with engine.connect() as conn:
+        for table, columns in migrations.items():
+            for col_name, col_ddl in columns:
+                try:
+                    if is_postgres:
+                        conn.execute(
+                            __import__("sqlalchemy").text(
+                                f'ALTER TABLE {table} ADD COLUMN IF NOT EXISTS "{col_name}" {col_ddl}'
+                            )
+                        )
+                        conn.commit()
+                    elif is_sqlite:
+                        # SQLite: check if column exists first
+                        rows = conn.execute(
+                            __import__("sqlalchemy").text(f"PRAGMA table_info({table})")
+                        ).fetchall()
+                        existing = [r[1] for r in rows]
+                        if col_name not in existing:
+                            conn.execute(
+                                __import__("sqlalchemy").text(
+                                    f'ALTER TABLE {table} ADD COLUMN "{col_name}" {col_ddl}'
+                                )
+                            )
+                            conn.commit()
+                except Exception as e:
+                    # Column may already exist or table may not exist yet — both are fine
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                    print(f"   ℹ️  Migration note for {table}.{col_name}: {e}")
+
+    print("✅ DB column migration complete")
+
+
 def init_db():
     """
     Initialize database with tables and seed data.
     """
     engine = create_engine(settings.DATABASE_URL)
-    
-    # Create all tables
+
+    # Create all tables (no-op for existing tables)
     Base.metadata.create_all(bind=engine)
-    
     print("✅ Database tables created successfully")
+
+    # Add any columns added after first deploy (safe no-op if already present)
+    _migrate_add_missing_columns(engine)
     
     # Seed developers
     db = SessionLocal()

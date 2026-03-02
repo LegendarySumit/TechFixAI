@@ -42,54 +42,63 @@ async def login_submit(
     db: Session = Depends(get_db)
 ):
     """Handle login form submission."""
-    form_data = await request.form()
-    email = form_data.get("email")
-    password = form_data.get("password")
-    remember = form_data.get("remember", False)
-    
-    # Validate input
-    if not email or not password:
+    import traceback
+    try:
+        form_data = await request.form()
+        email = form_data.get("email", "").strip()
+        password = form_data.get("password", "")
+        remember = form_data.get("remember", False)
+
+        # Validate input
+        if not email or not password:
+            return templates.TemplateResponse(
+                "login.html",
+                {"request": request, "error_message": "Email and password are required"},
+                status_code=400
+            )
+
+        # Find user
+        user = db.query(User).filter(User.email == email).first()
+
+        if not user or not user.verify_password(password):
+            return templates.TemplateResponse(
+                "login.html",
+                {"request": request, "error_message": "Invalid email or password"},
+                status_code=401
+            )
+
+        if not user.is_active:
+            return templates.TemplateResponse(
+                "login.html",
+                {"request": request, "error_message": "Account is disabled"},
+                status_code=403
+            )
+
+        # Update last login
+        user.last_login = datetime.utcnow()
+        db.commit()
+
+        # Set session cookie
+        max_age = 30 * 24 * 60 * 60 if remember else None
+        response = RedirectResponse(url="/dashboard", status_code=303)
+        response.set_cookie(
+            key="user_session",
+            value=user.email,
+            max_age=max_age,
+            httponly=True,
+            samesite="lax"
+        )
+        return response
+
+    except Exception as e:
+        print(f"❌ Login error: {type(e).__name__}: {str(e)}")
+        print(traceback.format_exc())
+        db.rollback()
         return templates.TemplateResponse(
             "login.html",
-            {"request": request, "error_message": "Email and password are required"},
-            status_code=400
+            {"request": request, "error_message": f"Login failed: {type(e).__name__}: {str(e)}"},
+            status_code=500
         )
-    
-    # Find user
-    user = db.query(User).filter(User.email == email).first()
-    
-    if not user or not user.verify_password(password):
-        return templates.TemplateResponse(
-            "login.html",
-            {"request": request, "error_message": "Invalid email or password"},
-            status_code=401
-        )
-    
-    if not user.is_active:
-        return templates.TemplateResponse(
-            "login.html",
-            {"request": request, "error_message": "Account is disabled"},
-            status_code=403
-        )
-    
-    # Update last login
-    user.last_login = datetime.utcnow()
-    db.commit()
-    
-    # Create response and set session cookie
-    response = RedirectResponse(url="/dashboard", status_code=303)
-    
-    # Simple session cookie (in production, use proper JWT or session management)
-    max_age = 30 * 24 * 60 * 60 if remember else None  # 30 days if remember me
-    response.set_cookie(
-        key="user_session",
-        value=user.email,
-        max_age=max_age,
-        httponly=True,
-        samesite="lax"
-    )
-    
-    return response
 
 
 @router.get("/signup", response_class=HTMLResponse)
@@ -104,76 +113,86 @@ async def signup_submit(
     db: Session = Depends(get_db)
 ):
     """Handle signup form submission."""
-    form_data = await request.form()
-    
-    email = form_data.get("email", "").strip()
-    full_name = form_data.get("full_name", "").strip()
-    password = form_data.get("password", "")
-    terms = form_data.get("terms")
-    
-    # Validate input
-    errors = []
-    
-    if not email:
-        errors.append("Email is required")
-    elif "@" not in email or "." not in email:
-        errors.append("Please enter a valid email address")
-    
-    if not full_name:
-        errors.append("Full name is required")
-    
-    if not password:
-        errors.append("Password is required")
-    elif len(password) < 8:
-        errors.append("Password must be at least 8 characters")
-    
-    if not terms:
-        errors.append("You must agree to the terms of service")
-    
-    # Check if email already exists
-    if email and db.query(User).filter(User.email == email).first():
-        errors.append("An account with this email already exists")
-    
-    if errors:
+    import traceback
+    try:
+        form_data = await request.form()
+
+        email = form_data.get("email", "").strip()
+        full_name = form_data.get("full_name", "").strip()
+        password = form_data.get("password", "")
+        terms = form_data.get("terms")
+
+        # Validate input
+        errors = []
+
+        if not email:
+            errors.append("Email is required")
+        elif "@" not in email or "." not in email:
+            errors.append("Please enter a valid email address")
+
+        if not full_name:
+            errors.append("Full name is required")
+
+        if not password:
+            errors.append("Password is required")
+        elif len(password) < 8:
+            errors.append("Password must be at least 8 characters")
+
+        if not terms:
+            errors.append("You must agree to the terms of service")
+
+        # Check if email already exists
+        if email and db.query(User).filter(User.email == email).first():
+            errors.append("An account with this email already exists")
+
+        if errors:
+            return templates.TemplateResponse(
+                "signup.html",
+                {"request": request, "error_message": "; ".join(errors), "email": email, "full_name": full_name},
+                status_code=400
+            )
+
+        # Auto-generate unique username from email prefix
+        base_username = email.split("@")[0].lower().replace(".", "_").replace("+", "_")[:20]
+        username = base_username
+        counter = 1
+        while db.query(User).filter(User.username == username).first():
+            username = f"{base_username}{counter}"
+            counter += 1
+
+        # Create new user
+        new_user = User(
+            email=email,
+            username=username,
+            full_name=full_name,
+            hashed_password=User.get_password_hash(password),
+            is_active=True,
+            is_verified=False
+        )
+
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+
+        response = RedirectResponse(url="/dashboard", status_code=303)
+        response.set_cookie(
+            key="user_session",
+            value=new_user.email,
+            max_age=None,
+            httponly=True,
+            samesite="lax"
+        )
+        return response
+
+    except Exception as e:
+        print(f"❌ Signup error: {type(e).__name__}: {str(e)}")
+        print(traceback.format_exc())
+        db.rollback()
         return templates.TemplateResponse(
             "signup.html",
-            {"request": request, "error_message": "; ".join(errors), "email": email, "full_name": full_name},
-            status_code=400
+            {"request": request, "error_message": f"Signup failed: {type(e).__name__}: {str(e)}"},
+            status_code=500
         )
-    
-    # Auto-generate unique username from email prefix
-    base_username = email.split("@")[0].lower().replace(".", "_").replace("+", "_")[:20]
-    username = base_username
-    counter = 1
-    while db.query(User).filter(User.username == username).first():
-        username = f"{base_username}{counter}"
-        counter += 1
-    
-    # Create new user
-    new_user = User(
-        email=email,
-        username=username,
-        full_name=full_name,
-        hashed_password=User.get_password_hash(password),
-        is_active=True,
-        is_verified=False
-    )
-    
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    
-    # Create response and set session cookie
-    response = RedirectResponse(url="/dashboard", status_code=303)
-    response.set_cookie(
-        key="user_session",
-        value=new_user.email,
-        max_age=None,
-        httponly=True,
-        samesite="lax"
-    )
-    
-    return response
 
 
 @router.get("/logout")
