@@ -28,8 +28,8 @@ async def google_login(request: Request):
     """Redirect to Google OAuth consent screen."""
     if not settings.GOOGLE_CLIENT_ID or settings.GOOGLE_CLIENT_ID == "YOUR_CLIENT_ID_HERE":
         return RedirectResponse(url="/login?error=oauth_not_configured")
-    redirect_uri = request.url_for("google_callback")
-    return await oauth.google.authorize_redirect(request, str(redirect_uri))
+    redirect_uri = settings.GOOGLE_REDIRECT_URI
+    return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
 @router.get("/auth/google/callback", name="google_callback")
