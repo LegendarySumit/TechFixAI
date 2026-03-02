@@ -17,7 +17,7 @@ pydantic-settings==2.1.0
 python-dotenv==1.0.0
 
 # AI / LLM / STT  (all cloud-based — no torch download)
-groq==0.4.2
+groq>=1.0.0
 # google-generativeai removed — caused v1beta 404. Groq handles translation + tickets.
 
 # Audio Processing
@@ -27,7 +27,7 @@ pydub==0.25.1
 python-jose[cryptography]==3.3.0
 cryptography==41.0.7
 passlib[bcrypt]==1.7.4
-httpx==0.25.2
+httpx==0.27.2
 itsdangerous==2.1.2
 authlib==1.3.0
 
