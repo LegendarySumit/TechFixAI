@@ -21,35 +21,37 @@ class TicketService:
     """
     
     def __init__(self):
+        self.groq_client = None
         self.gemini_model = None
+        self.use_groq = False
         self.use_gemini = False
         self.use_openai = False
-        
-        # Try Gemini API first
+
+        # ── Groq (primary — already working for STT + translation) ──
+        if settings.GROQ_API_KEY:
+            try:
+                from groq import Groq
+                self.groq_client = Groq(api_key=settings.GROQ_API_KEY)
+                self.use_groq = True
+                print("✅ [Ticket] Groq API ready (llama-3.1-8b-instant)")
+            except Exception as e:
+                print(f"❌ [Ticket] Groq init failed: {str(e)}")
+        else:
+            print("⚠️ [Ticket] GROQ_API_KEY not set")
+
+        # ── Gemini (secondary fallback — initialized independently) ──
         if settings.GEMINI_API_KEY:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=settings.GEMINI_API_KEY)
-                self.genai = genai
                 self.gemini_model = genai.GenerativeModel("gemini-1.5-flash")
                 self.use_gemini = True
-                print("✅ Gemini API configured for ticket generation")
+                print("✅ [Ticket] Gemini API ready (gemini-1.5-flash) — fallback")
             except Exception as e:
-                print(f"⚠️ Gemini API not available: {str(e)}")
-        
-        # Fallback to OpenAI if available
-        if not self.use_gemini and settings.OPENAI_API_KEY:
-            try:
-                import openai
-                openai.api_key = settings.OPENAI_API_KEY
-                self.openai = openai
-                self.use_openai = True
-                print("✅ OpenAI available for ticket generation")
-            except ImportError:
-                print("⚠️ OpenAI not installed - will use MOCK mode")
-        
-        if not self.use_gemini and not self.use_openai:
-            print("⚠️ No ticket generation API available - using MOCK mode")
+                print(f"⚠️ [Ticket] Gemini init failed: {str(e)}")
+
+        if not self.use_groq and not self.use_gemini:
+            print("⚠️ [Ticket] No AI API available — using rule-based fallback")
     
     async def generate_ticket_from_text(
         self,
@@ -58,25 +60,67 @@ class TicketService:
     ) -> Dict:
         """
         Generate structured ticket data from translated text.
-        Uses Gemini → OpenAI → rule-based mock (in order of preference).
+        Uses Groq → Gemini → rule-based fallback.
         """
-        # Try Gemini first
+        # 1️⃣ Groq (fast, reliable, same API already working for translation)
+        if self.use_groq:
+            try:
+                return await self._groq_generate_ticket(english_text)
+            except Exception as e:
+                import traceback
+                print(f"❌ [Ticket] Groq failed: {type(e).__name__}: {str(e)}")
+                print(traceback.format_exc())
+
+        # 2️⃣ Gemini fallback
         if self.use_gemini:
             try:
                 return await self._gemini_generate_ticket(english_text)
             except Exception as e:
-                print(f"⚠️ Gemini ticket generation failed: {e}. Falling back...")
+                print(f"⚠️ [Ticket] Gemini failed: {e}")
 
-        # Try OpenAI next
-        if self.use_openai:
-            try:
-                return await self._openai_generate_ticket(english_text)
-            except Exception as e:
-                print(f"⚠️ OpenAI ticket generation failed: {e}. Falling back to mock...")
-
-        # Rule-based fallback (always works, no API calls)
+        # 3️⃣ Rule-based fallback (always works)
         print(f"🎫 Generating ticket (rule-based fallback): {english_text[:50]}...")
         return self._mock_generate_ticket(english_text)
+
+    async def _groq_generate_ticket(self, english_text: str) -> Dict:
+        """Generate ticket using Groq API (llama-3.1-8b-instant)."""
+        print(f"🎫 [Ticket] Generating with Groq: {english_text[:50]}...")
+
+        TICKET_PROMPT = """You are a technical support ticket analyzer.
+Extract structured information from the problem description and return ONLY valid JSON:
+{
+    "title": "Clear concise title (max 100 chars)",
+    "description": "Detailed technical description",
+    "priority": "low|medium|high|critical",
+    "category": "bug|feature_request|incident|question",
+    "technical_area": "backend|frontend|database|infrastructure|network|other"
+}
+Output ONLY the JSON object, no markdown, no explanation."""
+
+        completion = self.groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": TICKET_PROMPT},
+                {"role": "user", "content": english_text}
+            ],
+            temperature=0.1,
+            max_tokens=400
+        )
+
+        response_text = completion.choices[0].message.content.strip()
+        # Strip markdown code blocks if model adds them
+        if response_text.startswith("```"):
+            response_text = response_text.split("\n", 1)[-1]
+        if response_text.endswith("```"):
+            response_text = response_text.rsplit("```", 1)[0]
+        response_text = response_text.strip()
+
+        ticket_data = json.loads(response_text)
+        if ticket_data.get("priority") not in ["low", "medium", "high", "critical"]:
+            ticket_data["priority"] = "medium"
+
+        print(f"✅ [Ticket] Groq done: [{ticket_data.get('priority','?').upper()}] {ticket_data.get('title','')[:60]}")
+        return ticket_data
     
     async def _gemini_generate_ticket(self, english_text: str) -> Dict:
         """Generate ticket using Gemini API."""

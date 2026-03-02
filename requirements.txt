@@ -18,7 +18,7 @@ python-dotenv==1.0.0
 
 # AI / LLM / STT  (all cloud-based — no torch download)
 groq==0.4.2
-google-generativeai==0.8.3
+# google-generativeai removed — caused v1beta 404. Groq handles translation + tickets.
 
 # Audio Processing
 pydub==0.25.1
