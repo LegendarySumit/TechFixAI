@@ -69,7 +69,6 @@ htmlcov/
 
 # AI Models (downloaded by Whisper)
 *.pt
-models/
 
 # Temporary files
 *.tmp
