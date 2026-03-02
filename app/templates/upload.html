@@ -997,7 +997,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="/static/js/voice-recorder.js?v=2"></script>
+<script src="/static/js/voice-recorder.js?v=3"></script>
 <script src="/static/js/ui-components.js"></script>
 <script>
 /* Upload page particle canvas */
@@ -1698,7 +1698,10 @@ async function stopChatVoice() {
     setChatInputEnabled(false);
     try {
         const fd = new FormData();
-        fd.append('audio', result.blob, 'chat-voice.webm');
+        const chatMime = (result.blob.type || 'audio/webm').split(';')[0];
+        const chatExtMap = {'audio/webm':'webm','audio/ogg':'ogg','audio/mp4':'mp4','audio/mpeg':'mp3','audio/wav':'wav','audio/m4a':'m4a'};
+        const chatExt = chatExtMap[chatMime] || 'webm';
+        fd.append('audio', result.blob, `chat-voice.${chatExt}`);
         const upResp = await fetch('/api/voice/upload', { method: 'POST', body: fd });
         if (!upResp.ok) throw new Error('upload failed');
         const { conversation_id } = await upResp.json();

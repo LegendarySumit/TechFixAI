@@ -91,42 +91,63 @@ class STTService:
     async def _groq_transcribe(self, audio_file_path: str, language: str) -> dict:
         """
         Transcribe using Groq's Whisper API.
-        Converts any browser format (webm/ogg/mp4) to WAV first — WAV is
-        universally accepted by Whisper and avoids codec rejection errors.
+        Groq Whisper natively accepts: mp3, mp4, mpeg, mpga, m4a, wav, webm, ogg.
+        We send the file with the correct MIME type — no conversion needed for
+        the common browser formats (webm/ogg/mp4).  We only convert exotic
+        formats (e.g. flac, aac) that Groq does not support.
         """
         file_size = os.path.getsize(audio_file_path)
         ext = os.path.splitext(audio_file_path)[1].lower()
         print(f"🎤 Transcribing with Groq API: {audio_file_path} ({file_size} bytes, ext={ext})")
 
-        # ── Convert non-WAV audio to WAV via pydub (ffmpeg backend) ──────────
-        wav_path = audio_file_path  # default: use as-is
+        # Groq-supported MIME types (sent as-is, no conversion needed)
+        GROQ_SUPPORTED = {
+            ".wav":  "audio/wav",
+            ".mp3":  "audio/mp3",
+            ".mp4":  "audio/mp4",
+            ".mpeg": "audio/mpeg",
+            ".mpga": "audio/mpeg",
+            ".m4a":  "audio/m4a",
+            ".webm": "audio/webm",
+            ".ogg":  "audio/ogg",
+        }
+
+        send_path = audio_file_path
+        send_mime = GROQ_SUPPORTED.get(ext)
         wav_created = False
-        if ext != ".wav":
+
+        if send_mime:
+            # Happy path — browser-native format, send directly
+            print(f"   ✅ Format {ext} natively supported by Groq — sending directly")
+        else:
+            # Exotic format: attempt pydub → WAV conversion
+            print(f"   🔄 Format {ext} not in Groq's supported list — converting to WAV…")
             try:
                 from pydub import AudioSegment
-                fmt = ext.lstrip(".")          # "webm", "ogg", "mp4", "mp3" …
+                fmt = ext.lstrip(".")
                 if fmt == "mpeg":
                     fmt = "mp3"
-                print(f"   🔄 Converting {ext} → WAV for Groq compatibility...")
                 audio_seg = AudioSegment.from_file(audio_file_path, format=fmt)
-                wav_path = audio_file_path.replace(ext, ".wav")
-                audio_seg.export(wav_path, format="wav")
+                send_path = audio_file_path.replace(ext, ".wav")
+                audio_seg.export(send_path, format="wav")
                 wav_created = True
-                wav_size = os.path.getsize(wav_path)
-                print(f"   ✅ Converted to WAV: {wav_path} ({wav_size} bytes)")
+                send_mime = "audio/wav"
+                print(f"   ✅ Converted to WAV: {send_path} ({os.path.getsize(send_path)} bytes)")
             except Exception as conv_err:
                 import traceback
-                print(f"   ⚠️ Audio conversion failed, trying original file: {conv_err}")
+                print(f"   ⚠️ Conversion failed — attempting with original file anyway: {conv_err}")
                 print(traceback.format_exc())
-                wav_path = audio_file_path   # fall back to original
+                send_path = audio_file_path
+                send_mime = "audio/octet-stream"
 
         try:
-            with open(wav_path, "rb") as f:
+            with open(send_path, "rb") as f:
                 audio_bytes = f.read()
 
-            filename = os.path.basename(wav_path)
+            filename = os.path.basename(send_path)
+            print(f"   📤 Sending to Groq: {filename} ({len(audio_bytes)} bytes, mime={send_mime})")
             transcription = self.groq_client.audio.transcriptions.create(
-                file=(filename, audio_bytes, "audio/wav"),
+                file=(filename, audio_bytes, send_mime),
                 model="whisper-large-v3",
                 language=language,
                 response_format="json"
@@ -136,7 +157,7 @@ class STTService:
             if not transcribed_text:
                 raise ValueError(
                     "Groq returned empty transcription — audio may be silent, "
-                    "too short, or in the wrong language"
+                    "too short, or the mic did not capture speech"
                 )
             print(f"✅ Groq transcription complete: {transcribed_text[:100]}...")
             return {
@@ -145,10 +166,10 @@ class STTService:
                 "method": "groq"
             }
         finally:
-            # Clean up temporary WAV file
-            if wav_created and os.path.exists(wav_path):
+            # Clean up temporary WAV file created during conversion
+            if wav_created and os.path.exists(send_path):
                 try:
-                    os.remove(wav_path)
+                    os.remove(send_path)
                 except Exception:
                     pass
     
