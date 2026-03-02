@@ -51,6 +51,14 @@ async def lifespan(app: FastAPI):
     os.makedirs(audio_path, exist_ok=True)
     print(f"📁 Audio storage: {os.path.abspath(audio_path)}")
 
+    # API key diagnostics — critical for spotting misconfiguration
+    print("\n🔑 API Key Status:")
+    print(f"   GROQ_API_KEY   : {'SET (' + settings.GROQ_API_KEY[:8] + '...)' if settings.GROQ_API_KEY else 'NOT SET ❌'}")
+    print(f"   GEMINI_API_KEY : {'SET (' + settings.GEMINI_API_KEY[:8] + '...)' if settings.GEMINI_API_KEY else 'NOT SET ❌'}")
+    print(f"   GOOGLE_CLIENT_ID: {'SET' if settings.GOOGLE_CLIENT_ID else 'NOT SET ❌'}")
+    print(f"   SECRET_KEY     : {'SET' if settings.SECRET_KEY else 'NOT SET ❌'}")
+    print()
+
     # Create all DB tables (safe no-op if they already exist)
     from app.db.init_db import init_db
     init_db()

@@ -16,45 +16,38 @@ class TranslationService:
     
     def __init__(self):
         self.gemini_model = None
+        self.groq_client = None
         self.use_gemini = False
         self.use_groq = False
         self.use_openai = False
-        
-        # Try Groq API first (since it's working for STT)
+
+        # ── Groq (primary — fast, free, 14k req/day with llama-3.1-8b-instant) ──
         if settings.GROQ_API_KEY:
             try:
                 from groq import Groq
                 self.groq_client = Groq(api_key=settings.GROQ_API_KEY)
                 self.use_groq = True
-                print("✅ Groq API configured for translation")
+                print("✅ [Translation] Groq API ready (llama-3.1-8b-instant)")
             except Exception as e:
-                print(f"⚠️ Groq API not available for translation: {str(e)}")
-        
-        # Try Gemini API as backup
-        if not self.use_groq and settings.GEMINI_API_KEY:
+                print(f"⚠️ [Translation] Groq init failed: {str(e)}")
+        else:
+            print("⚠️ [Translation] GROQ_API_KEY not set — Groq disabled")
+
+        # ── Gemini (secondary — always init independently so it's available as fallback) ──
+        if settings.GEMINI_API_KEY:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=settings.GEMINI_API_KEY)
-                self.genai = genai
                 self.gemini_model = genai.GenerativeModel("gemini-1.5-flash")
                 self.use_gemini = True
-                print("✅ Gemini API configured for translation (gemini-1.5-flash)")
+                print("✅ [Translation] Gemini API ready (gemini-1.5-flash) — fallback")
             except Exception as e:
-                print(f"⚠️ Gemini API not available: {str(e)}")
-        
-        # Fallback to OpenAI if available
-        if not self.use_groq and not self.use_gemini and settings.OPENAI_API_KEY:
-            try:
-                import openai
-                openai.api_key = settings.OPENAI_API_KEY
-                self.openai = openai
-                self.use_openai = True
-                print("✅ OpenAI available for translation")
-            except ImportError:
-                print("⚠️ OpenAI not installed - will use MOCK mode")
-        
-        if not self.use_groq and not self.use_gemini and not self.use_openai:
-            print("⚠️ No translation API available - using MOCK translation mode")
+                print(f"⚠️ [Translation] Gemini init failed: {str(e)}")
+        else:
+            print("⚠️ [Translation] GEMINI_API_KEY not set — Gemini disabled")
+
+        if not self.use_groq and not self.use_gemini:
+            print("❌ [Translation] NO real API available — will use MOCK mode!")
     
     async def translate_technical_text(
         self,
@@ -78,17 +71,26 @@ class TranslationService:
         
         print(f"🌐 Translating: {japanese_text[:50]}...")
         
-        # Try Groq API first (VERY FAST)
+        # 1️⃣ Try Groq first (fast)
         if self.use_groq:
             try:
                 return await self._groq_translate(japanese_text, context)
             except Exception as e:
                 import traceback
-                print(f"⚠️ Groq translation failed: {type(e).__name__}: {str(e)}")
+                print(f"❌ [Translation] Groq failed: {type(e).__name__}: {str(e)}")
                 print(traceback.format_exc())
-        
-        # Instant fallback to mock
-        print("⚠️⚠️⚠️ FALLING BACK TO MOCK TRANSLATION — real translation skipped")
+
+        # 2️⃣ Try Gemini as real fallback
+        if self.use_gemini:
+            try:
+                return await self._gemini_translate(japanese_text, context)
+            except Exception as e:
+                import traceback
+                print(f"❌ [Translation] Gemini failed: {type(e).__name__}: {str(e)}")
+                print(traceback.format_exc())
+
+        # 3️⃣ Emergency mock fallback
+        print("⚠️⚠️⚠️ FALLING BACK TO MOCK TRANSLATION — both Groq and Gemini failed")
         return self._mock_translate(japanese_text, context)
     
     async def _groq_translate(self, japanese_text: str, context: str) -> dict:
@@ -125,6 +127,23 @@ class TranslationService:
             print(f"   ❌ Groq error: {str(e)}")
             raise
     
+    async def _gemini_translate(self, japanese_text: str, context: str) -> dict:
+        """Translate using Gemini API (fallback when Groq fails)."""
+        print(f"   [Translation] Gemini translating...")
+        prompt = f"""Translate this Japanese technical support message to English.
+Output ONLY the English translation, nothing else.
+
+Japanese:
+{japanese_text}"""
+        response = self.gemini_model.generate_content(prompt)
+        translated_text = response.text.strip()
+        print(f"   ✅ [Translation] Gemini done: {translated_text[:80]}...")
+        return {
+            "translated_text": translated_text,
+            "original_text": japanese_text,
+            "method": "gemini"
+        }
+
     async def _openai_translate(self, japanese_text: str, context: str) -> dict:
         """Translate using OpenAI API."""
         print(f"🌐 Translating with OpenAI: {japanese_text[:50]}...")

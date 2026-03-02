@@ -30,24 +30,24 @@ class STTService:
                 from groq import Groq
                 self.groq_client = Groq(api_key=settings.GROQ_API_KEY)
                 self.use_groq = True
-                print("✅ Groq API configured for STT (fast, cloud-based)")
+                print(f"✅ [STT] Groq API ready (whisper-large-v3) key={settings.GROQ_API_KEY[:8]}...")
             except Exception as e:
-                print(f"⚠️ Groq API not available: {str(e)}")
-        
+                print(f"❌ [STT] Groq init failed: {type(e).__name__}: {str(e)}")
+        else:
+            print("❌ [STT] GROQ_API_KEY not set — Groq Whisper disabled!")
+
         # Fallback to OpenAI Whisper API
         if not self.use_groq and settings.OPENAI_API_KEY:
             try:
                 from openai import OpenAI
                 self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
                 self.use_openai = True
-                print("✅ OpenAI Whisper API configured for STT (cloud-based)")
+                print("✅ [STT] OpenAI Whisper API ready (fallback)")
             except Exception as e:
-                print(f"⚠️ OpenAI API not available: {str(e)}")
-        
+                print(f"❌ [STT] OpenAI init failed: {str(e)}")
+
         if not self.use_groq and not self.use_openai:
-            print("⚠️ No cloud STT API configured - will use MOCK mode")
-            print("   Get free Groq API key: https://console.groq.com")
-            print("   Or OpenAI API key: https://platform.openai.com")
+            print("❌ [STT] NO real STT API available — will use MOCK mode (random Japanese text!)")
     
     async def transcribe_audio(self, audio_file_path: str, language: str = "ja") -> dict:
         """
@@ -112,6 +112,8 @@ class STTService:
             )
         
         transcribed_text = transcription.text.strip()
+        if not transcribed_text:
+            raise ValueError("Groq returned empty transcription — audio may be silent, too short, or unsupported format")
         print(f"✅ Groq transcription complete: {transcribed_text[:100]}...")
         
         return {
