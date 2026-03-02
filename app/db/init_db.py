@@ -3,7 +3,7 @@ Database initialization script.
 Creates tables and seed data for developers.
 """
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from app.core.config import settings
 from app.db.base import Base
 from app.models.conversation import Conversation
@@ -46,22 +46,18 @@ def _migrate_add_missing_columns(engine):
                 try:
                     if is_postgres:
                         conn.execute(
-                            __import__("sqlalchemy").text(
-                                f'ALTER TABLE {table} ADD COLUMN IF NOT EXISTS "{col_name}" {col_ddl}'
-                            )
+                            text(f'ALTER TABLE {table} ADD COLUMN IF NOT EXISTS "{col_name}" {col_ddl}')
                         )
                         conn.commit()
                     elif is_sqlite:
                         # SQLite: check if column exists first
                         rows = conn.execute(
-                            __import__("sqlalchemy").text(f"PRAGMA table_info({table})")
+                            text(f"PRAGMA table_info({table})")
                         ).fetchall()
                         existing = [r[1] for r in rows]
                         if col_name not in existing:
                             conn.execute(
-                                __import__("sqlalchemy").text(
-                                    f'ALTER TABLE {table} ADD COLUMN "{col_name}" {col_ddl}'
-                                )
+                                text(f'ALTER TABLE {table} ADD COLUMN "{col_name}" {col_ddl}')
                             )
                             conn.commit()
                 except Exception as e:

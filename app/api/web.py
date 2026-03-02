@@ -2,15 +2,14 @@
 Web routes for serving HTML templates.
 """
 
-from datetime import datetime, timedelta
-from fastapi import APIRouter, Request, Depends, HTTPException, status, Response
+from datetime import datetime
+from fastapi import APIRouter, Request, Depends, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.user import User
-from app.core.config import settings
 
 
 router = APIRouter()
@@ -204,71 +203,6 @@ async def logout(response: Response):
     response = RedirectResponse(url="/", status_code=303)
     response.delete_cookie("user_session")
     return response
-
-
-@router.get("/verify-email", response_class=HTMLResponse)
-async def verify_email(request: Request, token: str = "", db: Session = Depends(get_db)):
-    """Verify email address via token link."""
-    error = ""
-    if not token:
-        error = "Invalid verification link."
-    else:
-        user = db.query(User).filter(User.verification_token == token).first()
-        if not user:
-            error = "Verification link is invalid or already used."
-        elif user.verification_token_expires and datetime.utcnow() > user.verification_token_expires:
-            error = "Verification link has expired. Please request a new one."
-        else:
-            # Mark verified, clear token
-            user.is_verified = True
-            user.verification_token = None
-            user.verification_token_expires = None
-            user.last_login = datetime.utcnow()
-            db.commit()
-            # Auto-login and redirect to dashboard
-            response = RedirectResponse(url="/dashboard", status_code=303)
-            response.set_cookie(
-                key="user_session",
-                value=user.email,
-                max_age=30 * 24 * 60 * 60,
-                httponly=True,
-                samesite="lax",
-            )
-            return response
-
-    return templates.TemplateResponse(
-        "login.html",
-        {"request": request, "error_message": error or "Email verified! You can now log in."},
-    )
-
-
-@router.post("/resend-verification", response_class=HTMLResponse)
-async def resend_verification(request: Request, db: Session = Depends(get_db)):
-    """Resend verification email."""
-    try:
-        form_data = await request.form()
-        email = form_data.get("email", "").strip()
-        user = db.query(User).filter(User.email == email).first()
-
-        # Always show the same page (don't reveal if email exists)
-        if user and not user.is_verified:
-            token, expires = generate_verification_token()
-            user.verification_token = token
-            user.verification_token_expires = expires
-            db.commit()
-            send_verification_email(email, token, user.full_name or email, request)
-
-        return templates.TemplateResponse(
-            "verify_email_sent.html",
-            {"request": request, "email": email, "email_sent": True, "resent": True},
-        )
-    except Exception as e:
-        import traceback
-        print(f"❌ Resend error: {e}\n{traceback.format_exc()}")
-        return templates.TemplateResponse(
-            "login.html",
-            {"request": request, "error_message": "Could not resend email. Please try again."},
-        )
 
 
 @router.get("/upload", response_class=HTMLResponse)

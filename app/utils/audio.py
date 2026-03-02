@@ -19,13 +19,13 @@ def get_audio_duration(file_path: str) -> Optional[float]:
     try:
         import wave
         import contextlib
-        
+
         with contextlib.closing(wave.open(file_path, 'r')) as f:
             frames = f.getnframes()
             rate = f.getframerate()
             duration = frames / float(rate)
             return duration
-    except:
+    except Exception:
         # For non-WAV files or errors, return None
         # Can be extended with other libraries (e.g., pydub)
         return None
