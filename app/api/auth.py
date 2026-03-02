@@ -28,7 +28,14 @@ async def google_login(request: Request):
     """Redirect to Google OAuth consent screen."""
     if not settings.GOOGLE_CLIENT_ID or settings.GOOGLE_CLIENT_ID == "YOUR_CLIENT_ID_HERE":
         return RedirectResponse(url="/login?error=oauth_not_configured")
-    redirect_uri = settings.GOOGLE_REDIRECT_URI
+    # Build redirect URI dynamically from the incoming request host.
+    # This automatically works on localhost AND Railway/any deployed URL
+    # without needing GOOGLE_REDIRECT_URI env var.
+    redirect_uri = str(request.url_for("google_callback"))
+    # Railway sits behind an https proxy — ensure we use https in production
+    if request.headers.get("x-forwarded-proto") == "https":
+        redirect_uri = redirect_uri.replace("http://", "https://", 1)
+    print(f"🔐 OAuth redirect_uri: {redirect_uri}")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 

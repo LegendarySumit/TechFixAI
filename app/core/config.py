@@ -59,6 +59,8 @@ class Settings(BaseSettings):
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
+    # GOOGLE_REDIRECT_URI is no longer used — redirect URI is built dynamically
+    # from the incoming request host so it works on localhost + Railway automatically.
 
     # Translation
     DEEPL_API_KEY: str = ""
