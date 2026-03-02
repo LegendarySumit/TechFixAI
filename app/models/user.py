@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 from app.db.base import Base
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__truncate_error=False)
 
 
 class User(Base):
@@ -34,11 +34,10 @@ class User(Base):
 
     @classmethod
     def get_password_hash(cls, password: str) -> str:
-        # bcrypt hard-limits passwords to 72 bytes; truncate to avoid ValueError
-        return pwd_context.hash(password.encode("utf-8")[:72])
+        return pwd_context.hash(password)
 
     def verify_password(self, password: str) -> bool:
         try:
-            return pwd_context.verify(password.encode("utf-8")[:72], self.hashed_password)
+            return pwd_context.verify(password, self.hashed_password)
         except Exception:
             return False
