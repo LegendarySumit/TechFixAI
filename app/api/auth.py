@@ -41,8 +41,9 @@ async def google_callback(request: Request):
 
     try:
         token = await oauth.google.authorize_access_token(request)
-    except Exception:
-        return RedirectResponse(url="/login?error=oauth_failed")
+    except Exception as e:
+        print(f"❌ OAuth callback error: {type(e).__name__}: {str(e)}")
+        return RedirectResponse(url=f"/login?error=oauth_failed")
 
     user_info = token.get("userinfo")
     if not user_info:

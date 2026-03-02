@@ -79,7 +79,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(UserSessionMiddleware)
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY or "techfixai-session-secret")
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY or "techfixai-session-secret",
+    https_only=False,
+    same_site="lax",
+)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
