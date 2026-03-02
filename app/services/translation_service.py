@@ -83,10 +83,12 @@ class TranslationService:
             try:
                 return await self._groq_translate(japanese_text, context)
             except Exception as e:
-                print(f"⚠️ Groq failed: {str(e)} - using mock")
+                import traceback
+                print(f"⚠️ Groq translation failed: {type(e).__name__}: {str(e)}")
+                print(traceback.format_exc())
         
         # Instant fallback to mock
-        print("   ⚡ Using instant mock translation")
+        print("⚠️⚠️⚠️ FALLING BACK TO MOCK TRANSLATION — real translation skipped")
         return self._mock_translate(japanese_text, context)
     
     async def _groq_translate(self, japanese_text: str, context: str) -> dict:
@@ -95,11 +97,11 @@ class TranslationService:
         
         try:
             completion = self.groq_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-8b-instant",  # 14,400 req/day free vs 30/day for 70b
                 messages=[
                     {
                         "role": "system",
-                        "content": "Translate Japanese to English. Output ONLY the translation."
+                        "content": "Translate Japanese to English. Output ONLY the English translation, nothing else."
                     },
                     {
                         "role": "user",
@@ -163,7 +165,7 @@ Translate from Japanese to English with these requirements:
         if self.use_groq:
             try:
                 completion = self.groq_client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
+                    model="llama-3.1-8b-instant",
                     messages=[
                         {
                             "role": "system",
