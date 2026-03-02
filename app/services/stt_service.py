@@ -146,8 +146,11 @@ class STTService:
 
             filename = os.path.basename(send_path)
             print(f"   📤 Sending to Groq: {filename} ({len(audio_bytes)} bytes, mime={send_mime})")
+            # Use 2-tuple (name, bytes) — no explicit MIME — so Groq auto-detects
+            # format from magic bytes. This is exactly what worked in production.
+            # Specifying MIME risks a mismatch if content-type headers lie.
             transcription = self.groq_client.audio.transcriptions.create(
-                file=(filename, audio_bytes, send_mime),
+                file=(filename, audio_bytes),
                 model="whisper-large-v3",
                 language=language,
                 response_format="json"
