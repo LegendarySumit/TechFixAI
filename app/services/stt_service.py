@@ -89,38 +89,68 @@ class STTService:
         return await self._mock_transcribe(audio_file_path, language)
     
     async def _groq_transcribe(self, audio_file_path: str, language: str) -> dict:
-        """Transcribe using Groq's Whisper API (free, very fast)."""
+        """
+        Transcribe using Groq's Whisper API.
+        Converts any browser format (webm/ogg/mp4) to WAV first — WAV is
+        universally accepted by Whisper and avoids codec rejection errors.
+        """
         file_size = os.path.getsize(audio_file_path)
-        print(f"🎤 Transcribing with Groq API: {audio_file_path} ({file_size} bytes)")
-        
-        with open(audio_file_path, "rb") as audio_file:
-            audio_bytes = audio_file.read()
-        
-        # Determine MIME type from extension
         ext = os.path.splitext(audio_file_path)[1].lower()
-        mime_map = {".wav": "audio/wav", ".mp3": "audio/mpeg", ".m4a": "audio/m4a",
-                    ".webm": "audio/webm", ".ogg": "audio/ogg", ".mp4": "audio/mp4"}
-        mime_type = mime_map.get(ext, "audio/wav")
-        print(f"   File extension: {ext}, MIME type: {mime_type}")
-        
-        with open(audio_file_path, "rb") as audio_file:
+        print(f"🎤 Transcribing with Groq API: {audio_file_path} ({file_size} bytes, ext={ext})")
+
+        # ── Convert non-WAV audio to WAV via pydub (ffmpeg backend) ──────────
+        wav_path = audio_file_path  # default: use as-is
+        wav_created = False
+        if ext != ".wav":
+            try:
+                from pydub import AudioSegment
+                fmt = ext.lstrip(".")          # "webm", "ogg", "mp4", "mp3" …
+                if fmt == "mpeg":
+                    fmt = "mp3"
+                print(f"   🔄 Converting {ext} → WAV for Groq compatibility...")
+                audio_seg = AudioSegment.from_file(audio_file_path, format=fmt)
+                wav_path = audio_file_path.replace(ext, ".wav")
+                audio_seg.export(wav_path, format="wav")
+                wav_created = True
+                wav_size = os.path.getsize(wav_path)
+                print(f"   ✅ Converted to WAV: {wav_path} ({wav_size} bytes)")
+            except Exception as conv_err:
+                import traceback
+                print(f"   ⚠️ Audio conversion failed, trying original file: {conv_err}")
+                print(traceback.format_exc())
+                wav_path = audio_file_path   # fall back to original
+
+        try:
+            with open(wav_path, "rb") as f:
+                audio_bytes = f.read()
+
+            filename = os.path.basename(wav_path)
             transcription = self.groq_client.audio.transcriptions.create(
-                file=(os.path.basename(audio_file_path), audio_bytes, mime_type),
-                model="whisper-large-v3",  # Most accurate model
+                file=(filename, audio_bytes, "audio/wav"),
+                model="whisper-large-v3",
                 language=language,
                 response_format="json"
             )
-        
-        transcribed_text = transcription.text.strip()
-        if not transcribed_text:
-            raise ValueError("Groq returned empty transcription — audio may be silent, too short, or unsupported format")
-        print(f"✅ Groq transcription complete: {transcribed_text[:100]}...")
-        
-        return {
-            "text": transcribed_text,
-            "language": language,
-            "method": "groq"
-        }
+
+            transcribed_text = transcription.text.strip()
+            if not transcribed_text:
+                raise ValueError(
+                    "Groq returned empty transcription — audio may be silent, "
+                    "too short, or in the wrong language"
+                )
+            print(f"✅ Groq transcription complete: {transcribed_text[:100]}...")
+            return {
+                "text": transcribed_text,
+                "language": language,
+                "method": "groq"
+            }
+        finally:
+            # Clean up temporary WAV file
+            if wav_created and os.path.exists(wav_path):
+                try:
+                    os.remove(wav_path)
+                except Exception:
+                    pass
     
     async def _openai_transcribe(self, audio_file_path: str, language: str) -> dict:
         """Transcribe using OpenAI Whisper API (cloud-based)."""
