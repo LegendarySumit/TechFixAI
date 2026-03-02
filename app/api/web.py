@@ -111,7 +111,7 @@ async def login_submit(
         db.rollback()
         return templates.TemplateResponse(
             "login.html",
-            {"request": request, "error_message": f"Login failed: {type(e).__name__}: {str(e)}"},
+            {"request": request, "error_message": "Login failed. Please try again."},
             status_code=500
         )
 
@@ -150,8 +150,8 @@ async def signup_submit(
 
         if not password:
             errors.append("Password is required")
-        elif len(password) < 8:
-            errors.append("Password must be at least 8 characters")
+        elif len(password) < 4:
+            errors.append("Password must be at least 4 characters")
 
         if not terms:
             errors.append("You must agree to the terms of service")
@@ -212,7 +212,7 @@ async def signup_submit(
         db.rollback()
         return templates.TemplateResponse(
             "signup.html",
-            {"request": request, "error_message": f"Signup failed: {type(e).__name__}: {str(e)}"},
+            {"request": request, "error_message": "Signup failed. Please try again."},
             status_code=500
         )
 

@@ -10,7 +10,8 @@ from passlib.context import CryptContext
 from app.db.base import Base
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__truncate_error=False)
+# pbkdf2_sha256 has no password-length limit (unlike bcrypt's 72-byte cap)
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 class User(Base):
