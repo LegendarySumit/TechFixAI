@@ -349,7 +349,7 @@ code,pre,.mono{font-family:'JetBrains Mono','Fira Code','Courier New',monospace}
 @keyframes badgePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.2)}}
 
 .hero-title{
-    font-size:clamp(2.5rem,6vw,4.75rem);font-weight:800;
+    font-size:clamp(2.8rem,7vw,5.2rem);font-weight:800;
     line-height:1.1;letter-spacing:-1.5px;color:var(--text-primary);
 }
 .hero-title .grad-text{
@@ -683,7 +683,7 @@ code,pre,.mono{font-family:'JetBrains Mono','Fira Code','Courier New',monospace}
 
   /* ── Hero ── */
   .hero-section { min-height: auto; padding: 3.5rem 0 2.5rem; }
-  .hero-title { font-size: 1.75rem; letter-spacing: -.5px; }
+  .hero-title { font-size: 2.3rem; letter-spacing: -.5px; }
   .hero-subtitle { font-size: .95rem; }
   .hero-badge { font-size: .72rem; padding: .35rem .85rem; }
 
@@ -771,7 +771,7 @@ code,pre,.mono{font-family:'JetBrains Mono','Fira Code','Courier New',monospace}
   .nav-username { font-size: .78rem; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* ── Hero ── */
-  .hero-title { font-size: 1.5rem; }
+  .hero-title { font-size: 2.05rem; }
   .hero-subtitle { font-size: .88rem; line-height: 1.6; }
   .hero-badge { font-size: .68rem; padding: .3rem .7rem; gap: .35rem; }
   .hero-badge .badge-dot { width: 5px; height: 5px; }
@@ -820,8 +820,8 @@ code,pre,.mono{font-family:'JetBrains Mono','Fira Code','Courier New',monospace}
   .message-bubble { max-width: 92%; font-size: .82rem; }
 
   /* ── Buttons (general) ── */
-  .btn { font-size: .82rem; padding: .45rem .9rem; gap: .3rem; }
-  .btn-lg { font-size: .88rem; padding: .55rem 1rem; }
+  .btn { font-size: .75rem; padding: .35rem .7rem; gap: .25rem; }
+  .btn-lg { font-size: .75rem; padding: .4rem .8rem; }
 
   /* ── Profile dropdown ── */
   .profile-dropdown { width: 195px; }
@@ -843,19 +843,12 @@ code,pre,.mono{font-family:'JetBrains Mono','Fira Code','Courier New',monospace}
   .container, .container-fluid { padding-left: .75rem; padding-right: .75rem; }
   section { padding-top: 2rem !important; padding-bottom: 2rem !important; }
 
-  /* ── Navbar ── */
-  .saas-navbar { padding: .45rem .75rem; }
-  .brand-name { font-size: .82rem; }
-  .navbar-brand img { width: 24px; height: 24px; }
-  .btn-nav-outline, .btn-nav-solid { font-size: .7rem; padding: .28rem .55rem; }
+  /* ── Hero ── */
+  .hero-title { font-size: 1.95rem; }
+  .hero-subtitle { font-size: .82rem; }
   .nav-profile-btn { padding: .28rem .65rem .28rem .28rem; gap: .4rem; }
   .nav-avatar { width: 26px; height: 26px; font-size: .72rem; }
   .nav-username { max-width: 60px; font-size: .72rem; }
-
-  /* ── Hero ── */
-  .hero-title { font-size: 1.35rem; letter-spacing: -.3px; }
-  .hero-subtitle { font-size: .82rem; }
-  .hero-badge { font-size: .63rem; padding: .25rem .6rem; }
 
   /* Workflow */
   .workflow-card { padding: .875rem .625rem; }
@@ -935,7 +928,7 @@ code,pre,.mono{font-family:'JetBrains Mono','Fira Code','Courier New',monospace}
   .nav-chevron { display: none; }
 
   /* ── Hero ── */
-  .hero-title { font-size: 1.2rem; }
+  .hero-title { font-size: 1.5rem; }
   .hero-subtitle { font-size: .78rem; }
   .hero-badge { font-size: .6rem; padding: .22rem .55rem; }
 
@@ -1057,7 +1050,7 @@ code,pre,.mono{font-family:'JetBrains Mono','Fira Code','Courier New',monospace}
 
   /* ── Hero ── */
   .hero-section { padding: 2rem 0 1.5rem; min-height: auto; }
-  .hero-title { font-size: 1.05rem; line-height: 1.2; letter-spacing: -.2px; }
+  .hero-title { font-size: 1.4rem; line-height: 1.2; letter-spacing: -.2px; }
   .hero-subtitle { font-size: .72rem; line-height: 1.55; }
   .hero-badge { font-size: .58rem; padding: .2rem .5rem; gap: .3rem; }
   .hero-badge .badge-dot { width: 5px; height: 5px; }
