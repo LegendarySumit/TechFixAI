@@ -207,25 +207,33 @@ async def logout(response: Response):
 
 @router.get("/upload", response_class=HTMLResponse)
 async def upload_page(request: Request):
-    """Upload audio page"""
+    """Upload audio page - Protected"""
+    if not request.state.current_user:
+        return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse("upload.html", {"request": request})
 
 
 @router.get("/tickets", response_class=HTMLResponse)
 async def tickets_page(request: Request):
-    """Tickets list page"""
+    """Tickets list page - Protected"""
+    if not request.state.current_user:
+        return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse("tickets.html", {"request": request})
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request):
-    """Admin dashboard page"""
+    """Admin dashboard page - Protected"""
+    if not request.state.current_user:
+        return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse("dashboard.html", {"request": request})
 
 
 @router.get("/developers", response_class=HTMLResponse)
 async def developers_page(request: Request):
-    """Developers team page"""
+    """Developers team page - Protected"""
+    if not request.state.current_user:
+        return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse("developers.html", {"request": request})
 
 
