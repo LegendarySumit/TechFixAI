@@ -17,9 +17,9 @@ class AudioEncryption:
         try:
             self.encryption_key = self._get_or_create_key()
             self.cipher = Fernet(self.encryption_key)
-            print("✅ Audio encryption initialized successfully")
+            print("[OK] Audio encryption initialized successfully")
         except Exception as e:
-            print(f"⚠️ Encryption initialization failed: {str(e)}")
+            print(f"[WARNING] Encryption initialization failed: {str(e)}")
             self.encryption_key = None
             self.cipher = None
     

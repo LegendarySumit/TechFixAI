@@ -30,11 +30,11 @@ class STTService:
                 from groq import Groq
                 self.groq_client = Groq(api_key=settings.GROQ_API_KEY)
                 self.use_groq = True
-                print(f"✅ [STT] Groq API ready (whisper-large-v3) key={settings.GROQ_API_KEY[:8]}...")
+                print(f"[OK] [STT] Groq API ready (whisper-large-v3) key={settings.GROQ_API_KEY[:8]}...")
             except Exception as e:
-                print(f"❌ [STT] Groq init failed: {type(e).__name__}: {str(e)}")
+                print(f"[ERROR] [STT] Groq init failed: {type(e).__name__}: {str(e)}")
         else:
-            print("❌ [STT] GROQ_API_KEY not set — Groq Whisper disabled!")
+            print("[ERROR] [STT] GROQ_API_KEY not set — Groq Whisper disabled!")
 
         # Fallback to OpenAI Whisper API
         if not self.use_groq and settings.OPENAI_API_KEY:
@@ -42,12 +42,12 @@ class STTService:
                 from openai import OpenAI
                 self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
                 self.use_openai = True
-                print("✅ [STT] OpenAI Whisper API ready (fallback)")
+                print("[OK] [STT] OpenAI Whisper API ready (fallback)")
             except Exception as e:
-                print(f"❌ [STT] OpenAI init failed: {str(e)}")
+                print(f"[ERROR] [STT] OpenAI init failed: {str(e)}")
 
         if not self.use_groq and not self.use_openai:
-            print("❌ [STT] NO real STT API available — will use MOCK mode (random Japanese text!)")
+            print("[ERROR] [STT] NO real STT API available — will use MOCK mode (random Japanese text!)")
     
     async def transcribe_audio(self, audio_file_path: str, language: str = "ja") -> dict:
         """
@@ -66,7 +66,7 @@ class STTService:
         if not os.path.exists(audio_file_path):
             raise FileNotFoundError(f"Audio file not found: {audio_file_path}")
         
-        print(f"🎤 Starting transcription: {audio_file_path}")
+        print(f"[AUDIO] Starting transcription: {audio_file_path}")
         
         # Try Groq API first (fastest, free)
         if self.use_groq:
@@ -74,7 +74,7 @@ class STTService:
                 return await self._groq_transcribe(audio_file_path, language)
             except Exception as e:
                 import traceback
-                print(f"❌ Groq transcription failed: {type(e).__name__}: {str(e)}")
+                print(f"[ERROR] Groq transcription failed: {type(e).__name__}: {str(e)}")
                 print(traceback.format_exc())
         
         # Fallback to OpenAI Whisper API
@@ -82,10 +82,10 @@ class STTService:
             try:
                 return await self._openai_transcribe(audio_file_path, language)
             except Exception as e:
-                print(f"❌ OpenAI transcription failed: {type(e).__name__}: {str(e)}")
+                print(f"[ERROR] OpenAI transcription failed: {type(e).__name__}: {str(e)}")
         
         # Final fallback to mock — log clearly so user knows
-        print("⚠️⚠️⚠️ FALLING BACK TO MOCK TRANSCRIPTION — real audio ignored")
+        print("[WARNING] FALLING BACK TO MOCK TRANSCRIPTION — real audio ignored")
         return await self._mock_transcribe(audio_file_path, language)
     
     async def _groq_transcribe(self, audio_file_path: str, language: str) -> dict:
@@ -98,7 +98,7 @@ class STTService:
         """
         file_size = os.path.getsize(audio_file_path)
         ext = os.path.splitext(audio_file_path)[1].lower()
-        print(f"🎤 Transcribing with Groq API: {audio_file_path} ({file_size} bytes, ext={ext})")
+        print(f"[AUDIO] Transcribing with Groq API: {audio_file_path} ({file_size} bytes, ext={ext})")
 
         # Groq-supported MIME types (sent as-is, no conversion needed)
         GROQ_SUPPORTED = {
