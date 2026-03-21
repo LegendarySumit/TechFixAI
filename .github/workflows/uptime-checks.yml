@@ -39,54 +39,100 @@ jobs:
 
       - name: Check main app endpoint
         if: steps.cfg.outputs.skip != 'true'
+        env:
+          BASE_URL: ${{ steps.cfg.outputs.base_url }}
         run: |
-          URL="${{ steps.cfg.outputs.base_url }}/"
-          set +e
-          STATUS=$(curl -sS -L --max-time 20 --retry 3 --retry-delay 2 --retry-connrefused --retry-all-errors -o /dev/null -w "%{http_code}" "$URL")
-          CURL_EXIT=$?
-          set -e
-          echo "Main endpoint ($URL) status: $STATUS, curl_exit: $CURL_EXIT"
-          # Consider any 2xx/3xx as healthy for entry route.
-          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
-            echo "Main app endpoint is unhealthy"
-            exit 1
-          fi
+          python - <<'PY'
+          import os
+          import sys
+          import time
+          import urllib.error
+          import urllib.request
+
+          url = os.environ["BASE_URL"].rstrip("/") + "/"
+          attempts = 4
+          status = None
+          last_error = None
+
+          for i in range(attempts):
+              try:
+                  req = urllib.request.Request(url, method="GET")
+                  with urllib.request.urlopen(req, timeout=20) as resp:
+                      status = resp.getcode()
+                      print(f"Main endpoint ({url}) status: {status}")
+                      break
+              except urllib.error.HTTPError as e:
+                  status = e.code
+                  print(f"Main endpoint ({url}) status: {status} (HTTPError)")
+                  break
+              except Exception as e:
+                  last_error = str(e)
+                  print(f"Main endpoint attempt {i+1}/{attempts} error: {last_error}")
+                  if i < attempts - 1:
+                      time.sleep(2)
+
+          if status is None:
+              print("Main endpoint probe failed after retries.")
+              if last_error:
+                  print(f"Last error: {last_error}")
+              sys.exit(1)
+
+          if not (200 <= status < 400):
+              print("Main app endpoint is unhealthy")
+              sys.exit(1)
+          PY
 
       - name: Check health endpoint
         if: steps.cfg.outputs.skip != 'true'
+        env:
+          BASE_URL: ${{ steps.cfg.outputs.base_url }}
         run: |
-          BASE="${{ steps.cfg.outputs.base_url }}"
-          CANDIDATES=("$BASE/health" "$BASE/health/" "$BASE/api/health")
-          HEALTH_OK=false
-          HEALTH_MISSING=false
+          python - <<'PY'
+          import os
+          import sys
+          import time
+          import urllib.error
+          import urllib.request
 
-          for URL in "${CANDIDATES[@]}"; do
-            set +e
-            STATUS=$(curl -sS -L --max-time 20 --retry 3 --retry-delay 2 --retry-connrefused --retry-all-errors -o /dev/null -w "%{http_code}" "$URL")
-            CURL_EXIT=$?
-            set -e
-            echo "Health probe ($URL) status: $STATUS, curl_exit: $CURL_EXIT"
+          base = os.environ["BASE_URL"].rstrip("/")
+          candidates = [f"{base}/health", f"{base}/health/", f"{base}/api/health"]
+          health_ok = False
+          health_missing = False
 
-            if [ "$STATUS" = "200" ] || [ "$STATUS" = "503" ]; then
-              HEALTH_OK=true
-              break
-            fi
+          for url in candidates:
+              status = None
+              last_error = None
 
-            if [ "$STATUS" = "404" ] || [ "$STATUS" = "405" ]; then
-              HEALTH_MISSING=true
-            fi
-          done
+              for i in range(4):
+                  try:
+                      req = urllib.request.Request(url, method="GET")
+                      with urllib.request.urlopen(req, timeout=20) as resp:
+                          status = resp.getcode()
+                          break
+                  except urllib.error.HTTPError as e:
+                      status = e.code
+                      break
+                  except Exception as e:
+                      last_error = str(e)
+                      if i < 3:
+                          time.sleep(2)
 
-          if [ "$HEALTH_OK" = true ]; then
-            echo "Health endpoint check passed."
-            exit 0
-          fi
+              print(f"Health probe ({url}) status: {status}, error: {last_error}")
 
-          # If the app root is healthy but health route is not exposed in this deployment, don't fail uptime.
-          if [ "$HEALTH_MISSING" = true ]; then
-            echo "Health endpoint not exposed (404/405) on tested paths; main endpoint is healthy. Passing with warning."
-            exit 0
-          fi
+              if status in (200, 503):
+                  health_ok = True
+                  break
+              if status in (404, 405):
+                  health_missing = True
 
-          echo "Health endpoint check failed on all candidate paths."
-          exit 1
+          if health_ok:
+              print("Health endpoint check passed.")
+              sys.exit(0)
+
+          if health_missing:
+              print("Health endpoint not exposed (404/405) on tested paths; main endpoint is healthy. Passing with warning.")
+              sys.exit(0)
+
+          print("Health endpoint check failed on all candidate paths.")
+          sys.exit(1)
+          PY
