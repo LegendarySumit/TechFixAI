@@ -201,6 +201,34 @@ class Settings(BaseSettings):
     MAX_TICKET_TITLE_LENGTH: int = 200
     AUTO_ASSIGNMENT_ENABLED: bool = True
 
+    # ===== QUOTAS & COST CONTROLS =====
+    # Per-tier upload limits (uploads per calendar month)
+    FREE_TIER_UPLOAD_QUOTA: int = 10
+    PRO_TIER_UPLOAD_QUOTA: int = 1000
+    ENTERPRISE_TIER_UPLOAD_QUOTA: int = 999999
+
+    # Monthly Groq API cost limits (in cents; $X.YZ = XYZ cents)
+    FREE_TIER_MONTHLY_COST_LIMIT_CENTS: int = 500  # $5/month
+    PRO_TIER_MONTHLY_COST_LIMIT_CENTS: int = 10000  # $100/month
+    ENTERPRISE_TIER_MONTHLY_COST_LIMIT_CENTS: int = 0  # 0 = unlimited
+
+    # Global monthly spend cap (all users combined, in cents)
+    GROQ_GLOBAL_MONTHLY_CAP_CENTS: int = 100000  # $1000/month for entire service
+    GROQ_WARN_THRESHOLD_PERCENT: int = 80  # Alert when 80% of monthly budget spent
+
+    # Groq API cost estimation (update if Groq pricing changes)
+    # STT: ~$0.05 per minute of audio
+    # LLaMA text generation: ~$0.0005 per 1K tokens
+    GROQ_STT_COST_CENTS_PER_MINUTE: float = 5  # $0.05 per minute
+    GROQ_TEXT_GEN_COST_CENTS_PER_1K_TOKENS: float = 0.05  # $0.0005 per 1K tokens
+
+    # Cost tracking behavior
+    TRACK_GROQ_COSTS: bool = True  # Enable cost tracking
+    BLOCK_UPLOADS_ON_QUOTA_EXCEEDED: bool = True  # Hard block if quota exceeded
+    AUTO_RETRY_FAILED_GROQ_CALLS: bool = True  # Retry with exponential backoff
+    GROQ_MAX_RETRIES: int = 3  # Max retries for failed Groq calls
+    GROQ_RETRY_BASE_DELAY_SECONDS: float = 1.0  # Initial retry delay
+
     class Config:
         env_file = ".env"
         case_sensitive = True

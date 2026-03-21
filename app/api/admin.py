@@ -13,6 +13,9 @@ from app.core.access_control import get_current_user_or_401
 from app.models.ticket import Ticket, TicketStatus, TicketPriority
 from app.models.developer import Developer
 from app.models.conversation import Conversation, ConversationStatus
+from app.models.user import User
+from app.services.quota_service import QuotaService
+from app.services.cost_tracking import CostTrackingService
 
 router = APIRouter()
 
@@ -181,3 +184,92 @@ async def list_developers(
         })
     
     return {"developers": dev_list}
+
+
+# ===== COST & QUOTA MONITORING (NEW) =====
+
+@router.get("/costs/global")
+async def get_global_costs(
+    _current_user=Depends(get_current_user_or_401),
+    db: Session = Depends(get_db)
+):
+    """
+    Get global Groq API spending metrics.
+    Shows system-wide cost tracking and budget status.
+    """
+    metrics = CostTrackingService.get_cost_metrics(db)
+    
+    return {
+        "metrics": metrics,
+        "status": "warning" if metrics["at_warning_threshold"] else ("exceeded" if metrics["exceeds_cap"] else "healthy")
+    }
+
+
+@router.get("/costs/users")
+async def get_user_costs(
+    skip: int = 0,
+    limit: int = Query(default=50, le=500),
+    sort_by: str = Query(default="spend", regex="^(spend|uploads|tier)$"),
+    _current_user=Depends(get_current_user_or_401),
+    db: Session = Depends(get_db)
+):
+    """
+    Get per-user cost breakdown and quota usage.
+    Useful for identifying heavy users and quota violations.
+    """
+    query = db.query(User)
+    
+    # Sort options
+    if sort_by == "spend":
+        query = query.order_by(User.groq_spend_cents_month.desc())
+    elif sort_by == "uploads":
+        query = query.order_by(User.uploads_this_month.desc())
+    elif sort_by == "tier":
+        query = query.order_by(User.subscription_tier.desc())
+    
+    total = query.count()
+    users = query.offset(skip).limit(limit).all()
+    
+    user_costs = []
+    for user in users:
+        user_costs.append({
+            "user_id": user.id,
+            "email": user.email,
+            "subscription_tier": user.subscription_tier,
+            "uploads_this_month": user.uploads_this_month,
+            "upload_limit": QuotaService.get_upload_limit(user),
+            "groq_spend_cents": user.groq_spend_cents_month,
+            "groq_spend_usd": round(user.groq_spend_cents_month / 100, 2),
+            "cost_limit_cents": QuotaService.get_cost_limit(user),
+            "cost_limit_usd": round(QuotaService.get_cost_limit(user) / 100, 2),
+            "quota_exceeded": user.quota_exceeded,
+            "quota_reset_date": user.quota_reset_date,
+        })
+    
+    return {
+        "total": total,
+        "users": user_costs
+    }
+
+
+@router.get("/quotas/user/{user_id}")
+async def get_user_quota_detail(
+    user_id: int,
+    _current_user=Depends(get_current_user_or_401),
+    db: Session = Depends(get_db)
+):
+    """
+    Get detailed quota status for a specific user.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    quota_status = QuotaService.get_user_quota_status(user)
+    
+    return {
+        "user_id": user.id,
+        "email": user.email,
+        **quota_status
+    }

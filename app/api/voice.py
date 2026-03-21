@@ -17,10 +17,13 @@ from app.core.config import settings
 from app.core.auth_guard import get_request_ip
 from app.core.rate_limit import check_rate_limit
 from app.models.conversation import Conversation, ConversationStatus
+from app.models.user import User
 from app.services.stt_service import stt_service
 from app.services.translation_service import translation_service
 from app.services.ticket_service import ticket_service
 from app.services.assignment_service import assignment_service
+from app.services.quota_service import QuotaService, QuotaExceededException
+from app.services.cost_tracking import CostTrackingService
 from app.utils.encryption import audio_encryption
 from app.utils.audit import audit_log
 
@@ -82,14 +85,44 @@ async def process_voice_pipeline(
         if not conversation:
             return
         
+        # Get user for cost tracking
+        user = None
+        if conversation.client_id:
+            user = db.query(User).filter(User.email == conversation.client_id).first()
+        
         # Step 1: STT with Groq (FAST - 3-5 seconds)
         conversation.status = ConversationStatus.PROCESSING
         db.commit()
+        
+        # Estimate STT cost
+        stt_cost_estimate = CostTrackingService.estimate_stt_cost(
+            conversation.audio_duration_seconds or 30  # Estimate 30s if unknown
+        )
+        
+        # Check cost budget before proceeding
+        if user:
+            try:
+                QuotaService.check_cost_budget(user, stt_cost_estimate, db)
+            except QuotaExceededException:
+                conversation.status = ConversationStatus.FAILED
+                conversation.english_translation = "Cost quota exceeded. Upgrade your plan to continue."
+                db.commit()
+                return
         
         transcription_result = await stt_service.transcribe_audio(audio_file_path)
         conversation.japanese_transcript = transcription_result["text"]
         conversation.status = ConversationStatus.TRANSCRIBED
         db.commit()
+        
+        # Track STT cost
+        if user:
+            CostTrackingService.log_cost_event(
+                user_email=user.email,
+                operation="stt",
+                cost_cents=stt_cost_estimate,
+                details={"conversation_id": conversation.id}
+            )
+            QuotaService.add_groq_cost(user, stt_cost_estimate, db)
         
         print(f"✅ STT: {conversation.japanese_transcript[:60]}")
         
@@ -101,6 +134,19 @@ async def process_voice_pipeline(
         conversation.english_translation = translation_result["translated_text"]
         conversation.status = ConversationStatus.TRANSLATED
         db.commit()
+        
+        # Estimate and track translation cost (rough estimate: 0.5 USD per 1000 tokens)
+        translation_token_estimate = len(conversation.english_translation.split()) * 1.3  # ~1.3 tokens per word
+        translation_cost = CostTrackingService.estimate_text_gen_cost(int(translation_token_estimate))
+        
+        if user:
+            CostTrackingService.log_cost_event(
+                user_email=user.email,
+                operation="translation",
+                cost_cents=translation_cost,
+                details={"conversation_id": conversation.id, "tokens": int(translation_token_estimate)}
+            )
+            QuotaService.add_groq_cost(user, translation_cost, db)
         
         print(f"✅ Translation: {conversation.english_translation[:60]}")
         
@@ -178,6 +224,22 @@ async def upload_voice(
             detail=f"Too many uploads. Retry after about {max(1, retry_upload_rate)} second(s).",
             headers={"Retry-After": str(max(1, retry_upload_rate))},
         )
+
+    # ===== QUOTA CHECKS (NEW) =====
+    # Check upload quota if user is authenticated
+    user = request.state.current_user
+    if user:
+        try:
+            # Reset monthly quota if needed and check upload limit
+            QuotaService.reset_monthly_quota_if_needed(user, db)
+            QuotaService.check_upload_quota(user, db)
+        except QuotaExceededException as e:
+            audit_log(
+                user_email=user.email,
+                action="upload_quota_exceeded",
+                details={"remaining_uploads": max(0, QuotaService.get_upload_limit(user) - user.uploads_this_month)}
+            )
+            raise e
 
     content_length = request.headers.get("content-length")
     if content_length:
@@ -264,6 +326,10 @@ async def upload_voice(
         details={"audio_format": audio.content_type, "file_size_mb": file_size_mb}
     )
     
+    # Increment upload quota if user authenticated
+    if user:
+        QuotaService.increment_upload_count(user, db)
+    
     # Start background processing (fresh DB session opened inside the task)
     background_tasks.add_task(
         process_voice_pipeline,
@@ -271,10 +337,14 @@ async def upload_voice(
         audio_file_path,
     )
     
+    # Return quota status in response
+    quota_status = QuotaService.get_user_quota_status(user) if user else None
+    
     return {
         "conversation_id": conversation.id,
         "status": "processing",
-        "message": "Audio uploaded successfully and processing started"
+        "message": "Audio uploaded successfully and processing started",
+        "quota": quota_status
     }
 
 
