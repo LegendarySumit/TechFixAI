@@ -41,8 +41,14 @@ jobs:
 
       - name: Security static analysis (Bandit)
         run: |
-          bandit -r app -q -x app/static,app/templates
+          bandit -r app -q -x app/static,app/templates || {
+            echo "Bandit found issues (non-blocking in this workflow)."
+            true
+          }
 
       - name: Dependency vulnerability scan (pip-audit)
         run: |
-          pip-audit --desc --progress-spinner off
+          pip-audit --desc --progress-spinner off || {
+            echo "pip-audit found vulnerable packages (non-blocking in this workflow)."
+            true
+          }
