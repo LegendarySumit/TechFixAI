@@ -1,6 +1,6 @@
 """Add user quotas, subscription tiers, and cost tracking.
 
-Revision ID: 0001_add_quotas_and_cost_tracking
+Revision ID: 0001_quotas_cost
 Revises: 
 Create Date: 2026-03-21
 
@@ -15,7 +15,7 @@ from sqlalchemy import inspect
 
 
 # revision identifiers, used by Alembic.
-revision = '0001_add_quotas_and_cost_tracking'
+revision = '0001_quotas_cost'
 down_revision = '001_add_audio_data'
 branch_labels = None
 depends_on = None
