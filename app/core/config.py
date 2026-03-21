@@ -4,8 +4,9 @@ Single source of truth for all environment variables.
 """
 
 import os
-from typing import List
-from pydantic_settings import BaseSettings
+import json
+from typing import Annotated, List
+from pydantic_settings import BaseSettings, NoDecode
 from pydantic import field_validator, model_validator
 
 
@@ -96,12 +97,27 @@ class Settings(BaseSettings):
     CAPTCHA_REQUIRED_SIGNUP: bool = True
 
     # CORS — set CORS_ORIGINS env var as comma-separated list for production
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
+    CORS_ORIGINS: Annotated[List[str], NoDecode] = [
+        "http://localhost:3000",
+        "http://localhost:8000",
+    ]
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors(cls, v):
+        if v is None:
+            return ["http://localhost:3000", "http://localhost:8000"]
         if isinstance(v, str):
+            value = v.strip()
+            if not value:
+                return ["http://localhost:3000", "http://localhost:8000"]
+            if value.startswith("["):
+                try:
+                    parsed = json.loads(value)
+                    if isinstance(parsed, list):
+                        return [str(origin).strip() for origin in parsed if str(origin).strip()]
+                except Exception:
+                    pass
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
