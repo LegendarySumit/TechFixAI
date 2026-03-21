@@ -126,7 +126,7 @@ class TransportAndSecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "Content-Security-Policy"
             ] = (
                 "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://challenges.cloudflare.com; "
+                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://challenges.cloudflare.com; "
                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                 "img-src 'self' data: https:; "
                 "font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; "

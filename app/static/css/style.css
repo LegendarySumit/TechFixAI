@@ -260,6 +260,9 @@ code,pre,.mono{font-family:'JetBrains Mono','Fira Code','Courier New',monospace}
 .footer-links a{color:var(--text-secondary);text-decoration:none;transition:var(--ease-quick);display:inline-flex;align-items:center;gap:.25rem}
 .footer-links a:hover{color:#818cf8;transform:translateX(3px)}
 .footer-links i{font-size:1rem;margin-right:.25rem}
+.footer-main-grid .footer-col{min-width:0}
+.footer-resource-grid .footer-links{margin-bottom:0}
+.footer-resource-grid .footer-links li:last-child{margin-bottom:0 !important}
 .social-links{display:flex;gap:.6rem;margin-top:1rem}
 .social-icon{
     width:34px;height:34px;display:flex;align-items:center;justify-content:center;
@@ -270,6 +273,19 @@ code,pre,.mono{font-family:'JetBrains Mono','Fira Code','Courier New',monospace}
 .social-icon:hover{background:rgba(99,102,241,.15);border-color:var(--border-active);color:#818cf8;transform:translateY(-2px);box-shadow:var(--glow-indigo)}
 .saas-footer .text-muted{color:var(--text-secondary) !important}
 .saas-footer .border-subtle{border-color:var(--border-subtle) !important}
+
+@media (min-width: 992px){
+  .footer-main-grid{grid-auto-flow:row dense}
+  .footer-resource-grid{--bs-gutter-x:2rem}
+}
+
+@media (max-width: 991.98px){
+  .footer-main-grid .footer-col{margin-bottom:.35rem}
+}
+
+@media (max-width: 575.98px){
+  .footer-resource-grid > [class*='col-']{width:100%}
+}
 
 /* =============================================================
    HOME PAGE — HERO
