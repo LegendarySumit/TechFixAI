@@ -5,8 +5,8 @@ Single source of truth for all environment variables.
 
 import os
 import json
-from typing import Annotated, List
-from pydantic_settings import BaseSettings, NoDecode
+from typing import List
+from pydantic_settings import BaseSettings
 from pydantic import field_validator, model_validator
 
 
@@ -96,30 +96,27 @@ class Settings(BaseSettings):
     CAPTCHA_REQUIRED_LOGIN: bool = True
     CAPTCHA_REQUIRED_SIGNUP: bool = True
 
-    # CORS — set CORS_ORIGINS env var as comma-separated list for production
-    CORS_ORIGINS: Annotated[List[str], NoDecode] = [
-        "http://localhost:3000",
-        "http://localhost:8000",
-    ]
+    # CORS — set CORS_ORIGINS env var as comma-separated list or JSON array string.
+    # Keep this as str for compatibility with older pydantic-settings versions.
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8000"
 
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def parse_cors(cls, v):
-        if v is None:
+    def get_cors_origins(self) -> List[str]:
+        raw = (self.CORS_ORIGINS or "").strip()
+        if not raw:
             return ["http://localhost:3000", "http://localhost:8000"]
-        if isinstance(v, str):
-            value = v.strip()
-            if not value:
-                return ["http://localhost:3000", "http://localhost:8000"]
-            if value.startswith("["):
-                try:
-                    parsed = json.loads(value)
-                    if isinstance(parsed, list):
-                        return [str(origin).strip() for origin in parsed if str(origin).strip()]
-                except Exception:
-                    pass
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
+
+        if raw.startswith("["):
+            try:
+                parsed = json.loads(raw)
+                if isinstance(parsed, list):
+                    origins = [str(origin).strip() for origin in parsed if str(origin).strip()]
+                    if origins:
+                        return origins
+            except Exception:
+                pass
+
+        origins = [origin.strip() for origin in raw.split(",") if origin.strip()]
+        return origins or ["http://localhost:3000", "http://localhost:8000"]
 
     # Observability & Monitoring
     LOG_LEVEL: str = "INFO"
@@ -150,7 +147,7 @@ class Settings(BaseSettings):
             raise ValueError("PUBLIC_DEPLOYMENT=True requires a strong non-default SECRET_KEY")
 
         invalid_cors = []
-        for origin in self.CORS_ORIGINS:
+        for origin in self.get_cors_origins():
             normalized = origin.strip().lower()
             if (
                 not normalized.startswith("https://")
