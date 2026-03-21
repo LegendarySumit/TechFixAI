@@ -30,7 +30,7 @@ class STTService:
                 from groq import Groq
                 self.groq_client = Groq(api_key=settings.GROQ_API_KEY)
                 self.use_groq = True
-                print(f"[OK] [STT] Groq API ready (whisper-large-v3) key={settings.GROQ_API_KEY[:8]}...")
+                print("[OK] [STT] Groq API ready (whisper-large-v3)")
             except Exception as e:
                 print(f"[ERROR] [STT] Groq init failed: {type(e).__name__}: {str(e)}")
         else:

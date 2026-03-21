@@ -653,17 +653,49 @@
 }
 .preview-modal-en {
     padding: 0.5rem 0.875rem;
-    background: rgba(16,185,129,.06);
     border-bottom: 1px solid rgba(255,255,255,.05);
 }
 .preview-modal-label {
     font-size: 0.66rem; text-transform: uppercase;
-    letter-spacing: 0.07em; color: #6b7280; margin-bottom: 0.15rem;
+    letter-spacing: 0.07em;
+    color: #6b7280;
+    margin-bottom: 0.15rem;
 }
 .preview-modal-actions {
-    padding: 0.45rem 0.875rem;
-    display: flex; gap: 0.5rem;
-    background: rgba(4,9,26,.7);
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    width: fit-content;
+    margin: 0.6rem auto 0.75rem auto;
+    padding: 0;
+    background: transparent;
+}
+.preview-modal-send {
+    min-height: 40px;
+    padding: 0.5rem 1rem;
+    border-radius: 9px;
+    border: 1px solid rgba(52, 211, 153, 0.45);
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ecfeff;
+    font-weight: 700;
+}
+.preview-modal-send:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+}
+.preview-modal-cancel {
+    min-height: 40px;
+    min-width: 110px;
+    padding: 0.5rem 0.85rem;
+    border-radius: 9px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(30, 41, 59, 0.75);
+    color: #cbd5e1;
+    font-weight: 600;
+}
+.preview-modal-cancel:hover {
+    background: rgba(51, 65, 85, 0.9);
+    color: #e2e8f0;
 }
 .chat-lang-bar { display:flex; gap:.3rem; margin-top:.4rem; }
 .chat-lang-btn {
@@ -674,7 +706,66 @@
 .chat-lang-btn.active { background:rgba(99,102,241,.22); border-color:rgba(99,102,241,.5); color:#a5b4fc; }
 .chat-lang-btn:hover:not(.active) { background:rgba(99,102,241,.1); color:#e5e7eb; }
 .chat-jp-note {
-    font-size:.72rem; color:#6b7280; margin-top:.3rem; font-style:italic; line-height:1.4;
+    margin-top: 0.45rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 9px;
+    background: rgba(15, 23, 42, 0.46);
+    border: 1px solid rgba(224, 231, 255, 0.28);
+    line-height: 1.45;
+}
+.chat-jp-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 0.2rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: #c7d2fe;
+    text-transform: uppercase;
+}
+.chat-jp-text {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-shadow: 0 1px 0 rgba(2, 6, 23, 0.35);
+}
+
+#chatInputRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(99, 102, 241, 0.22);
+    border-radius: 12px;
+    padding: 0.4rem;
+}
+
+#chatInputRow #chatInput {
+    background: rgba(51, 65, 85, 0.5) !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    color: #e2e8f0 !important;
+    border-radius: 10px;
+    min-height: 48px;
+    flex: 1 1 auto;
+}
+
+.chat-send-btn-modal {
+    min-height: 48px;
+    min-width: 54px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    border: 1px solid rgba(167, 139, 250, 0.45);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    padding: 0.75rem 0.95rem;
+    flex-shrink: 0;
+}
+.chat-send-btn-modal:hover {
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
 }
 </style>
 {% endblock %}
@@ -971,21 +1062,20 @@
                         <div id="chatPreviewEn" style="color:#d1fae5;font-size:.9rem"></div>
                     </div>
                     <div class="preview-modal-actions">
-                        <button class="btn btn-sm btn-success flex-grow-1" onclick="sendChatTranslated()"><i class="bi bi-send-fill me-1"></i>Send</button>
-                        <button class="btn btn-sm" style="background:rgba(100,116,139,.3);color:#94a3b8;border:none;" onclick="cancelChatPreview()"><i class="bi bi-x"></i></button>
+                        <button class="btn btn-sm preview-modal-send" onclick="sendChatTranslated()" title="Send this message"><i class="bi bi-send-fill me-1"></i>Send</button>
+                        <button class="btn btn-sm preview-modal-cancel" onclick="cancelChatPreview()" title="Cancel"><i class="bi bi-x me-1"></i>Cancel</button>
                     </div>
                 </div>
 
                 <!-- Input row -->
-                <div id="chatInputRow" style="display:flex;gap:0.5rem;">
+                <div id="chatInputRow">
                     <button class="chat-mic-btn-modal" id="chatMicBtn" onclick="toggleChatVoice()" title="Record in Japanese">
                         <i class="bi bi-mic-fill"></i>
                     </button>
                     <input type="text" id="chatInput" class="form-control"
-                           style="background:rgba(51,65,85,.5);border:1px solid rgba(99,102,241,.3);color:#e2e8f0;"
                            placeholder="Type or record in Japanese…"
                            onkeypress="handleChatKeyPress(event)">
-                    <button class="btn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;" onclick="sendChatMessage()">
+                    <button class="btn chat-send-btn-modal" onclick="sendChatMessage()" title="Send message">
                         <i class="bi bi-send-fill"></i>
                     </button>
                 </div>
@@ -1057,6 +1147,37 @@ let recordingSeconds = 0;
 let audioBlob = null;
 let currentConversationId = null;
 let selectedFile = null;
+const uploadStateKey = 'techfixai_upload_state_v1';
+
+function getUploadState() {
+    try {
+        const raw = sessionStorage.getItem(uploadStateKey);
+        return raw ? JSON.parse(raw) : {};
+    } catch (_) {
+        return {};
+    }
+}
+
+function setUploadState(patch = {}) {
+    const next = {
+        ...getUploadState(),
+        ...patch,
+        updatedAt: Date.now(),
+    };
+    try {
+        sessionStorage.setItem(uploadStateKey, JSON.stringify(next));
+    } catch (_) {
+        // Ignore storage write failures.
+    }
+}
+
+function clearUploadState() {
+    try {
+        sessionStorage.removeItem(uploadStateKey);
+    } catch (_) {
+        // Ignore storage cleanup failures.
+    }
+}
 
 // Step navigation
 function showStep(stepNumber) {
@@ -1067,7 +1188,50 @@ function showStep(stepNumber) {
     if (stepContainer) {
         stepContainer.classList.add('active');
         currentStep = stepNumber;
+        setUploadState({ step: stepNumber });
     }
+}
+
+function restoreUploadWorkflowState() {
+    const state = getUploadState();
+    const step = Number(state.step || 0);
+
+    if (!step || step < 1 || step > 4) {
+        return false;
+    }
+
+    if (state.currentConversationId) {
+        currentConversationId = state.currentConversationId;
+    }
+
+    if (step === 4 && state.successData && state.successData.ticket) {
+        showSuccessScreen(state.successData);
+        return true;
+    }
+
+    if (step === 3 && currentConversationId) {
+        showStep(3);
+        processTicketCreation();
+        return true;
+    }
+
+    if (step === 2) {
+        showStep(2);
+        if (state.japaneseTranscript) {
+            document.getElementById('japaneseTranscript').value = state.japaneseTranscript;
+        }
+        if (typeof state.transcriptionConfidence === 'number') {
+            displayConfidenceScore(
+                state.transcriptionConfidence,
+                state.transcriptionQuality,
+                Boolean(state.needsClarity)
+            );
+        }
+        return true;
+    }
+
+    showStep(1);
+    return true;
 }
 
 function displayConfidenceScore(confidence, qualityStatus, needsClarity) {
@@ -1272,6 +1436,7 @@ async function uploadAudio(audioData) {
         
         const data = await response.json();
         currentConversationId = data.conversation_id;
+        setUploadState({ currentConversationId });
         
         // Show processing message
         document.getElementById('recordingStatus').textContent = 'Transcribing Japanese audio...';
@@ -1300,6 +1465,13 @@ async function pollForTranscription() {
             if (data.japanese_transcript) {
                 // Show the transcription in Step 2
                 document.getElementById('japaneseTranscript').value = data.japanese_transcript;
+                setUploadState({
+                    step: 2,
+                    japaneseTranscript: data.japanese_transcript,
+                    transcriptionConfidence: data.transcription_confidence,
+                    transcriptionQuality: data.transcription_quality,
+                    needsClarity: data.needs_clarity,
+                });
                 
                 // Display confidence score
                 displayConfidenceScore(
@@ -1615,6 +1787,7 @@ function showSuccessScreen(data) {
     
     // Show step 4
     showStep(4);
+    setUploadState({ step: 4, successData: data });
 }
 
 // ── Chat state ──────────────────────────────────────────────────────────────────────────────────
@@ -1702,12 +1875,10 @@ async function stopChatVoice() {
         const chatExtMap = {'audio/webm':'webm','audio/ogg':'ogg','audio/mp4':'mp4','audio/mpeg':'mp3','audio/wav':'wav','audio/m4a':'m4a'};
         const chatExt = chatExtMap[chatMime] || 'webm';
         fd.append('audio', result.blob, `chat-voice.${chatExt}`);
-        const upResp = await fetch('/api/voice/upload', { method: 'POST', body: fd });
-        if (!upResp.ok) throw new Error('upload failed');
-        const { conversation_id } = await upResp.json();
-
         showChatProc('Transcribing & translating…');
-        const st = await pollChatVoice(conversation_id);
+        const upResp = await fetch('/api/voice/chat-transcribe', { method: 'POST', body: fd });
+        if (!upResp.ok) throw new Error('chat transcribe failed');
+        const st = await upResp.json();
 
         hideChatProc();
         setChatInputEnabled(true);
@@ -1819,7 +1990,7 @@ function addChatMessage(sender, text, isWelcome = false, jpOriginal = null) {
             <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
                 <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:1rem;padding:.75rem 1rem;max-width:70%;color:white">
                     <div style="font-size:.95rem;line-height:1.4">${esc(text)}</div>
-                    ${jpOriginal ? `<div class="chat-jp-note"><i class="bi bi-mic me-1"></i>${esc(jpOriginal)}</div>` : ''}
+                    ${jpOriginal ? `<div class="chat-jp-note"><span class="chat-jp-label"><i class="bi bi-mic"></i>Japanese (original)</span><span class="chat-jp-text">${esc(jpOriginal)}</span></div>` : ''}
                     <small style="color:rgba(255,255,255,.7);font-size:.8rem;display:block;margin-top:.25rem">${time}</small>
                 </div>
             </div>`;
@@ -1868,6 +2039,7 @@ function createNewTicket() {
     
     // Go back to step 1
     showStep(1);
+    clearUploadState();
 }
 
 // Utility
@@ -1878,7 +2050,9 @@ function sleep(ms) {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Voice to Ticket initialized');
-    showStep(1);
+    if (!restoreUploadWorkflowState()) {
+        showStep(1);
+    }
     initializeDragDrop();
 });
 

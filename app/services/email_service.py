@@ -39,7 +39,6 @@ def send_verification_email(to_email: str, token: str, full_name: str, request=N
     """
     if not settings.SMTP_HOST or not settings.SMTP_USER or not settings.SMTP_PASSWORD:
         print(f"⚠️ [Email] SMTP not configured — skipping verification email to {to_email}")
-        print(f"   Token for manual testing: {token}")
         return False
 
     base_url = _get_base_url(request)

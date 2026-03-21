@@ -3,6 +3,7 @@ Google OAuth authentication routes.
 """
 
 from datetime import datetime
+from urllib.parse import urlparse
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 from authlib.integrations.starlette_client import OAuth
@@ -10,6 +11,7 @@ from authlib.integrations.starlette_client import OAuth
 from app.db.session import SessionLocal
 from app.models.user import User
 from app.core.config import settings
+from app.core.session import set_session_cookie
 
 router = APIRouter()
 
@@ -23,20 +25,59 @@ oauth.register(
 )
 
 
+def _build_google_redirect_uri(request: Request) -> str:
+    """Build a deterministic OAuth callback URL to avoid redirect_uri mismatches."""
+    configured_redirect = (settings.GOOGLE_REDIRECT_URI or "").strip()
+    if configured_redirect:
+        return configured_redirect
+
+    configured_base = (settings.APP_BASE_URL or "").strip().rstrip("/")
+    if configured_base:
+        return f"{configured_base}/auth/google/callback"
+
+    dynamic_redirect = str(request.url_for("google_callback"))
+    forwarded_proto = request.headers.get("x-forwarded-proto", "").split(",")[0].strip().lower()
+    if forwarded_proto == "https":
+        dynamic_redirect = dynamic_redirect.replace("http://", "https://", 1)
+    return dynamic_redirect
+
+
+def _is_local_host(hostname: str) -> bool:
+    return (hostname or "").lower() in {"localhost", "127.0.0.1", "::1"}
+
+
+def _maybe_redirect_to_canonical_oauth_host(request: Request, redirect_uri: str):
+    """
+    If auth starts on 127.0.0.1 but callback is configured for localhost (or vice versa),
+    OAuth state cookie will mismatch by domain. Redirect first to canonical host.
+    """
+    parsed = urlparse(redirect_uri)
+    callback_host = (parsed.hostname or "").lower()
+    request_host = (request.url.hostname or "").lower()
+
+    if not callback_host or not request_host:
+        return None
+
+    if callback_host == request_host:
+        return None
+
+    if _is_local_host(callback_host) and _is_local_host(request_host):
+        canonical_url = f"{parsed.scheme}://{parsed.netloc}{request.url.path}"
+        return RedirectResponse(url=canonical_url, status_code=307)
+
+    return None
+
+
 @router.get("/auth/google")
 async def google_login(request: Request):
     """Redirect to Google OAuth consent screen."""
     if not settings.GOOGLE_CLIENT_ID or settings.GOOGLE_CLIENT_ID == "YOUR_CLIENT_ID_HERE":
         return RedirectResponse(url="/login?error=oauth_not_configured")
-    # Use fixed GOOGLE_REDIRECT_URI env var if set (recommended for Railway/production).
-    # Falls back to dynamic url_for() for local dev where no env var is needed.
-    if settings.GOOGLE_REDIRECT_URI:
-        redirect_uri = settings.GOOGLE_REDIRECT_URI
-    else:
-        redirect_uri = str(request.url_for("google_callback"))
-        # Ensure https when behind a proxy (Railway forwards x-forwarded-proto)
-        if request.headers.get("x-forwarded-proto") == "https":
-            redirect_uri = redirect_uri.replace("http://", "https://", 1)
+    redirect_uri = _build_google_redirect_uri(request)
+    canonical_host_redirect = _maybe_redirect_to_canonical_oauth_host(request, redirect_uri)
+    if canonical_host_redirect:
+        return canonical_host_redirect
+
     print(f"🔐 OAuth redirect_uri: {redirect_uri}")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
@@ -52,6 +93,8 @@ async def google_callback(request: Request):
         token = await oauth.google.authorize_access_token(request)
     except Exception as e:
         print(f"❌ OAuth callback error: {type(e).__name__}: {str(e)}")
+        if "mismatching_state" in str(e).lower() or "mismatchingstateerror" in type(e).__name__.lower():
+            return RedirectResponse(url="/login?error=oauth_state_mismatch")
         return RedirectResponse(url=f"/login?error=oauth_failed")
 
     user_info = token.get("userinfo")
@@ -79,6 +122,8 @@ async def google_callback(request: Request):
                 user.google_id = google_id
             if picture and not user.picture_url:
                 user.picture_url = picture
+            if not user.password_changed_at:
+                user.password_changed_at = datetime.utcnow()
             user.last_login = datetime.utcnow()
             db.commit()
         else:
@@ -105,13 +150,7 @@ async def google_callback(request: Request):
             db.refresh(user)
 
         response = RedirectResponse(url="/dashboard", status_code=303)
-        response.set_cookie(
-            key="user_session",
-            value=user.email,
-            max_age=30 * 24 * 60 * 60,   # 30 days
-            httponly=True,
-            samesite="lax",
-        )
+        set_session_cookie(response, user, remember=True)
         return response
     except Exception as e:
         import traceback

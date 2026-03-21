@@ -150,16 +150,23 @@
 .chat-input-wrapper .input-group {
     margin-bottom: 0;
     display: flex;
+    align-items: center;
     gap: 0.5rem;
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(99, 102, 241, 0.22);
+    border-radius: 12px;
+    padding: 0.4rem;
 }
 
 .chat-input-wrapper .form-control {
     background: rgba(30, 41, 59, 0.6);
     border: 1.5px solid rgba(99, 102, 241, 0.3);
     color: #e5e7eb;
-    border-radius: 8px;
+    border-radius: 10px;
+    min-height: 48px;
     padding: 0.75rem 1rem;
     transition: all 0.2s ease;
+    flex: 1 1 auto;
 }
 
 .chat-input-wrapper .form-control::placeholder {
@@ -259,6 +266,16 @@
     .status-actions-grid {
         grid-template-columns: 1fr;
     }
+
+    .preview-actions {
+        flex-direction: column-reverse;
+    }
+
+    .preview-actions .preview-send-btn,
+    .preview-actions .preview-cancel-btn {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 /* ── Voice chat mic button ───────────────────────────── */
@@ -267,6 +284,8 @@
     border: 1.5px solid rgba(99, 102, 241, 0.35) !important;
     color: #818cf8;
     border-radius: 8px;
+    min-height: 48px;
+    min-width: 54px;
     padding: 0.75rem 1rem;
     transition: all 0.2s ease;
     flex-shrink: 0;
@@ -281,6 +300,32 @@
     border-color: rgba(239, 68, 68, 0.5) !important;
     color: #f87171;
     animation: mic-pulse 1.2s ease-in-out infinite;
+}
+
+.chat-input-wrapper .chat-send-btn {
+    min-height: 48px;
+    min-width: 54px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    border: 1px solid rgba(167, 139, 250, 0.45);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+    padding: 0.75rem 0.95rem;
+    flex-shrink: 0;
+}
+
+.chat-input-wrapper .chat-send-btn i {
+    font-size: 1rem;
+}
+
+.chat-input-wrapper .chat-send-btn:hover {
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+}
+
+.chat-input-wrapper .chat-send-btn:disabled {
+    opacity: 0.55;
+    box-shadow: none;
 }
 @keyframes mic-pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
@@ -354,10 +399,41 @@
     margin-bottom: 0.2rem;
 }
 .preview-actions {
-    padding: 0.5rem 0.875rem;
+    padding: 0.65rem 0.875rem;
     display: flex;
     gap: 0.5rem;
+    justify-content: flex-end;
     background: rgba(15, 23, 42, 0.6);
+}
+
+.preview-actions .preview-send-btn {
+    min-height: 40px;
+    padding: 0.5rem 1.05rem;
+    border-radius: 9px;
+    border: 1px solid rgba(52, 211, 153, 0.45);
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ecfeff;
+    font-weight: 700;
+}
+
+.preview-actions .preview-send-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+}
+
+.preview-actions .preview-cancel-btn {
+    min-height: 40px;
+    padding: 0.5rem 0.9rem;
+    border-radius: 9px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(30, 41, 59, 0.75);
+    color: #cbd5e1;
+    font-weight: 600;
+}
+
+.preview-actions .preview-cancel-btn:hover {
+    background: rgba(51, 65, 85, 0.9);
+    color: #e2e8f0;
 }
 
 /* ── Bilingual toggle buttons ────────────────────────── */
@@ -389,11 +465,31 @@
 
 /* ── User bubble voice note ──────────────────────────── */
 .jp-original-note {
-    font-size: 0.72rem;
-    color: #6b7280;
-    margin-top: 0.3rem;
-    font-style: italic;
-    line-height: 1.4;
+    margin-top: 0.45rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 9px;
+    background: rgba(15, 23, 42, 0.46);
+    border: 1px solid rgba(224, 231, 255, 0.28);
+    line-height: 1.45;
+}
+
+.jp-original-note .jp-original-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 0.2rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: #c7d2fe;
+    text-transform: uppercase;
+}
+
+.jp-original-note .jp-original-text {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-shadow: 0 1px 0 rgba(2, 6, 23, 0.35);
 }
 </style>
 {% endblock %}
@@ -534,11 +630,11 @@
                             <div id="preview-en" class="text-light small fw-medium"></div>
                         </div>
                         <div class="preview-actions">
-                            <button class="btn btn-sm btn-primary flex-grow-1" onclick="sendTranslatedMessage()">
+                            <button class="btn btn-sm preview-send-btn" onclick="sendTranslatedMessage()" title="Send this message">
                                 <i class="bi bi-send-fill me-1"></i>Send
                             </button>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="cancelPreview()">
-                                <i class="bi bi-x-lg"></i>
+                            <button class="btn btn-sm preview-cancel-btn" onclick="cancelPreview()" title="Cancel">
+                                <i class="bi bi-x-lg me-1"></i>Cancel
                             </button>
                         </div>
                     </div>
@@ -553,7 +649,7 @@
                         <input type="text" class="form-control" id="chat-input"
                                placeholder="Type or 🎤 speak in Japanese…"
                                onkeypress="if(event.key==='Enter') sendMessage()">
-                        <button class="btn btn-primary" onclick="sendMessage()">
+                        <button class="btn btn-primary chat-send-btn" onclick="sendMessage()" title="Send message">
                             <i class="bi bi-send-fill"></i>
                         </button>
                     </div>
@@ -686,7 +782,7 @@ function renderUserBubble(msg, i) {
             <div class="chat-bubble user">
                 <p class="mb-1" style="line-height:1.5">${escHtml(msg.message)}</p>
                 ${msg.fromVoice && msg.originalJa
-                    ? `<div class="jp-original-note"><i class="bi bi-mic me-1"></i>${escHtml(msg.originalJa)}</div>`
+                    ? `<div class="jp-original-note"><span class="jp-original-label"><i class="bi bi-mic"></i>Japanese (original)</span><span class="jp-original-text">${escHtml(msg.originalJa)}</span></div>`
                     : ''}
                 ${timeStr ? `<div class="chat-timestamp">${timeStr}</div>` : ''}
             </div>
@@ -735,7 +831,7 @@ async function updateTicketStatus(newStatus) {
 Ticket and audio will be deleted in ${countdown} seconds…`);
                 const interval = setInterval(() => {
                     countdown--;
-                    if (countdown <= 0) { clearInterval(interval); window.location.href = '/'; }
+                    if (countdown <= 0) { clearInterval(interval); window.location.href = '/tickets'; }
                 }, 1000);
             } else {
                 alert(`Ticket status updated to: ${newStatus}`);
@@ -802,12 +898,10 @@ async function stopChatRecording() {
     try {
         const formData = new FormData();
         formData.append('audio', result.blob, 'chat-voice.webm');
-        const uploadResp = await fetch('/api/voice/upload', { method: 'POST', body: formData });
-        if (!uploadResp.ok) throw new Error(`Upload failed: ${uploadResp.status}`);
-        const { conversation_id } = await uploadResp.json();
-
         showChatProcessing('Transcribing & translating…');
-        const statusData = await pollChatVoiceStatus(conversation_id);
+        const uploadResp = await fetch('/api/voice/chat-transcribe', { method: 'POST', body: formData });
+        if (!uploadResp.ok) throw new Error(`Voice chat processing failed: ${uploadResp.status}`);
+        const statusData = await uploadResp.json();
 
         hideChatProcessing();
         setInputRowEnabled(true);

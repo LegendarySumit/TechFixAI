@@ -202,6 +202,11 @@
                             </a>
                         </li>
                         <li class="mb-2">
+                            <a href="/terms" title="Read our terms of service">
+                                <i class="bi bi-journal-check"></i> Terms of Service
+                            </a>
+                        </li>
+                        <li class="mb-2">
                             <a href="/about" title="Learn more about TechFixAI">
                                 <i class="bi bi-info-circle"></i> About Us
                             </a>
@@ -260,6 +265,20 @@
             }
         });
     </script>
+
+    {% if sentry_frontend_dsn %}
+    <script src="https://browser.sentry-cdn.com/8.34.0/bundle.tracing.min.js" crossorigin="anonymous"></script>
+    <script>
+        if (window.Sentry) {
+            window.Sentry.init({
+                dsn: "{{ sentry_frontend_dsn }}",
+                environment: "{{ sentry_environment }}",
+                release: "{{ sentry_release }}",
+                tracesSampleRate: 0.1
+            });
+        }
+    </script>
+    {% endif %}
     
     {% block extra_js %}{% endblock %}
 </body>

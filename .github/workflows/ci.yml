@@ -1,0 +1,48 @@
+name: CI Quality Gates
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest bandit pip-audit requests
+
+      - name: Lint (syntax gate)
+        run: |
+          python -m compileall -q app scheduler.py audit.py encryption.py migrate_db.py
+
+      - name: Run tests (if present)
+        run: |
+          if [ -d tests ] && [ "$(find tests -name 'test_*.py' | wc -l)" -gt 0 ]; then
+            pytest -q --maxfail=1
+          else
+            echo "No test suite found; running local smoke import checks"
+            python -c "from app.main import app; print('import-ok')"
+          fi
+
+      - name: Security static analysis (Bandit)
+        run: |
+          bandit -r app -q -x app/static,app/templates
+
+      - name: Dependency vulnerability scan (pip-audit)
+        run: |
+          pip-audit --desc --progress-spinner off

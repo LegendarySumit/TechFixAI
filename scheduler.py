@@ -10,7 +10,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from app.core.config import settings
-from audit import audit_log_action
+from app.core.metrics import MetricsRecorder
+from audit import audit_log_action, cleanup_old_audit_logs
 
 
 def cleanup_old_audio_files(retention_days: int = None):
@@ -27,7 +28,7 @@ def cleanup_old_audio_files(retention_days: int = None):
     audio_path = Path(settings.AUDIO_STORAGE_PATH)
     
     if not audio_path.exists():
-        return
+        return 0
     
     deleted_count = 0
     total_size_mb = 0
@@ -55,6 +56,8 @@ def cleanup_old_audio_files(retention_days: int = None):
             }
         )
         print(f"🧹 Cleaned up {deleted_count} old audio files ({total_size_mb:.2f} MB)")
+
+    return deleted_count
 
 
 def cleanup_old_database_records(retention_days: int = None):
@@ -100,12 +103,35 @@ def cleanup_old_database_records(retention_days: int = None):
                 }
             )
             print(f"🧹 Cleaned up {deleted_count} old database records")
+
+        return deleted_count
     
     except Exception as e:
         print(f"❌ Error during database cleanup: {str(e)}")
         db.rollback()
+        raise
     finally:
         db.close()
+
+
+def cleanup_old_audit_records(retention_days: int = None):
+    """Delete audit-log entries older than the configured retention period."""
+    if retention_days is None:
+        retention_days = settings.AUDIT_LOG_RETENTION_DAYS
+
+    removed = cleanup_old_audit_logs(retention_days)
+    if removed > 0:
+        audit_log_action(
+            action="CLEANUP_OLD_AUDIT_LOGS",
+            resource_id="audit_log",
+            details={
+                "deleted_count": removed,
+                "retention_days": retention_days,
+            },
+        )
+        print(f"🧹 Cleaned up {removed} old audit log entries")
+
+    return removed
 
 
 def start_cleanup_scheduler():
@@ -122,14 +148,50 @@ def start_cleanup_scheduler():
                 seconds_until_midnight = (next_midnight - now).total_seconds()
                 
                 print(f"⏰ Next cleanup scheduled in {seconds_until_midnight / 3600:.1f} hours")
+                MetricsRecorder.set_queue_length(1)
+                MetricsRecorder.record_queue_wait("daily_cleanup", seconds_until_midnight)
                 
                 # Sleep until next midnight
                 time.sleep(seconds_until_midnight)
                 
                 # Run cleanup
                 print("🧹 Running scheduled data cleanup...")
-                cleanup_old_audio_files()
-                cleanup_old_database_records()
+                MetricsRecorder.set_queue_length(0)
+
+                step_start = time.time()
+                deleted_audio = cleanup_old_audio_files()
+                MetricsRecorder.record_cleanup(
+                    task_type="audio",
+                    duration=time.time() - step_start,
+                    items_deleted=deleted_audio,
+                    success=True,
+                )
+
+                step_start = time.time()
+                try:
+                    deleted_db = cleanup_old_database_records()
+                    MetricsRecorder.record_cleanup(
+                        task_type="database",
+                        duration=time.time() - step_start,
+                        items_deleted=deleted_db,
+                        success=True,
+                    )
+                except Exception:
+                    MetricsRecorder.record_cleanup(
+                        task_type="database",
+                        duration=time.time() - step_start,
+                        items_deleted=0,
+                        success=False,
+                    )
+
+                step_start = time.time()
+                deleted_audit = cleanup_old_audit_records()
+                MetricsRecorder.record_cleanup(
+                    task_type="audit_logs",
+                    duration=time.time() - step_start,
+                    items_deleted=deleted_audit,
+                    success=True,
+                )
                 
             except Exception as e:
                 print(f"❌ Error in cleanup scheduler: {str(e)}")

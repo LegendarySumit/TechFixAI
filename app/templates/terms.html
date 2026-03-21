@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service - TechFixAI{% endblock %}
+
+{% block extra_css %}
+<style>
+.terms-hero{padding:4rem 0 2rem;text-align:center;position:relative;overflow:hidden}
+.terms-hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(ellipse 650px 320px at 50% 0%,rgba(34,197,94,.08),transparent);pointer-events:none}
+.terms-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.28);border-radius:99px;font-size:.78rem;font-weight:600;color:#86efac;letter-spacing:.05em;text-transform:uppercase;margin-bottom:1.25rem}
+.terms-hero h1{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;letter-spacing:-.4px;margin-bottom:.8rem}
+.terms-hero h1 span{background:linear-gradient(135deg,#86efac,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.updated-pill{display:inline-flex;align-items:center;gap:.4rem;font-size:.78rem;color:#4a5f7a;background:rgba(13,27,46,.6);border:1px solid rgba(34,197,94,.15);border-radius:8px;padding:.35rem .75rem}
+.terms-content{max-width:860px;margin:0 auto;padding:1.5rem 0 3rem}
+.terms-section{margin-bottom:1.6rem;padding-bottom:1.6rem;border-bottom:1px solid rgba(34,197,94,.1)}
+.terms-section:last-child{border-bottom:none}
+.terms-section h2{font-size:1.15rem;font-weight:800;color:#c7d2fe;margin-bottom:.45rem}
+.terms-section p,.terms-section li{font-size:.88rem;color:#8899bb;line-height:1.75}
+.terms-section ul{padding-left:1.1rem;margin-bottom:0}
+.terms-highlight{background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.18);border-radius:12px;padding:1rem 1.15rem;margin:.8rem 0;color:#9fb1d5;font-size:.85rem;line-height:1.7}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="terms-hero">
+  <div class="container">
+    <div class="terms-badge"><i class="bi bi-file-earmark-check"></i> Legal</div>
+    <h1>Terms of <span>Service</span></h1>
+    <div class="updated-pill"><i class="bi bi-calendar3"></i> Last updated: March 2026</div>
+  </div>
+</section>
+
+<div class="container">
+  <main class="terms-content">
+    <section class="terms-section">
+      <h2>1. Acceptance of Terms</h2>
+      <p>By accessing or using TechFixAI, you agree to be bound by these Terms of Service and applicable laws. If you do not agree, do not use the service.</p>
+    </section>
+
+    <section class="terms-section">
+      <h2>2. Service Description</h2>
+      <p>TechFixAI provides voice-to-ticket automation, translation support, and incident routing features. We may improve, modify, or discontinue features at any time with reasonable notice.</p>
+    </section>
+
+    <section class="terms-section">
+      <h2>3. Account Responsibilities</h2>
+      <ul>
+        <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
+        <li>You must provide accurate information and keep your account details updated.</li>
+        <li>You must not share accounts or attempt unauthorized access to other users' data.</li>
+      </ul>
+    </section>
+
+    <section class="terms-section">
+      <h2>4. Acceptable Use</h2>
+      <ul>
+        <li>No unlawful, abusive, or malicious use of the platform.</li>
+        <li>No attempts to reverse engineer, disrupt, or overload service infrastructure.</li>
+        <li>No uploading content that violates third-party rights or applicable laws.</li>
+      </ul>
+    </section>
+
+    <section class="terms-section">
+      <h2>5. Data and Privacy</h2>
+      <p>Your use of TechFixAI is subject to our <a href="/privacy" style="color:#86efac">Privacy Policy</a>. Audio and derived artifacts are retained and deleted according to the documented retention policy.</p>
+      <div class="terms-highlight">
+        Data deletion requests can be submitted to <strong>privacy@techfixai.com</strong> with the subject line <strong>"Data Deletion Request"</strong>.
+      </div>
+    </section>
+
+    <section class="terms-section">
+      <h2>6. Security Reporting and Abuse</h2>
+      <p>Security vulnerabilities or abuse reports should be sent to <strong style="color:#86efac">security@techfixai.com</strong> and <strong style="color:#86efac">abuse@techfixai.com</strong>. Include relevant details so we can investigate quickly.</p>
+    </section>
+
+    <section class="terms-section">
+      <h2>7. Limitation of Liability</h2>
+      <p>The service is provided on an "as is" basis. To the maximum extent permitted by law, TechFixAI is not liable for indirect, incidental, or consequential damages arising from service use.</p>
+    </section>
+
+    <section class="terms-section">
+      <h2>8. Contact</h2>
+      <p>For legal and terms-related questions, contact <strong style="color:#86efac">legal@techfixai.com</strong>.</p>
+    </section>
+  </main>
+</div>
+{% endblock %}

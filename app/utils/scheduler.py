@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from app.core.config import settings
-from app.utils.audit import audit_log_action
+from app.utils.audit import audit_log_action, cleanup_old_audit_logs
 
 
 def cleanup_old_audio_files(retention_days: int = None):
@@ -104,6 +104,24 @@ def cleanup_old_database_records(retention_days: int = None):
         db.close()
 
 
+def cleanup_old_audit_records(retention_days: int = None):
+    """Delete audit-log entries older than the configured retention period."""
+    if retention_days is None:
+        retention_days = settings.AUDIT_LOG_RETENTION_DAYS
+
+    removed = cleanup_old_audit_logs(retention_days)
+    if removed > 0:
+        audit_log_action(
+            action="CLEANUP_OLD_AUDIT_LOGS",
+            resource_id="audit_log",
+            details={
+                "deleted_count": removed,
+                "retention_days": retention_days,
+            },
+        )
+        print(f"🧹 Cleaned up {removed} old audit log entries")
+
+
 def start_cleanup_scheduler():
     """
     Start background cleanup tasks.
@@ -126,6 +144,7 @@ def start_cleanup_scheduler():
                 print("🧹 Running scheduled data cleanup...")
                 cleanup_old_audio_files()
                 cleanup_old_database_records()
+                cleanup_old_audit_records()
                 
             except Exception as e:
                 print(f"❌ Error in cleanup scheduler: {str(e)}")

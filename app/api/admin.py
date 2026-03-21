@@ -3,11 +3,13 @@ Admin API endpoints.
 Admin visibility into the system.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from datetime import timezone
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.db.session import get_db
+from app.core.access_control import get_current_user_or_401
 from app.models.ticket import Ticket, TicketStatus, TicketPriority
 from app.models.developer import Developer
 from app.models.conversation import Conversation, ConversationStatus
@@ -15,8 +17,21 @@ from app.models.conversation import Conversation, ConversationStatus
 router = APIRouter()
 
 
+def _to_utc_iso(dt):
+    if not dt:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    else:
+        dt = dt.astimezone(timezone.utc)
+    return dt.isoformat().replace("+00:00", "Z")
+
+
 @router.get("/dashboard")
-async def get_dashboard(db: Session = Depends(get_db)):
+async def get_dashboard(
+    _current_user=Depends(get_current_user_or_401),
+    db: Session = Depends(get_db)
+):
     """
     Admin dashboard with system overview.
     """
@@ -91,6 +106,7 @@ async def list_all_conversations(
     status: str = None,
     skip: int = 0,
     limit: int = Query(default=50, le=200),
+    _current_user=Depends(get_current_user_or_401),
     db: Session = Depends(get_db)
 ):
     """
@@ -114,7 +130,7 @@ async def list_all_conversations(
                 "audio_duration_seconds": c.audio_duration_seconds,
                 "japanese_transcript": c.japanese_transcript,
                 "english_translation": c.english_translation,
-                "created_at": c.created_at,
+                "created_at": _to_utc_iso(c.created_at),
                 "has_ticket": c.ticket is not None,
                 "ticket_number": c.ticket.ticket_number if c.ticket else None
             }
@@ -124,7 +140,10 @@ async def list_all_conversations(
 
 
 @router.get("/developers")
-async def list_developers(db: Session = Depends(get_db)):
+async def list_developers(
+    _current_user=Depends(get_current_user_or_401),
+    db: Session = Depends(get_db)
+):
     """
     List all developers with their stats.
     """

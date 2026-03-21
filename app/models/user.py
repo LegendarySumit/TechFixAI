@@ -30,6 +30,7 @@ class User(Base):
     # Reserved for future email verification flow
     verification_token = Column(String, nullable=True, index=True)
     verification_token_expires = Column(DateTime, nullable=True)
+    password_changed_at = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

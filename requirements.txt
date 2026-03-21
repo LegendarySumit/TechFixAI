@@ -7,7 +7,7 @@ uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 
 # Database
-sqlalchemy==2.0.23
+sqlalchemy==2.0.41
 psycopg2-binary==2.9.9
 alembic==1.12.1
 
@@ -37,4 +37,9 @@ schedule==1.2.0
 
 # Templating
 jinja2==3.1.2
+
+# Observability & Monitoring
+sentry-sdk[fastapi]==1.40.0
+prometheus-client==0.19.0
+python-json-logger==2.0.8
 

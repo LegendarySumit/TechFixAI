@@ -313,7 +313,12 @@ function getStatusColor(status) {
 }
 
 function formatTimestamp(timestamp) {
-    const date = new Date(timestamp);
+    if (!timestamp) return '—';
+    const normalized = /Z$|[+-]\d\d:\d\d$/.test(timestamp) ? timestamp : `${timestamp}Z`;
+    const date = new Date(normalized);
+    if (Number.isNaN(date.getTime())) {
+        return timestamp;
+    }
     const now = new Date();
     const diff = now - date;
     

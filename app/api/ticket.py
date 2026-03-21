@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.core.access_control import require_admin_user, get_current_user_or_401, is_admin_email
 from app.models.ticket import Ticket, TicketStatus, TicketPriority
 from app.models.conversation import Conversation
 
@@ -137,6 +138,7 @@ async def update_ticket_status(
     ticket_number: str,
     status_update: dict,
     background_tasks: BackgroundTasks,
+    _admin=Depends(require_admin_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -174,15 +176,28 @@ async def update_ticket_status(
 @router.delete("/{ticket_number}")
 async def delete_ticket(
     ticket_number: str,
+    current_user=Depends(get_current_user_or_401),
     db: Session = Depends(get_db)
 ):
     """
     Permanently delete a ticket and its associated conversation.
+    Allowed for admins and ticket owners.
     """
     ticket = db.query(Ticket).filter(Ticket.ticket_number == ticket_number).first()
 
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
+
+    user_email = (getattr(current_user, "email", "") or "").strip().lower()
+    owner_email = ""
+    if ticket.conversation and ticket.conversation.client_id:
+        owner_email = str(ticket.conversation.client_id).strip().lower()
+
+    is_admin = is_admin_email(user_email)
+    is_owner = bool(owner_email and user_email and owner_email == user_email)
+
+    if not (is_admin or is_owner):
+        raise HTTPException(status_code=403, detail="Only ticket owner or admin can delete this ticket")
 
     conversation_id = ticket.conversation_id
 

@@ -39,6 +39,17 @@ ENV/
 .env.local
 .env.*.local
 
+# Service-account keys / credentials
+*service-account*.json
+*service_account*.json
+*adminsdk*.json
+*credentials*.json
+*.pem
+*.p12
+*.key
+id_rsa
+id_rsa.pub
+
 # Database
 *.db
 *.sqlite

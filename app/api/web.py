@@ -3,17 +3,31 @@ Web routes for serving HTML templates.
 """
 
 from datetime import datetime
-from fastapi import APIRouter, Request, Depends, Response
+from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.user import User
+from app.core.config import settings
+from app.core.auth_guard import (
+    check_auth_allowed,
+    get_request_ip,
+    register_auth_failure,
+    register_auth_success,
+)
+from app.core.captcha import verify_captcha_token
+from app.core.rate_limit import check_rate_limit
+from app.core.session import clear_session_cookie, set_session_cookie
+from app.core.access_control import is_admin_email
 
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+templates.env.globals["sentry_frontend_dsn"] = settings.SENTRY_DSN
+templates.env.globals["sentry_environment"] = "production" if settings.PUBLIC_DEPLOYMENT else "development"
+templates.env.globals["sentry_release"] = settings.SENTRY_RELEASE
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -29,11 +43,28 @@ async def login_page(request: Request):
         "oauth_not_configured": "Google OAuth is not configured yet. Use email/password below.",
         "google_denied": "Google sign-in was cancelled.",
         "oauth_failed": "Google sign-in failed. Please try again.",
+        "oauth_state_mismatch": "Google sign-in session expired or host changed (localhost vs 127.0.0.1). Retry from localhost.",
         "no_profile": "Could not retrieve your Google profile. Please try again.",
         "no_email": "Your Google account has no verified email.",
+        "weak_password": "New password must be at least 8 characters.",
+        "password_mismatch": "New password and confirmation do not match.",
+        "invalid_current_password": "Current password is incorrect.",
+        "password_reuse": "New password must be different from your current password.",
     }
     error = error_map.get(request.query_params.get("error", ""), "")
-    return templates.TemplateResponse("login.html", {"request": request, "error_message": error})
+    info_map = {
+        "password_changed": "Password updated. Please sign in again.",
+    }
+    info = info_map.get(request.query_params.get("info", ""), "")
+    return templates.TemplateResponse(
+        "login.html",
+        {
+            "request": request,
+            "error_message": error,
+            "success_message": info,
+            "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+        },
+    )
 
 
 @router.post("/login", response_class=HTMLResponse)
@@ -47,13 +78,65 @@ async def login_submit(
         form_data = await request.form()
         email = form_data.get("email", "").strip()
         password = form_data.get("password", "")
-        remember = form_data.get("remember", False)
+        remember = str(form_data.get("remember", "")).lower() in {"1", "true", "on", "yes"}
+        ip_address = get_request_ip(request)
+        account_key = email.lower() if email else "unknown"
+
+        allowed_auth_rate, retry_auth_rate = check_rate_limit(
+            bucket=f"auth_login:{ip_address}",
+            max_requests=settings.AUTH_LOGIN_RATE_LIMIT_REQUESTS,
+            window_seconds=settings.AUTH_LOGIN_RATE_LIMIT_WINDOW_SECONDS,
+        )
+        if not allowed_auth_rate:
+            wait_minutes = max(1, retry_auth_rate // 60)
+            return templates.TemplateResponse(
+                "login.html",
+                {
+                    "request": request,
+                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+                    "error_message": f"Too many login requests. Please retry in about {wait_minutes} minute(s).",
+                },
+                status_code=429,
+            )
+
+        if settings.CAPTCHA_ENABLED and settings.CAPTCHA_REQUIRED_LOGIN:
+            captcha_token = str(form_data.get("captcha_token", "")).strip()
+            captcha_ok, captcha_error = await verify_captcha_token(captcha_token, ip_address)
+            if not captcha_ok:
+                register_auth_failure(ip_address, account_key)
+                return templates.TemplateResponse(
+                    "login.html",
+                    {
+                        "request": request,
+                        "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+                        "error_message": captcha_error,
+                    },
+                    status_code=400,
+                )
+
+        allowed, retry_after_seconds = check_auth_allowed(ip_address, account_key)
+        if not allowed:
+            wait_minutes = max(1, retry_after_seconds // 60)
+            return templates.TemplateResponse(
+                "login.html",
+                {
+                    "request": request,
+                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+                    "error_message": f"Too many attempts. Please try again in about {wait_minutes} minute(s).",
+                },
+                status_code=429,
+            )
 
         # Validate input
         if not email or not password:
+            register_auth_failure(ip_address, account_key)
             return templates.TemplateResponse(
                 "login.html",
-                {"request": request, "error_message": "Email and password are required"},
+                {
+                    "request": request,
+                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+                    "error_message": "Email and password are required",
+                },
                 status_code=400
             )
 
@@ -61,33 +144,38 @@ async def login_submit(
         user = db.query(User).filter(User.email == email).first()
 
         if not user or not user.verify_password(password):
+            register_auth_failure(ip_address, account_key)
             return templates.TemplateResponse(
                 "login.html",
-                {"request": request, "error_message": "Invalid email or password"},
+                {
+                    "request": request,
+                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+                    "error_message": "Invalid email or password",
+                },
                 status_code=401
             )
 
         if not user.is_active:
+            register_auth_failure(ip_address, account_key)
             return templates.TemplateResponse(
                 "login.html",
-                {"request": request, "error_message": "Account is disabled"},
+                {
+                    "request": request,
+                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+                    "error_message": "Account is disabled",
+                },
                 status_code=403
             )
+
+        register_auth_success(ip_address, account_key)
 
         # Update last login
         user.last_login = datetime.utcnow()
         db.commit()
 
         # Set session cookie
-        max_age = 30 * 24 * 60 * 60 if remember else None
         response = RedirectResponse(url="/dashboard", status_code=303)
-        response.set_cookie(
-            key="user_session",
-            value=user.email,
-            max_age=max_age,
-            httponly=True,
-            samesite="lax"
-        )
+        set_session_cookie(response, user, remember=remember)
         return response
 
     except Exception as e:
@@ -96,7 +184,11 @@ async def login_submit(
         db.rollback()
         return templates.TemplateResponse(
             "login.html",
-            {"request": request, "error_message": "Login failed. Please try again."},
+            {
+                "request": request,
+                "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+                "error_message": "Login failed. Please try again.",
+            },
             status_code=500
         )
 
@@ -104,7 +196,13 @@ async def login_submit(
 @router.get("/signup", response_class=HTMLResponse)
 async def signup_page(request: Request):
     """Sign up page"""
-    return templates.TemplateResponse("signup.html", {"request": request})
+    return templates.TemplateResponse(
+        "signup.html",
+        {
+            "request": request,
+            "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+        },
+    )
 
 
 @router.post("/signup", response_class=HTMLResponse)
@@ -121,6 +219,74 @@ async def signup_submit(
         full_name = form_data.get("full_name", "").strip()
         password = form_data.get("password", "")
         terms = form_data.get("terms")
+        ip_address = get_request_ip(request)
+        account_key = email.lower() if email else "unknown"
+
+        # Honeypot anti-bot field: real users never fill this hidden field.
+        if str(form_data.get("website", "")).strip():
+            register_auth_failure(ip_address, account_key)
+            return templates.TemplateResponse(
+                "signup.html",
+                {
+                    "request": request,
+                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+                    "error_message": "Signup validation failed.",
+                    "email": email,
+                    "full_name": full_name,
+                },
+                status_code=400,
+            )
+
+        allowed_signup_rate, retry_signup_rate = check_rate_limit(
+            bucket=f"auth_signup:{ip_address}",
+            max_requests=settings.AUTH_SIGNUP_RATE_LIMIT_REQUESTS,
+            window_seconds=settings.AUTH_SIGNUP_RATE_LIMIT_WINDOW_SECONDS,
+        )
+        if not allowed_signup_rate:
+            wait_minutes = max(1, retry_signup_rate // 60)
+            return templates.TemplateResponse(
+                "signup.html",
+                {
+                    "request": request,
+                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+                    "error_message": f"Too many signup requests. Please retry in about {wait_minutes} minute(s).",
+                    "email": email,
+                    "full_name": full_name,
+                },
+                status_code=429,
+            )
+
+        if settings.CAPTCHA_ENABLED and settings.CAPTCHA_REQUIRED_SIGNUP:
+            captcha_token = str(form_data.get("captcha_token", "")).strip()
+            captcha_ok, captcha_error = await verify_captcha_token(captcha_token, ip_address)
+            if not captcha_ok:
+                register_auth_failure(ip_address, account_key)
+                return templates.TemplateResponse(
+                    "signup.html",
+                    {
+                        "request": request,
+                        "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+                        "error_message": captcha_error,
+                        "email": email,
+                        "full_name": full_name,
+                    },
+                    status_code=400,
+                )
+
+        allowed, retry_after_seconds = check_auth_allowed(ip_address, account_key)
+        if not allowed:
+            wait_minutes = max(1, retry_after_seconds // 60)
+            return templates.TemplateResponse(
+                "signup.html",
+                {
+                    "request": request,
+                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+                    "error_message": f"Too many signup attempts. Please try again in about {wait_minutes} minute(s).",
+                    "email": email,
+                    "full_name": full_name,
+                },
+                status_code=429,
+            )
 
         # Validate input
         errors = []
@@ -135,8 +301,8 @@ async def signup_submit(
 
         if not password:
             errors.append("Password is required")
-        elif len(password) < 4:
-            errors.append("Password must be at least 4 characters")
+        elif len(password) < 8:
+            errors.append("Password must be at least 8 characters")
 
         if not terms:
             errors.append("You must agree to the terms of service")
@@ -146,9 +312,16 @@ async def signup_submit(
             errors.append("An account with this email already exists")
 
         if errors:
+            register_auth_failure(ip_address, account_key)
             return templates.TemplateResponse(
                 "signup.html",
-                {"request": request, "error_message": "; ".join(errors), "email": email, "full_name": full_name},
+                {
+                    "request": request,
+                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+                    "error_message": "; ".join(errors),
+                    "email": email,
+                    "full_name": full_name,
+                },
                 status_code=400
             )
 
@@ -177,13 +350,11 @@ async def signup_submit(
         # Log in directly
         new_user.last_login = datetime.utcnow()
         db.commit()
+
+        register_auth_success(ip_address, account_key)
+
         response = RedirectResponse(url="/dashboard", status_code=303)
-        response.set_cookie(
-            key="user_session",
-            value=new_user.email,
-            httponly=True,
-            samesite="lax"
-        )
+        set_session_cookie(response, new_user, remember=False)
         return response
 
     except Exception as e:
@@ -192,16 +363,60 @@ async def signup_submit(
         db.rollback()
         return templates.TemplateResponse(
             "signup.html",
-            {"request": request, "error_message": "Signup failed. Please try again."},
+            {
+                "request": request,
+                "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+                "error_message": "Signup failed. Please try again.",
+            },
             status_code=500
         )
 
 
 @router.get("/logout")
-async def logout(response: Response):
+async def logout():
     """Logout user"""
     response = RedirectResponse(url="/", status_code=303)
-    response.delete_cookie("user_session")
+    clear_session_cookie(response)
+    return response
+
+
+@router.post("/account/password")
+async def change_password_submit(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Change password and force logout from existing sessions."""
+    if not request.state.current_user:
+        return RedirectResponse(url="/login", status_code=303)
+
+    form_data = await request.form()
+    current_password = form_data.get("current_password", "")
+    new_password = form_data.get("new_password", "")
+    confirm_password = form_data.get("confirm_password", "")
+
+    if not new_password or len(new_password) < 8:
+        return RedirectResponse(url="/login?error=weak_password", status_code=303)
+
+    if new_password != confirm_password:
+        return RedirectResponse(url="/login?error=password_mismatch", status_code=303)
+
+    user = db.query(User).filter(User.id == request.state.current_user.id).first()
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
+
+    if user.hashed_password and not user.verify_password(current_password):
+        return RedirectResponse(url="/login?error=invalid_current_password", status_code=303)
+
+    if user.hashed_password and user.verify_password(new_password):
+        return RedirectResponse(url="/login?error=password_reuse", status_code=303)
+
+    user.hashed_password = User.get_password_hash(new_password)
+    user.password_changed_at = datetime.utcnow()
+    user.last_login = None
+    db.commit()
+
+    response = RedirectResponse(url="/login?info=password_changed", status_code=303)
+    clear_session_cookie(response)
     return response
 
 
@@ -223,7 +438,7 @@ async def tickets_page(request: Request):
 
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request):
-    """Admin dashboard page - Protected"""
+    """Dashboard page - Protected"""
     if not request.state.current_user:
         return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse("dashboard.html", {"request": request})
@@ -261,6 +476,12 @@ async def privacy_page(request: Request):
     return templates.TemplateResponse("privacy.html", {"request": request})
 
 
+@router.get("/terms", response_class=HTMLResponse)
+async def terms_page(request: Request):
+    """Terms of service page"""
+    return templates.TemplateResponse("terms.html", {"request": request})
+
+
 @router.get("/about", response_class=HTMLResponse)
 async def about_page(request: Request):
     """About us page"""
@@ -270,3 +491,72 @@ async def about_page(request: Request):
 async def support_page(request: Request):
     """Support center page"""
     return templates.TemplateResponse("support.html", {"request": request})
+
+
+# Observability endpoints (health checks, metrics)
+
+@router.get("/health")
+async def health_check():
+    """
+    Health check endpoint for uptime monitoring.
+    Returns 200 if healthy, 503 if any dependency is down.
+    """
+    from app.core.health import HealthChecker, HealthStatus
+    from app.core.metrics import MetricsRecorder
+    from fastapi.responses import JSONResponse
+    import time
+    
+    start_time = time.time()
+    
+    try:
+        status_data = await HealthChecker.get_health_status()
+        duration = time.time() - start_time
+        
+        # Record health check metrics
+        healthy = status_data["status"] == HealthStatus.HEALTHY
+        MetricsRecorder.record_health_check(healthy, duration)
+        
+        # Return 503 if unhealthy or degraded
+        status_code = 200 if status_data["status"] == HealthStatus.HEALTHY else 503
+        
+        return JSONResponse(
+            status_code=status_code,
+            content={
+                **status_data,
+                "response_time_seconds": duration,
+            }
+        )
+    except Exception as e:
+        duration = time.time() - start_time
+        MetricsRecorder.record_health_check(False, duration)
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "error": str(e),
+                "response_time_seconds": duration,
+            }
+        )
+
+
+@router.get("/metrics")
+async def metrics():
+    """
+    Prometheus metrics endpoint.
+    Returns all collected metrics in Prometheus text format.
+    Enabled only if METRICS_ENABLED=True.
+    """
+    from app.core.config import settings
+    from app.core.metrics import get_metrics_text
+    from fastapi.responses import Response
+    
+    if not settings.METRICS_ENABLED:
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Metrics disabled"}
+        )
+    
+    return Response(
+        content=get_metrics_text(),
+        media_type="text/plain; charset=utf-8",
+    )

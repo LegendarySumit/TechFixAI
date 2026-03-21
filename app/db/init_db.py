@@ -33,6 +33,7 @@ def _migrate_add_missing_columns(engine):
             ("updated_at",   "TIMESTAMP"),
             ("verification_token",          "VARCHAR"),
             ("verification_token_expires",  "TIMESTAMP"),
+            ("password_changed_at",         "TIMESTAMP"),
         ],
         "conversations": [
             ("image_file_path", "VARCHAR"),

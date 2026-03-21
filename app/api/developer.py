@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.db.session import get_db
+from app.core.access_control import require_admin_user
 from app.models.developer import Developer
 from app.models.ticket import Ticket, TicketStatus
 
@@ -139,6 +140,7 @@ async def get_developer(
 @router.post("/")
 async def create_developer(
     payload: DeveloperCreate,
+    _admin=Depends(require_admin_user),
     db: Session = Depends(get_db)
 ):
     """Create a new developer."""
@@ -167,6 +169,7 @@ async def create_developer(
 async def update_developer_status(
     developer_id: int,
     payload: StatusUpdate,
+    _admin=Depends(require_admin_user),
     db: Session = Depends(get_db)
 ):
     """Update a developer's availability status."""
@@ -187,6 +190,7 @@ async def update_developer_status(
 @router.delete("/{developer_id}")
 async def delete_developer(
     developer_id: int,
+    _admin=Depends(require_admin_user),
     db: Session = Depends(get_db)
 ):
     """Remove a developer (only if they have no active tickets)."""

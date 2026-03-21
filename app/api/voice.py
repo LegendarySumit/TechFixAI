@@ -8,12 +8,14 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, BackgroundTasks, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.core.config import settings
+from app.core.auth_guard import get_request_ip
+from app.core.rate_limit import check_rate_limit
 from app.models.conversation import Conversation, ConversationStatus
 from app.services.stt_service import stt_service
 from app.services.translation_service import translation_service
@@ -23,6 +25,40 @@ from app.utils.encryption import audio_encryption
 from app.utils.audit import audit_log
 
 router = APIRouter()
+
+
+def _validate_audio_upload(audio: UploadFile, audio_bytes: bytes):
+    """Shared validation for supported MIME and upload size."""
+    allowed_audio_prefixes = [
+        "audio/wav", "audio/mp3", "audio/mpeg", "audio/m4a",
+        "audio/webm", "audio/ogg", "audio/mp4", "audio/x-m4a"
+    ]
+    content_type = (audio.content_type or "").lower()
+    if not any(content_type.startswith(p) for p in allowed_audio_prefixes):
+        raise HTTPException(status_code=400, detail=f"Invalid audio format: {content_type}")
+
+    file_size_mb = len(audio_bytes) / (1024 * 1024)
+    if file_size_mb > settings.MAX_UPLOAD_SIZE_MB:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Max size: {settings.MAX_UPLOAD_SIZE_MB}MB"
+        )
+
+
+def _infer_audio_extension(audio: UploadFile) -> str:
+    ext_from_filename = audio.filename.split(".")[-1].lower() if "." in (audio.filename or "") else ""
+    ext_map = {
+        "audio/wav": "wav", "audio/mp3": "mp3", "audio/mpeg": "mp3",
+        "audio/m4a": "m4a", "audio/x-m4a": "m4a", "audio/mp4": "mp4",
+        "audio/webm": "webm", "audio/ogg": "ogg"
+    }
+    content_type = (audio.content_type or "").lower()
+    file_extension = ext_from_filename or "wav"
+    for mime_prefix, ext in ext_map.items():
+        if content_type.startswith(mime_prefix):
+            file_extension = ext
+            break
+    return file_extension
 
 
 async def process_voice_pipeline(
@@ -108,6 +144,7 @@ async def process_voice_pipeline(
 
 @router.post("/upload")
 async def upload_voice(
+    request: Request,
     background_tasks: BackgroundTasks,
     audio: UploadFile = File(...),
     image: Optional[UploadFile] = File(None),
@@ -129,40 +166,43 @@ async def upload_voice(
         conversation_id: ID to track processing status
     """
     
-    # Validate audio file type (check prefix to handle e.g. "audio/webm;codecs=opus")
-    allowed_audio_prefixes = ["audio/wav", "audio/mp3", "audio/mpeg", "audio/m4a",
-                               "audio/webm", "audio/ogg", "audio/mp4", "audio/x-m4a"]
-    content_type = (audio.content_type or "").lower()
-    print(f"📁 Upload content-type: {content_type}, filename: {audio.filename}")
-    if not any(content_type.startswith(p) for p in allowed_audio_prefixes):
-        raise HTTPException(status_code=400, detail=f"Invalid audio format: {content_type}")
-    
-    # Validate audio file size
-    audio_content = await audio.read()
-    file_size_mb = len(audio_content) / (1024 * 1024)
-    if file_size_mb > settings.MAX_AUDIO_SIZE_MB:
+    client_ip = get_request_ip(request)
+    allowed_upload_rate, retry_upload_rate = check_rate_limit(
+        bucket=f"voice_upload:{client_ip}",
+        max_requests=settings.VOICE_UPLOAD_RATE_LIMIT_REQUESTS,
+        window_seconds=settings.VOICE_UPLOAD_RATE_LIMIT_WINDOW_SECONDS,
+    )
+    if not allowed_upload_rate:
         raise HTTPException(
-            status_code=400,
-            detail=f"File too large. Max size: {settings.MAX_AUDIO_SIZE_MB}MB"
+            status_code=429,
+            detail=f"Too many uploads. Retry after about {max(1, retry_upload_rate)} second(s).",
+            headers={"Retry-After": str(max(1, retry_upload_rate))},
         )
+
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            # multipart overhead is expected, keep a small safety margin.
+            max_request_bytes = (settings.MAX_UPLOAD_SIZE_MB + 2) * 1024 * 1024
+            if int(content_length) > max_request_bytes:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"Upload too large. Max ~{settings.MAX_UPLOAD_SIZE_MB}MB payload.",
+                )
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid Content-Length header.")
+
+    # Validate audio file type and size
+    audio_content = await audio.read()
+    _validate_audio_upload(audio, audio_content)
+    file_size_mb = len(audio_content) / (1024 * 1024)
     
     # Create storage directory if not exists
     os.makedirs(settings.AUDIO_STORAGE_PATH, exist_ok=True)
     
     # Generate unique audio filename
     # Determine correct file extension from content type or filename
-    ext_from_filename = audio.filename.split(".")[-1].lower() if "." in (audio.filename or "") else ""
-    ext_map = {
-        "audio/wav": "wav", "audio/mp3": "mp3", "audio/mpeg": "mp3",
-        "audio/m4a": "m4a", "audio/x-m4a": "m4a", "audio/mp4": "mp4",
-        "audio/webm": "webm", "audio/ogg": "ogg"
-    }
-    # Match by prefix
-    file_extension = ext_from_filename or "wav"
-    for mime_prefix, ext in ext_map.items():
-        if content_type.startswith(mime_prefix):
-            file_extension = ext
-            break
+    file_extension = _infer_audio_extension(audio)
     unique_filename = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}.{file_extension}"
     audio_file_path = os.path.join(settings.AUDIO_STORAGE_PATH, unique_filename)
     
@@ -179,8 +219,8 @@ async def upload_voice(
         
         image_content = await image.read()
         image_size_mb = len(image_content) / (1024 * 1024)
-        if image_size_mb > settings.MAX_AUDIO_SIZE_MB:  # reuse same cap as audio
-            raise HTTPException(status_code=400, detail=f"Image too large. Max size: {settings.MAX_AUDIO_SIZE_MB}MB")
+        if image_size_mb > settings.MAX_UPLOAD_SIZE_MB:
+            raise HTTPException(status_code=400, detail=f"Image too large. Max size: {settings.MAX_UPLOAD_SIZE_MB}MB")
         
         img_extension = image.filename.split(".")[-1] if "." in image.filename else "png"
         image_filename = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}.{img_extension}"
@@ -189,6 +229,11 @@ async def upload_voice(
         with open(image_file_path, "wb") as f:
             f.write(image_content)
     
+    # Default ownership to authenticated user email when client_id is not provided.
+    effective_client_id = client_id
+    if not effective_client_id and getattr(request.state, "current_user", None):
+        effective_client_id = request.state.current_user.email
+
     # Create conversation record with metadata
     # Encrypt audio data before storing in database (AES-256)
     encrypted_audio = None
@@ -202,7 +247,7 @@ async def upload_voice(
         audio_data=encrypted_audio,  # Store encrypted audio bytes in database
         audio_format=audio.content_type,
         image_file_path=image_file_path,
-        client_id=client_id,
+        client_id=effective_client_id,
         environment=environment,
         urgency_override=urgency_override,
         status=ConversationStatus.RECEIVED
@@ -231,6 +276,66 @@ async def upload_voice(
         "status": "processing",
         "message": "Audio uploaded successfully and processing started"
     }
+
+
+@router.post("/chat-transcribe")
+async def chat_transcribe_voice(
+    request: Request,
+    audio: UploadFile = File(...),
+):
+    """
+    Chat-only voice helper for ticket detail page.
+    Transcribes + translates audio but does not create conversation or ticket records.
+    """
+    client_ip = get_request_ip(request)
+    allowed_upload_rate, retry_upload_rate = check_rate_limit(
+        bucket=f"voice_upload:{client_ip}",
+        max_requests=settings.VOICE_UPLOAD_RATE_LIMIT_REQUESTS,
+        window_seconds=settings.VOICE_UPLOAD_RATE_LIMIT_WINDOW_SECONDS,
+    )
+    if not allowed_upload_rate:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Too many uploads. Retry after about {max(1, retry_upload_rate)} second(s).",
+            headers={"Retry-After": str(max(1, retry_upload_rate))},
+        )
+
+    audio_content = await audio.read()
+    _validate_audio_upload(audio, audio_content)
+
+    os.makedirs(settings.AUDIO_STORAGE_PATH, exist_ok=True)
+    file_extension = _infer_audio_extension(audio)
+    temp_filename = f"chat_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}.{file_extension}"
+    temp_audio_path = os.path.join(settings.AUDIO_STORAGE_PATH, temp_filename)
+
+    try:
+        with open(temp_audio_path, "wb") as f:
+            f.write(audio_content)
+
+        transcription_result = await stt_service.transcribe_audio(temp_audio_path)
+        japanese_text = transcription_result.get("text", "")
+
+        if not japanese_text.strip():
+            raise HTTPException(status_code=400, detail="Unable to transcribe audio")
+
+        translation_result = await translation_service.translate_technical_text(
+            japanese_text,
+            context="developer chat"
+        )
+        english_text = translation_result.get("translated_text", japanese_text)
+
+        return {
+            "japanese_transcript": japanese_text,
+            "english_translation": english_text,
+            "transcription_method": transcription_result.get("method"),
+            "translation_method": translation_result.get("method"),
+        }
+    finally:
+        if os.path.exists(temp_audio_path):
+            try:
+                os.remove(temp_audio_path)
+            except Exception:
+                pass
 
 
 @router.get("/status/{conversation_id}")
@@ -303,14 +408,33 @@ class TranslateRequest(BaseModel):
 
 
 @router.post("/translate")
-async def translate_text(payload: TranslateRequest):
+async def translate_text(request: Request, payload: TranslateRequest):
     """
     Translate text between English and Japanese.
     - target_lang="en": Japanese → English
     - target_lang="ja": English → Japanese
     """
+    client_ip = get_request_ip(request)
+    allowed_translate_rate, retry_translate_rate = check_rate_limit(
+        bucket=f"translate:{client_ip}",
+        max_requests=settings.TRANSLATE_RATE_LIMIT_REQUESTS,
+        window_seconds=settings.TRANSLATE_RATE_LIMIT_WINDOW_SECONDS,
+    )
+    if not allowed_translate_rate:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Too many translation requests. Retry after about {max(1, retry_translate_rate)} second(s).",
+            headers={"Retry-After": str(max(1, retry_translate_rate))},
+        )
+
     if not payload.text.strip():
         raise HTTPException(status_code=400, detail="text cannot be empty")
+
+    if len(payload.text) > settings.TRANSLATE_MAX_CHARS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"text too long. Max {settings.TRANSLATE_MAX_CHARS} characters.",
+        )
 
     if payload.target_lang == "en":
         result = await translation_service.translate_technical_text(payload.text)
