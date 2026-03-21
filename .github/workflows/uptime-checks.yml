@@ -41,8 +41,11 @@ jobs:
         if: steps.cfg.outputs.skip != 'true'
         run: |
           URL="${{ steps.cfg.outputs.base_url }}/"
-          STATUS=$(curl -sS -L --max-time 20 --retry 3 --retry-delay 2 --retry-all-errors -o /dev/null -w "%{http_code}" "$URL")
-          echo "Main endpoint ($URL) status: $STATUS"
+          set +e
+          STATUS=$(curl -sS -L --max-time 20 --retry 3 --retry-delay 2 --retry-connrefused --retry-all-errors -o /dev/null -w "%{http_code}" "$URL")
+          CURL_EXIT=$?
+          set -e
+          echo "Main endpoint ($URL) status: $STATUS, curl_exit: $CURL_EXIT"
           # Consider any 2xx/3xx as healthy for entry route.
           if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
             echo "Main app endpoint is unhealthy"
@@ -53,8 +56,11 @@ jobs:
         if: steps.cfg.outputs.skip != 'true'
         run: |
           URL="${{ steps.cfg.outputs.base_url }}/health"
-          STATUS=$(curl -sS -L --max-time 20 --retry 3 --retry-delay 2 --retry-all-errors -o /dev/null -w "%{http_code}" "$URL")
-          echo "Health endpoint ($URL) status: $STATUS"
+          set +e
+          STATUS=$(curl -sS -L --max-time 20 --retry 3 --retry-delay 2 --retry-connrefused --retry-all-errors -o /dev/null -w "%{http_code}" "$URL")
+          CURL_EXIT=$?
+          set -e
+          echo "Health endpoint ($URL) status: $STATUS, curl_exit: $CURL_EXIT"
           # Accept healthy or degraded (200 or 503) as reachable, but fail on network/server errors.
           if [ "$STATUS" != "200" ] && [ "$STATUS" != "503" ]; then
             echo "Health endpoint check failed"
