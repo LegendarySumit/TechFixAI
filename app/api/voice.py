@@ -24,6 +24,7 @@ from app.services.ticket_service import ticket_service
 from app.services.assignment_service import assignment_service
 from app.services.quota_service import QuotaService, QuotaExceededException
 from app.services.cost_tracking import CostTrackingService
+from app.services.product_analytics import track_product_event
 from app.utils.encryption import audio_encryption
 from app.utils.audit import audit_log
 
@@ -161,6 +162,14 @@ async def process_voice_pipeline(
             conversation_id=conversation.id,
             ticket_data=ticket_data
         )
+
+        if user:
+            track_product_event(
+                event_name="ticket_created",
+                user_id=user.id,
+                user_email=user.email,
+                properties={"ticket_number": ticket.ticket_number},
+            )
         
         print(f"✅ Ticket: #{ticket.ticket_number}")
         
@@ -258,6 +267,15 @@ async def upload_voice(
     audio_content = await audio.read()
     _validate_audio_upload(audio, audio_content)
     file_size_mb = len(audio_content) / (1024 * 1024)
+
+    if user:
+        track_product_event(
+            event_name="upload_started",
+            user_id=user.id,
+            user_email=user.email,
+            ip_address=client_ip,
+            properties={"size_mb": round(file_size_mb, 3)},
+        )
     
     # Create storage directory if not exists
     os.makedirs(settings.AUDIO_STORAGE_PATH, exist_ok=True)
@@ -317,6 +335,15 @@ async def upload_voice(
     db.add(conversation)
     db.commit()
     db.refresh(conversation)
+
+    if user:
+        track_product_event(
+            event_name="upload_accepted",
+            user_id=user.id,
+            user_email=user.email,
+            ip_address=client_ip,
+            properties={"conversation_id": conversation.id},
+        )
     
     # Audit log
     audit_log(
@@ -329,6 +356,13 @@ async def upload_voice(
     # Increment upload quota if user authenticated
     if user:
         QuotaService.increment_upload_count(user, db)
+        if user.uploads_this_month == 1:
+            track_product_event(
+                event_name="first_upload_completed",
+                user_id=user.id,
+                user_email=user.email,
+                ip_address=client_ip,
+            )
     
     # Start background processing (fresh DB session opened inside the task)
     background_tasks.add_task(

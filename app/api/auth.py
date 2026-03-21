@@ -12,6 +12,9 @@ from app.db.session import SessionLocal
 from app.models.user import User
 from app.core.config import settings
 from app.core.session import set_session_cookie
+from app.core.captcha import verify_captcha_token
+from app.core.auth_guard import get_request_ip
+from app.services.product_analytics import track_product_event
 
 router = APIRouter()
 
@@ -71,8 +74,25 @@ def _maybe_redirect_to_canonical_oauth_host(request: Request, redirect_uri: str)
 @router.get("/auth/google")
 async def google_login(request: Request):
     """Redirect to Google OAuth consent screen."""
+    source = request.query_params.get("source", "login")
+    if settings.CAPTCHA_ENABLED and (settings.CAPTCHA_REQUIRED_LOGIN or settings.CAPTCHA_REQUIRED_SIGNUP):
+        captcha_token = str(request.query_params.get("captcha_token", "")).strip()
+        captcha_ok, _ = await verify_captcha_token(captcha_token, get_request_ip(request))
+        if not captcha_ok:
+            if source == "signup":
+                return RedirectResponse(url="/signup?error=captcha_required", status_code=303)
+            return RedirectResponse(url="/login?error=captcha_required", status_code=303)
+
     if not settings.GOOGLE_CLIENT_ID or settings.GOOGLE_CLIENT_ID == "YOUR_CLIENT_ID_HERE":
         return RedirectResponse(url="/login?error=oauth_not_configured")
+
+    track_product_event(
+        event_name="google_oauth_started",
+        session_id=request.cookies.get(settings.SESSION_COOKIE_NAME),
+        ip_address=get_request_ip(request),
+        properties={"source": source},
+    )
+
     redirect_uri = _build_google_redirect_uri(request)
     canonical_host_redirect = _maybe_redirect_to_canonical_oauth_host(request, redirect_uri)
     if canonical_host_redirect:
@@ -151,6 +171,12 @@ async def google_callback(request: Request):
 
         response = RedirectResponse(url="/dashboard", status_code=303)
         set_session_cookie(response, user, remember=True)
+        track_product_event(
+            event_name="google_oauth_completed",
+            user_id=user.id,
+            user_email=user.email,
+            ip_address=get_request_ip(request),
+        )
         return response
     except Exception as e:
         import traceback

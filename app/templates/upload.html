@@ -1412,6 +1412,7 @@ async function uploadFile() {
 // Upload audio to server
 async function uploadAudio(audioData) {
     try {
+        appTrack('upload_started', {});
         const formData = new FormData();
         // Derive a proper filename so the backend gets the right extension.
         // audioData.type is e.g. "audio/webm;codecs=opus" or "audio/mp4"
@@ -1436,6 +1437,7 @@ async function uploadAudio(audioData) {
         
         const data = await response.json();
         currentConversationId = data.conversation_id;
+        appTrack('upload_accepted', { conversation_id: currentConversationId });
         setUploadState({ currentConversationId });
         
         // Show processing message
@@ -1446,6 +1448,7 @@ async function uploadAudio(audioData) {
         
     } catch (error) {
         console.error('Upload error:', error);
+        appTrack('upload_failed', { reason: 'upload_request_failed' });
         alert('Failed to upload audio. Please try again.');
         document.getElementById('recordingStatus').textContent = 'Upload failed. Try again.';
     }
@@ -1487,6 +1490,7 @@ async function pollForTranscription() {
                 
                 // Move to step 2
                 showStep(2);
+                appTrack('transcription_ready', { conversation_id: currentConversationId });
                 return;
             }
             

@@ -16,6 +16,7 @@ from app.models.conversation import Conversation, ConversationStatus
 from app.models.user import User
 from app.services.quota_service import QuotaService
 from app.services.cost_tracking import CostTrackingService
+from app.services.product_analytics import build_funnel_report
 
 router = APIRouter()
 
@@ -273,3 +274,12 @@ async def get_user_quota_detail(
         "email": user.email,
         **quota_status
     }
+
+
+@router.get("/analytics/funnel")
+async def get_funnel_report(
+    days: int = Query(default=30, ge=1, le=120),
+    _current_user=Depends(get_current_user_or_401),
+):
+    """Get onboarding/upload funnel with dropoff points."""
+    return build_funnel_report(since_days=days)

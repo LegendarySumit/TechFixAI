@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Pricing - TechFixAI{% endblock %}
+{% block content %}
+<section class="container py-5">
+  <h1 class="mb-3">Pricing</h1>
+  <p class="text-muted">Plans aligned with enforced platform quotas.</p>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card bg-dark-subtle border-secondary h-100">
+        <div class="card-body">
+          <h4>Free</h4>
+          <p class="text-muted">For individual evaluation</p>
+          <ul>
+            <li>{{ free_quota }} uploads / month</li>
+            <li>${{ '%.2f'|format(free_cost_limit/100) }} AI usage / month</li>
+          </ul>
+          <a href="/signup" class="btn btn-outline-light">Start Free</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-dark-subtle border-primary h-100">
+        <div class="card-body">
+          <h4>Pro</h4>
+          <p class="text-muted">For active engineering teams</p>
+          <ul>
+            <li>{{ pro_quota }} uploads / month</li>
+            <li>${{ '%.2f'|format(pro_cost_limit/100) }} AI usage / month</li>
+          </ul>
+          <button class="btn btn-primary" onclick="appTrack('checkout_started',{plan:'pro'});window.location='/support';">Contact Sales</button>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-dark-subtle border-secondary h-100">
+        <div class="card-body">
+          <h4>Enterprise</h4>
+          <p class="text-muted">Custom scale and compliance</p>
+          <ul>
+            <li>{{ enterprise_quota }} uploads / month</li>
+            <li>Custom AI usage caps</li>
+          </ul>
+          <button class="btn btn-outline-light" onclick="appTrack('checkout_started',{plan:'enterprise'});window.location='/support';">Talk to Us</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="text-muted small mt-4">Need billing, invoicing, and tax details? See <a href="/billing-policy">Billing & Compliance Policy</a>.</p>
+</section>
+{% endblock %}

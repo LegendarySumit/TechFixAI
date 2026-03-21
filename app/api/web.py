@@ -21,6 +21,8 @@ from app.core.captcha import verify_captcha_token
 from app.core.rate_limit import check_rate_limit
 from app.core.session import clear_session_cookie, set_session_cookie
 from app.core.access_control import is_admin_email
+from app.core.health import HealthChecker
+from app.services.product_analytics import track_product_event
 
 
 router = APIRouter()
@@ -44,6 +46,7 @@ async def login_page(request: Request):
         "google_denied": "Google sign-in was cancelled.",
         "oauth_failed": "Google sign-in failed. Please try again.",
         "oauth_state_mismatch": "Google sign-in session expired or host changed (localhost vs 127.0.0.1). Retry from localhost.",
+        "captcha_required": "Please complete CAPTCHA before continuing.",
         "no_profile": "Could not retrieve your Google profile. Please try again.",
         "no_email": "Your Google account has no verified email.",
         "weak_password": "New password must be at least 8 characters.",
@@ -56,6 +59,11 @@ async def login_page(request: Request):
         "password_changed": "Password updated. Please sign in again.",
     }
     info = info_map.get(request.query_params.get("info", ""), "")
+    track_product_event(
+        event_name="login_started",
+        session_id=request.cookies.get(settings.SESSION_COOKIE_NAME),
+        ip_address=get_request_ip(request),
+    )
     return templates.TemplateResponse(
         "login.html",
         {
@@ -169,6 +177,13 @@ async def login_submit(
 
         register_auth_success(ip_address, account_key)
 
+        track_product_event(
+            event_name="login_success",
+            user_id=user.id,
+            user_email=user.email,
+            ip_address=ip_address,
+        )
+
         # Update last login
         user.last_login = datetime.utcnow()
         db.commit()
@@ -196,11 +211,20 @@ async def login_submit(
 @router.get("/signup", response_class=HTMLResponse)
 async def signup_page(request: Request):
     """Sign up page"""
+    error_map = {
+        "captcha_required": "Please complete CAPTCHA before continuing.",
+    }
+    track_product_event(
+        event_name="signup_started",
+        session_id=request.cookies.get(settings.SESSION_COOKIE_NAME),
+        ip_address=get_request_ip(request),
+    )
     return templates.TemplateResponse(
         "signup.html",
         {
             "request": request,
             "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+            "error_message": error_map.get(request.query_params.get("error", ""), ""),
         },
     )
 
@@ -353,6 +377,13 @@ async def signup_submit(
 
         register_auth_success(ip_address, account_key)
 
+        track_product_event(
+            event_name="signup_completed",
+            user_id=new_user.id,
+            user_email=new_user.email,
+            ip_address=ip_address,
+        )
+
         response = RedirectResponse(url="/dashboard", status_code=303)
         set_session_cookie(response, new_user, remember=False)
         return response
@@ -425,6 +456,12 @@ async def upload_page(request: Request):
     """Upload audio page - Protected"""
     if not request.state.current_user:
         return RedirectResponse(url="/login", status_code=303)
+    track_product_event(
+        event_name="upload_page_viewed",
+        user_id=request.state.current_user.id,
+        user_email=request.state.current_user.email,
+        ip_address=get_request_ip(request),
+    )
     return templates.TemplateResponse("upload.html", {"request": request})
 
 
@@ -441,6 +478,12 @@ async def dashboard_page(request: Request):
     """Dashboard page - Protected"""
     if not request.state.current_user:
         return RedirectResponse(url="/login", status_code=303)
+    track_product_event(
+        event_name="retention_visit",
+        user_id=request.state.current_user.id,
+        user_email=request.state.current_user.email,
+        ip_address=get_request_ip(request),
+    )
     return templates.TemplateResponse("dashboard.html", {"request": request})
 
 
@@ -491,6 +534,60 @@ async def about_page(request: Request):
 async def support_page(request: Request):
     """Support center page"""
     return templates.TemplateResponse("support.html", {"request": request})
+
+
+@router.get("/status", response_class=HTMLResponse)
+async def status_page(request: Request):
+    """Public service status page."""
+    status = await HealthChecker.get_health_status()
+    return templates.TemplateResponse(
+        "status.html",
+        {
+            "request": request,
+            "status": status,
+            "uptime_target_percent": 99.9,
+        },
+    )
+
+
+@router.get("/changelog", response_class=HTMLResponse)
+async def changelog_page(request: Request):
+    """Public release notes/changelog page."""
+    return templates.TemplateResponse("changelog.html", {"request": request})
+
+
+@router.get("/sla", response_class=HTMLResponse)
+async def sla_page(request: Request):
+    """Public support SLA page."""
+    return templates.TemplateResponse("sla.html", {"request": request})
+
+
+@router.get("/pricing", response_class=HTMLResponse)
+async def pricing_page(request: Request):
+    """Public pricing page aligned with backend quota controls."""
+    return templates.TemplateResponse(
+        "pricing.html",
+        {
+            "request": request,
+            "free_quota": settings.FREE_TIER_UPLOAD_QUOTA,
+            "pro_quota": settings.PRO_TIER_UPLOAD_QUOTA,
+            "enterprise_quota": settings.ENTERPRISE_TIER_UPLOAD_QUOTA,
+            "free_cost_limit": settings.FREE_TIER_MONTHLY_COST_LIMIT_CENTS,
+            "pro_cost_limit": settings.PRO_TIER_MONTHLY_COST_LIMIT_CENTS,
+        },
+    )
+
+
+@router.get("/billing-policy", response_class=HTMLResponse)
+async def billing_policy_page(request: Request):
+    """Refund/cancellation/tax/invoicing policy page."""
+    return templates.TemplateResponse("billing_policy.html", {"request": request})
+
+
+@router.get("/go-no-go", response_class=HTMLResponse)
+async def go_no_go_page(request: Request):
+    """Public launch readiness checklist page."""
+    return templates.TemplateResponse("go_no_go.html", {"request": request})
 
 
 # Observability endpoints (health checks, metrics)

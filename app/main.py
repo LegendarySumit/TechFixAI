@@ -25,7 +25,7 @@ from app.core.session import (
 )
 from app.core.observability import RequestIDMiddleware, setup_observability
 from app.core.logging_config import get_logger
-from app.api import voice, ticket, admin, web, developer, auth
+from app.api import voice, ticket, admin, web, developer, auth, analytics
 from scheduler import start_cleanup_scheduler
 
 
@@ -221,5 +221,6 @@ app.include_router(voice.router, prefix="/api/voice", tags=["voice"])
 app.include_router(ticket.router, prefix="/api/tickets", tags=["tickets"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(developer.router, prefix="/api/developers", tags=["developers"])
+app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
 app.include_router(auth.router, tags=["auth"])
 app.include_router(web.router, tags=["web"])  # Web UI routes

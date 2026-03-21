@@ -122,16 +122,17 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#04
         {% if error_message %}
         <div class="msg-error"><i class="bi bi-exclamation-circle"></i>{{ error_message }}</div>
         {% endif %}
+        <div id="captcha-gate-msg" class="msg-error" style="display:none;"><i class="bi bi-shield-lock"></i>Complete CAPTCHA first to continue.</div>
 
         <!-- Google OAuth (recommended) -->
-        <a href="/auth/google" class="btn-google">
+        <button type="button" id="google-signup-btn" class="btn-google">
           <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
           Continue with Google
-        </a>
+        </button>
 
         <div class="auth-sep">or sign up with email</div>
 
-        <form method="POST">
+        <form method="POST" id="signup-form">
           <div class="fld">
             <label for="full_name">Full Name</label>
             <div class="inp-wrap"><i class="bi bi-person fld-icon"></i><input type="text" id="full_name" name="full_name" placeholder="Jane Smith" required></div>
@@ -161,7 +162,7 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#04
             <div class="cf-turnstile" data-sitekey="{{ captcha_site_key }}" data-callback="onSignupCaptchaToken"></div>
           </div>
           {% endif %}
-          <button type="submit" class="btn-submit"><i class="bi bi-person-plus"></i> Create Account</button>
+          <button type="submit" id="signup-submit-btn" class="btn-submit"><i class="bi bi-person-plus"></i> Create Account</button>
         </form>
         <div class="auth-sep">Already have an account?</div>
         <a href="/login" class="btn-alt"><i class="bi bi-box-arrow-in-right"></i> Sign In</a>
@@ -176,6 +177,66 @@ function onSignupCaptchaToken(token){
   var input = document.getElementById('captcha_token');
   if (input) input.value = token;
 }
+
+(function(){
+  const captchaEnabled = {{ 'true' if captcha_site_key else 'false' }};
+  const form = document.getElementById('signup-form');
+  const submitBtn = document.getElementById('signup-submit-btn');
+  const googleBtn = document.getElementById('google-signup-btn');
+  const gateMsg = document.getElementById('captcha-gate-msg');
+  const captchaInput = document.getElementById('captcha_token');
+
+  function hasCaptchaToken(){
+    return captchaInput && captchaInput.value && captchaInput.value.length > 10;
+  }
+
+  function setAuthEnabled(enabled){
+    if (!submitBtn || !googleBtn) return;
+    submitBtn.disabled = !enabled;
+    googleBtn.disabled = !enabled;
+    googleBtn.style.opacity = enabled ? '1' : '0.65';
+    googleBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+  }
+
+  function showCaptchaMsg(show){
+    if (!gateMsg) return;
+    gateMsg.style.display = show ? 'flex' : 'none';
+  }
+
+  if (captchaEnabled) {
+    setAuthEnabled(false);
+    const original = window.onSignupCaptchaToken;
+    window.onSignupCaptchaToken = function(token){
+      if (typeof original === 'function') original(token);
+      setAuthEnabled(true);
+      showCaptchaMsg(false);
+    };
+  }
+
+  if (form) {
+    form.addEventListener('submit', function(e){
+      appTrack('manual_signup_submitted', {});
+      if (captchaEnabled && !hasCaptchaToken()) {
+        e.preventDefault();
+        showCaptchaMsg(true);
+      }
+    });
+  }
+
+  if (googleBtn) {
+    googleBtn.addEventListener('click', function(){
+      if (captchaEnabled && !hasCaptchaToken()) {
+        showCaptchaMsg(true);
+        return;
+      }
+      appTrack('google_oauth_click', { source: 'signup' });
+      const token = encodeURIComponent(captchaInput ? captchaInput.value : '');
+      window.location.href = '/auth/google?source=signup&captcha_token=' + token;
+    });
+  }
+
+  appTrack('signup_page_viewed', {});
+})();
 </script>
 {% endif %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

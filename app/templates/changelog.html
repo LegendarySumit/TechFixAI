@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Changelog - TechFixAI{% endblock %}
+{% block content %}
+<section class="container py-5">
+  <h1 class="mb-3">Release Notes</h1>
+  <p class="text-muted">Public changelog for trust and transparency.</p>
+
+  <div class="card bg-dark-subtle border-secondary mb-3">
+    <div class="card-body">
+      <h5 class="mb-1">v1.2.0 - Public Readiness</h5>
+      <p class="text-muted small mb-3">2026-03-22</p>
+      <ul class="mb-0">
+        <li>Added quota and cost controls for safer AI usage.</li>
+        <li>Added admin cost monitoring and funnel analytics visibility.</li>
+        <li>Added public status, SLA, pricing, and policy pages.</li>
+        <li>Enforced captcha gate before login and Google auth continuation.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card bg-dark-subtle border-secondary">
+    <div class="card-body">
+      <h5 class="mb-1">v1.1.0 - Reliability Updates</h5>
+      <p class="text-muted small mb-3">2026-03-21</p>
+      <ul class="mb-0">
+        <li>Improved CORS parsing compatibility for deployment stability.</li>
+        <li>Expanded observability and metrics endpoints.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+{% endblock %}
