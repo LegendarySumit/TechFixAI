@@ -1,19 +1,59 @@
 {% extends "base.html" %}
 {% block title %}Billing Policy - TechFixAI{% endblock %}
+
+{% block extra_css %}
+<style>
+.bill-hero{padding:4.25rem 0 2.2rem;text-align:center;position:relative;overflow:hidden}
+.bill-hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(ellipse 760px 340px at 50% 0%,rgba(99,102,241,.08),transparent);pointer-events:none}
+.bill-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:999px;font-size:.78rem;font-weight:600;color:#818cf8;letter-spacing:.05em;text-transform:uppercase;margin-bottom:1.2rem}
+.bill-hero h1{font-size:clamp(1.9rem,4.8vw,2.9rem);font-weight:800;letter-spacing:-.45px;margin-bottom:.8rem}
+.bill-hero h1 span{background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.bill-hero p{max-width:620px;margin:0 auto;color:#8899bb;font-size:.96rem;line-height:1.75}
+.bill-sec{padding:2.4rem 0;border-top:1px solid rgba(99,102,241,.08)}
+.bill-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.bill-card{background:rgba(13,27,46,.72);border:1px solid rgba(99,102,241,.14);border-radius:14px;padding:1.2rem 1.25rem}
+.bill-card-hd{display:flex;align-items:center;gap:.55rem;font-size:1rem;font-weight:700;color:#c7d2fe;margin-bottom:.45rem}
+.bill-card-hd i{color:#818cf8}
+.bill-card p{margin:0;color:#8899bb;font-size:.86rem;line-height:1.7}
+.bill-note{margin-top:1rem;background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.2);border-radius:12px;padding:1rem 1.1rem;color:#98aacf;font-size:.84rem;line-height:1.7}
+.bill-note a{color:#67e8f9;text-decoration:none}
+.bill-note a:hover{text-decoration:underline}
+@media(max-width:860px){.bill-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="container py-5">
-  <h1 class="mb-3">Billing, Refund, and Compliance Policy</h1>
+<section class="bill-hero">
+  <div class="container">
+    <div class="bill-badge"><i class="bi bi-receipt-cutoff"></i> Commercial Policy</div>
+    <h1>Billing &amp; <span>Compliance</span></h1>
+    <p>Clear terms for subscriptions, refunds, taxes, and invoicing so finance and engineering teams can plan with confidence.</p>
+  </div>
+</section>
 
-  <h4 class="mt-4">Cancellation</h4>
-  <p class="text-muted">Subscriptions can be cancelled before the next billing cycle. Access remains active until period end unless otherwise specified.</p>
-
-  <h4 class="mt-4">Refunds</h4>
-  <p class="text-muted">Refund requests are reviewed case-by-case for billing errors and duplicate charges. Usage-based charges are generally non-refundable.</p>
-
-  <h4 class="mt-4">Tax & Invoicing</h4>
-  <p class="text-muted">Invoices include required tax fields for active sales geographies. Customers must provide valid billing and tax information for compliant invoicing.</p>
-
-  <h4 class="mt-4">Support Contact</h4>
-  <p class="text-muted mb-0">For billing issues, contact support via <a href="/support">Support Center</a>.</p>
+<section class="bill-sec">
+  <div class="container">
+    <div class="bill-grid">
+      <article class="bill-card">
+        <h3 class="bill-card-hd"><i class="bi bi-x-circle"></i> Cancellation</h3>
+        <p>Subscriptions can be cancelled before the next billing cycle. Access remains active until the current billing period ends unless otherwise stated in a contract addendum.</p>
+      </article>
+      <article class="bill-card">
+        <h3 class="bill-card-hd"><i class="bi bi-arrow-counterclockwise"></i> Refunds</h3>
+        <p>Refund requests are reviewed case-by-case for duplicate charges or billing errors. Usage-based charges are generally non-refundable once processing has occurred.</p>
+      </article>
+      <article class="bill-card">
+        <h3 class="bill-card-hd"><i class="bi bi-file-earmark-text"></i> Tax &amp; Invoicing</h3>
+        <p>Invoices include mandatory tax fields for active sales geographies. Customers must provide accurate billing and tax information to maintain compliant invoicing records.</p>
+      </article>
+      <article class="bill-card">
+        <h3 class="bill-card-hd"><i class="bi bi-shield-check"></i> Compliance Scope</h3>
+        <p>Commercial terms apply to all paid plans and are interpreted together with the Terms of Service and Privacy Policy for data handling and legal obligations.</p>
+      </article>
+    </div>
+    <div class="bill-note">
+      Need help with invoice corrections, purchase orders, or billing disputes? Reach us through the <a href="/support">Support Center</a>.
+    </div>
+  </div>
 </section>
 {% endblock %}

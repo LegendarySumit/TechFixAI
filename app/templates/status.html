@@ -1,29 +1,163 @@
 {% extends "base.html" %}
 {% block title %}Status - TechFixAI{% endblock %}
+
+{% block extra_css %}
+<style>
+.st-hero{padding:4.25rem 0 2.2rem;text-align:center;position:relative;overflow:hidden}
+.st-hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(ellipse 760px 360px at 50% 0%,rgba(34,211,238,.08),transparent);pointer-events:none}
+.st-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.25);border-radius:999px;font-size:.78rem;font-weight:600;color:#67e8f9;letter-spacing:.05em;text-transform:uppercase;margin-bottom:1.2rem}
+.st-hero h1{font-size:clamp(1.9rem,4.8vw,2.9rem);font-weight:800;letter-spacing:-.45px;margin-bottom:.8rem}
+.st-hero h1 span{background:linear-gradient(135deg,#22d3ee,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.st-hero p{max-width:610px;margin:0 auto;color:#8899bb;font-size:.96rem;line-height:1.75}
+.st-sec{padding:2.4rem 0;border-top:1px solid rgba(99,102,241,.08)}
+.st-kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-bottom:1.15rem}
+.st-kpi-card{background:rgba(13,27,46,.72);border:1px solid rgba(99,102,241,.14);border-radius:14px;padding:1rem 1.1rem}
+.st-kpi-label{font-size:.72rem;color:#6b7fa3;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.st-kpi-val{margin-top:.35rem;font-size:1.05rem;font-weight:700;color:#c7d2fe}
+.st-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+.st-card{background:rgba(13,27,46,.72);border:1px solid rgba(99,102,241,.14);border-radius:14px;padding:1.05rem 1.1rem}
+.st-card h3{font-size:.95rem;font-weight:700;color:#c7d2fe;margin:0 0 .55rem;text-transform:capitalize}
+.st-pill{display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .65rem;border-radius:999px;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.st-up{background:rgba(16,185,129,.12);color:#6ee7b7;border:1px solid rgba(16,185,129,.32)}
+.st-degraded{background:rgba(245,158,11,.14);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+.st-down{background:rgba(244,63,94,.14);color:#fb7185;border:1px solid rgba(244,63,94,.3)}
+.st-subsec{margin-top:1.35rem;background:rgba(13,27,46,.58);border:1px solid rgba(99,102,241,.14);border-radius:14px;padding:1.1rem 1.15rem}
+.st-subhead{display:flex;align-items:center;justify-content:space-between;gap:.7rem;flex-wrap:wrap;margin-bottom:.75rem}
+.st-subsec h2{font-size:1.02rem;font-weight:700;color:#dbe7ff;margin:0}
+.st-mini-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.24rem .62rem;border-radius:999px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.st-mini-badge.chg{background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);color:#c4b5fd}
+.st-mini-badge.sla{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
+.st-tl{display:grid;gap:.75rem}
+.st-tl-item{background:rgba(9,20,36,.75);border:1px solid rgba(99,102,241,.12);border-radius:12px;padding:.85rem .95rem}
+.st-tl-top{display:flex;justify-content:space-between;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.45rem}
+.st-tl-ver{font-size:.9rem;font-weight:700;color:#c7d2fe}
+.st-tl-date{font-size:.74rem;color:#8ea1c7;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.22);padding:.2rem .55rem;border-radius:999px}
+.st-tl-item ul{margin:0;padding-left:1rem}
+.st-tl-item li{color:#8ea1c7;font-size:.82rem;line-height:1.55;margin-bottom:.2rem}
+.st-sla-wrap{overflow:auto}
+.st-sla{width:100%;min-width:660px;border-collapse:separate;border-spacing:0}
+.st-sla th,.st-sla td{padding:.72rem .7rem;border-bottom:1px solid rgba(99,102,241,.14);color:#8ea1c7;font-size:.82rem;vertical-align:middle}
+.st-sla th{font-size:.71rem;text-transform:uppercase;letter-spacing:.08em;color:#96a6c7}
+.st-sla tr:last-child td{border-bottom:none}
+.st-sev{display:inline-flex;align-items:center;border-radius:999px;padding:.2rem .58rem;font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.st-sev-p1{background:rgba(244,63,94,.14);border:1px solid rgba(244,63,94,.3);color:#fb7185}
+.st-sev-p2{background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.3);color:#fbbf24}
+.st-sev-p3{background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.26);color:#67e8f9}
+@media(max-width:980px){.st-kpi{grid-template-columns:1fr 1fr}.st-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.st-kpi,.st-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="container py-5">
-  <h1 class="mb-3">System Status</h1>
-  <p class="text-muted">Real-time service availability and dependency health.</p>
-
-  <div class="card bg-dark-subtle border-secondary mb-4">
-    <div class="card-body">
-      <h5 class="card-title mb-2">Overall Status: <span class="text-{% if status.status == 'healthy' %}success{% elif status.status == 'degraded' %}warning{% else %}danger{% endif %}">{{ status.status|upper }}</span></h5>
-      <p class="mb-1 text-muted">Updated at: {{ status.timestamp }}</p>
-      <p class="mb-0 text-muted">Target uptime SLO: {{ uptime_target_percent }}%</p>
-    </div>
+{% set overall = status.status if status and status.status else 'unknown' %}
+{% set deps = status.dependencies if status and status.dependencies else {} %}
+<section class="st-hero">
+  <div class="container">
+    <div class="st-badge"><i class="bi bi-activity"></i> Live Reliability</div>
+    <h1>System <span>Status</span></h1>
+    <p>Real-time visibility into platform health, dependency availability, and service-level reliability targets.</p>
   </div>
+</section>
 
-  <div class="row g-3">
-    {% for name, dep in status.dependencies.items() %}
-    <div class="col-md-4">
-      <div class="card h-100 bg-dark-subtle border-secondary">
-        <div class="card-body">
-          <h6 class="mb-2 text-capitalize">{{ name }}</h6>
-          <p class="mb-0">Status: <span class="text-{% if dep.status == 'up' %}success{% elif dep.status == 'degraded' %}warning{% else %}danger{% endif %}">{{ dep.status }}</span></p>
-        </div>
+<section class="st-sec">
+  <div class="container">
+    <div class="st-kpi">
+      <div class="st-kpi-card">
+        <div class="st-kpi-label">Overall</div>
+        <div class="st-kpi-val">{{ overall|upper }}</div>
+      </div>
+      <div class="st-kpi-card">
+        <div class="st-kpi-label">Updated</div>
+        <div class="st-kpi-val">{{ status.timestamp if status and status.timestamp else 'N/A' }}</div>
+      </div>
+      <div class="st-kpi-card">
+        <div class="st-kpi-label">Uptime Target</div>
+        <div class="st-kpi-val">{{ uptime_target_percent }}%</div>
       </div>
     </div>
-    {% endfor %}
+
+    <div class="st-grid">
+      {% for name, dep in deps.items() %}
+      <article class="st-card">
+        <h3>{{ name }}</h3>
+        {% set dep_state = dep.status if dep and dep.status else 'unknown' %}
+        <span class="st-pill {% if dep_state == 'up' %}st-up{% elif dep_state == 'degraded' %}st-degraded{% else %}st-down{% endif %}">
+          <i class="bi {% if dep_state == 'up' %}bi-check-circle{% elif dep_state == 'degraded' %}bi-exclamation-triangle{% else %}bi-x-circle{% endif %}"></i>
+          {{ dep_state }}
+        </span>
+      </article>
+      {% endfor %}
+    </div>
+
+    <section id="changelog" class="st-subsec">
+      <div class="st-subhead">
+        <h2>Changelog</h2>
+        <span class="st-mini-badge chg"><i class="bi bi-clock-history"></i> Release Notes</span>
+      </div>
+      <div class="st-tl">
+        <article class="st-tl-item">
+          <div class="st-tl-top">
+            <div class="st-tl-ver">v1.2.0 - Public Readiness</div>
+            <div class="st-tl-date">2026-03-22</div>
+          </div>
+          <ul>
+            <li>Added quota and cost controls for safer AI usage.</li>
+            <li>Added admin cost monitoring and funnel analytics visibility.</li>
+            <li>Added public status, SLA, pricing, and policy pages.</li>
+            <li>Enforced captcha gate before login and Google auth continuation.</li>
+          </ul>
+        </article>
+        <article class="st-tl-item">
+          <div class="st-tl-top">
+            <div class="st-tl-ver">v1.1.0 - Reliability Updates</div>
+            <div class="st-tl-date">2026-03-21</div>
+          </div>
+          <ul>
+            <li>Improved CORS parsing compatibility for deployment stability.</li>
+            <li>Expanded observability and metrics endpoints.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="sla" class="st-subsec">
+      <div class="st-subhead">
+        <h2>Support SLA</h2>
+        <span class="st-mini-badge sla"><i class="bi bi-shield"></i> Commitments</span>
+      </div>
+      <div class="st-sla-wrap">
+        <table class="st-sla">
+          <thead>
+            <tr>
+              <th>Severity</th>
+              <th>Definition</th>
+              <th>Initial Response</th>
+              <th>Target Resolution</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="st-sev st-sev-p1">P1</span></td>
+              <td>Production down or core business blocked</td>
+              <td>&lt; 1 hour</td>
+              <td>&lt; 4 hours</td>
+            </tr>
+            <tr>
+              <td><span class="st-sev st-sev-p2">P2</span></td>
+              <td>Major degradation with temporary workaround available</td>
+              <td>&lt; 4 hours</td>
+              <td>&lt; 1 business day</td>
+            </tr>
+            <tr>
+              <td><span class="st-sev st-sev-p3">P3</span></td>
+              <td>Minor issue with low operational impact</td>
+              <td>&lt; 1 business day</td>
+              <td>3-5 business days</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>
 </section>
 {% endblock %}

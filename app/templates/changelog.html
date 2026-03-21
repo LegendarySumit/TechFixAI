@@ -1,31 +1,70 @@
 {% extends "base.html" %}
 {% block title %}Changelog - TechFixAI{% endblock %}
+
+{% block extra_css %}
+<style>
+.cl-hero{padding:4.25rem 0 2.2rem;text-align:center;position:relative;overflow:hidden}
+.cl-hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(ellipse 780px 360px at 50% 0%,rgba(139,92,246,.08),transparent);pointer-events:none}
+.cl-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.28);border-radius:999px;font-size:.78rem;font-weight:600;color:#c4b5fd;letter-spacing:.05em;text-transform:uppercase;margin-bottom:1.2rem}
+.cl-hero h1{font-size:clamp(1.9rem,4.8vw,2.9rem);font-weight:800;letter-spacing:-.45px;margin-bottom:.8rem}
+.cl-hero h1 span{background:linear-gradient(135deg,#c4b5fd,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.cl-hero p{max-width:620px;margin:0 auto;color:#8899bb;font-size:.96rem;line-height:1.75}
+.cl-sec{padding:2.4rem 0;border-top:1px solid rgba(99,102,241,.08)}
+.cl-wrap{max-width:900px;margin:0 auto;position:relative}
+.cl-wrap::before{content:'';position:absolute;left:15px;top:8px;bottom:8px;width:2px;background:linear-gradient(180deg,rgba(139,92,246,.4),rgba(34,211,238,.2))}
+.cl-item{position:relative;padding-left:48px;margin-bottom:1.2rem}
+.cl-dot{position:absolute;left:8px;top:12px;width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#22d3ee);box-shadow:0 0 0 4px rgba(139,92,246,.15)}
+.cl-card{background:rgba(13,27,46,.72);border:1px solid rgba(99,102,241,.14);border-radius:14px;padding:1.1rem 1.2rem}
+.cl-top{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;margin-bottom:.55rem}
+.cl-ver{font-size:1rem;font-weight:700;color:#c7d2fe}
+.cl-date{font-size:.76rem;color:#6b7fa3;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);padding:.22rem .6rem;border-radius:999px}
+.cl-card ul{margin:0;padding-left:1rem}
+.cl-card li{color:#8ea1c7;font-size:.85rem;line-height:1.65;margin-bottom:.3rem}
+.cl-card li:last-child{margin-bottom:0}
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="container py-5">
-  <h1 class="mb-3">Release Notes</h1>
-  <p class="text-muted">Public changelog for trust and transparency.</p>
-
-  <div class="card bg-dark-subtle border-secondary mb-3">
-    <div class="card-body">
-      <h5 class="mb-1">v1.2.0 - Public Readiness</h5>
-      <p class="text-muted small mb-3">2026-03-22</p>
-      <ul class="mb-0">
-        <li>Added quota and cost controls for safer AI usage.</li>
-        <li>Added admin cost monitoring and funnel analytics visibility.</li>
-        <li>Added public status, SLA, pricing, and policy pages.</li>
-        <li>Enforced captcha gate before login and Google auth continuation.</li>
-      </ul>
-    </div>
+<section class="cl-hero">
+  <div class="container">
+    <div class="cl-badge"><i class="bi bi-clock-history"></i> Public Release Notes</div>
+    <h1>Product <span>Changelog</span></h1>
+    <p>A transparent timeline of platform updates, reliability improvements, and public readiness milestones.</p>
   </div>
+</section>
 
-  <div class="card bg-dark-subtle border-secondary">
-    <div class="card-body">
-      <h5 class="mb-1">v1.1.0 - Reliability Updates</h5>
-      <p class="text-muted small mb-3">2026-03-21</p>
-      <ul class="mb-0">
-        <li>Improved CORS parsing compatibility for deployment stability.</li>
-        <li>Expanded observability and metrics endpoints.</li>
-      </ul>
+<section class="cl-sec">
+  <div class="container">
+    <div class="cl-wrap">
+      <article class="cl-item">
+        <div class="cl-dot"></div>
+        <div class="cl-card">
+          <div class="cl-top">
+            <div class="cl-ver">v1.2.0 - Public Readiness</div>
+            <div class="cl-date">2026-03-22</div>
+          </div>
+          <ul>
+            <li>Added quota and cost controls for safer AI usage.</li>
+            <li>Added admin cost monitoring and funnel analytics visibility.</li>
+            <li>Added public status, SLA, pricing, and policy pages.</li>
+            <li>Enforced captcha gate before login and Google auth continuation.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="cl-item">
+        <div class="cl-dot"></div>
+        <div class="cl-card">
+          <div class="cl-top">
+            <div class="cl-ver">v1.1.0 - Reliability Updates</div>
+            <div class="cl-date">2026-03-21</div>
+          </div>
+          <ul>
+            <li>Improved CORS parsing compatibility for deployment stability.</li>
+            <li>Expanded observability and metrics endpoints.</li>
+          </ul>
+        </div>
+      </article>
     </div>
   </div>
 </section>

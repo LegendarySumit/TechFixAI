@@ -552,14 +552,14 @@ async def status_page(request: Request):
 
 @router.get("/changelog", response_class=HTMLResponse)
 async def changelog_page(request: Request):
-    """Public release notes/changelog page."""
-    return templates.TemplateResponse("changelog.html", {"request": request})
+    """Legacy changelog URL redirected to merged status page section."""
+    return RedirectResponse(url="/status#changelog", status_code=307)
 
 
 @router.get("/sla", response_class=HTMLResponse)
 async def sla_page(request: Request):
-    """Public support SLA page."""
-    return templates.TemplateResponse("sla.html", {"request": request})
+    """Legacy SLA URL redirected to merged status page section."""
+    return RedirectResponse(url="/status#sla", status_code=307)
 
 
 @router.get("/pricing", response_class=HTMLResponse)
@@ -580,8 +580,8 @@ async def pricing_page(request: Request):
 
 @router.get("/billing-policy", response_class=HTMLResponse)
 async def billing_policy_page(request: Request):
-    """Refund/cancellation/tax/invoicing policy page."""
-    return templates.TemplateResponse("billing_policy.html", {"request": request})
+    """Legacy billing policy URL redirected to merged pricing page section."""
+    return RedirectResponse(url="/pricing#billing", status_code=307)
 
 
 @router.get("/go-no-go", response_class=HTMLResponse)

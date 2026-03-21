@@ -1,52 +1,168 @@
 {% extends "base.html" %}
 {% block title %}Pricing - TechFixAI{% endblock %}
+
+{% block extra_css %}
+<style>
+.pr-hero{padding:4.25rem 0 2.2rem;text-align:center;position:relative;overflow:hidden}
+.pr-hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(ellipse 820px 360px at 50% 0%,rgba(99,102,241,.08),transparent);pointer-events:none}
+.pr-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:999px;font-size:.78rem;font-weight:600;color:#818cf8;letter-spacing:.05em;text-transform:uppercase;margin-bottom:1.2rem}
+.pr-hero h1{font-size:clamp(1.9rem,4.8vw,2.9rem);font-weight:800;letter-spacing:-.45px;margin-bottom:.8rem}
+.pr-hero h1 span{background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.pr-hero p{max-width:640px;margin:0 auto;color:#8899bb;font-size:.96rem;line-height:1.75}
+.pr-sec{padding:2.4rem 0;border-top:1px solid rgba(99,102,241,.08)}
+.pr-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.2rem}
+.pr-card{position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(15,30,50,.9),rgba(9,20,38,.82));border:1px solid rgba(99,102,241,.22);border-radius:18px;padding:1.3rem 1.25rem;display:flex;flex-direction:column;min-height:100%;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+.pr-card::before{content:'';position:absolute;inset:0;background:radial-gradient(620px 180px at -20% -20%,rgba(99,102,241,.16),transparent 62%);pointer-events:none}
+.pr-card:hover{transform:translateY(-4px);border-color:rgba(99,102,241,.42);box-shadow:0 16px 36px rgba(5,13,26,.55)}
+.pr-card.featured{border-color:rgba(129,140,248,.62);box-shadow:0 16px 38px rgba(99,102,241,.22)}
+.pr-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.65rem;margin-bottom:.35rem;position:relative;z-index:1;flex-wrap:wrap}
+.pr-plan{font-size:1.55rem;font-weight:800;color:#eef2ff;line-height:1.1;letter-spacing:-.5px}
+.pr-tag{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .58rem;border-radius:999px;border:1px solid rgba(99,102,241,.24);background:rgba(99,102,241,.1);font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#a5b4fc}
+.pr-tag.popular{border-color:rgba(34,211,238,.3);background:rgba(34,211,238,.12);color:#67e8f9}
+.pr-sub{margin-top:0;font-size:.84rem;color:#7f93b7;position:relative;z-index:1}
+.pr-stats{display:grid;grid-template-columns:1fr;gap:.55rem;margin:.95rem 0 .75rem;position:relative;z-index:1}
+.pr-stat{background:rgba(10,24,42,.7);border:1px solid rgba(99,102,241,.18);border-radius:12px;padding:.58rem .72rem}
+.pr-stat-label{display:block;font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:#6b7fa3;font-weight:700;margin-bottom:.2rem}
+.pr-stat-value{display:block;font-size:1.02rem;color:#dbe7ff;font-weight:700;line-height:1.1}
+.pr-list{list-style:none;padding:0;margin:1rem 0 1.15rem;position:relative;z-index:1}
+.pr-list li{padding:.36rem 0 .36rem 1.35rem;position:relative;color:#90a4c8;font-size:.84rem;line-height:1.55}
+.pr-list li::before{content:'\2713';position:absolute;left:0;top:.34rem;color:#22d3ee;font-weight:800}
+.pr-cta{margin-top:auto;position:relative;z-index:1}
+.pr-btn{font-weight:700;letter-spacing:.01em;padding:.62rem .9rem;display:flex;align-items:center;justify-content:center;text-align:center}
+.pr-note{margin-top:1.1rem;color:#8ea1c7;font-size:.82rem}
+.pr-note a{color:#67e8f9;text-decoration:none}
+.pr-note a:hover{text-decoration:underline}
+.pr-bill{margin-top:1.2rem;background:rgba(13,27,46,.62);border:1px solid rgba(99,102,241,.16);border-radius:14px;padding:1.1rem 1.15rem}
+.pr-bill-head{display:flex;align-items:center;justify-content:space-between;gap:.7rem;flex-wrap:wrap;margin-bottom:.7rem}
+.pr-bill-hd{font-size:1rem;font-weight:700;color:#dbe7ff;margin:0}
+.pr-bill-badge{display:inline-flex;align-items:center;gap:.38rem;padding:.24rem .62rem;border-radius:999px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.28);color:#a5b4fc}
+.pr-bill-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+.pr-bill-card{background:rgba(9,20,36,.78);border:1px solid rgba(99,102,241,.12);border-radius:12px;padding:.8rem .85rem}
+.pr-bill-card h3{margin:0 0 .3rem;font-size:.86rem;font-weight:700;color:#c7d2fe;display:flex;align-items:center;gap:.45rem}
+.pr-bill-card h3 i{color:#818cf8}
+.pr-bill-card p{margin:0;color:#8ea1c7;font-size:.79rem;line-height:1.6}
+@media(max-width:980px){.pr-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.pr-grid{grid-template-columns:1fr}.pr-bill-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="container py-5">
-  <h1 class="mb-3">Pricing</h1>
-  <p class="text-muted">Plans aligned with enforced platform quotas.</p>
-
-  <div class="row g-3">
-    <div class="col-md-4">
-      <div class="card bg-dark-subtle border-secondary h-100">
-        <div class="card-body">
-          <h4>Free</h4>
-          <p class="text-muted">For individual evaluation</p>
-          <ul>
-            <li>{{ free_quota }} uploads / month</li>
-            <li>${{ '%.2f'|format(free_cost_limit/100) }} AI usage / month</li>
-          </ul>
-          <a href="/signup" class="btn btn-outline-light">Start Free</a>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card bg-dark-subtle border-primary h-100">
-        <div class="card-body">
-          <h4>Pro</h4>
-          <p class="text-muted">For active engineering teams</p>
-          <ul>
-            <li>{{ pro_quota }} uploads / month</li>
-            <li>${{ '%.2f'|format(pro_cost_limit/100) }} AI usage / month</li>
-          </ul>
-          <button class="btn btn-primary" onclick="appTrack('checkout_started',{plan:'pro'});window.location='/support';">Contact Sales</button>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card bg-dark-subtle border-secondary h-100">
-        <div class="card-body">
-          <h4>Enterprise</h4>
-          <p class="text-muted">Custom scale and compliance</p>
-          <ul>
-            <li>{{ enterprise_quota }} uploads / month</li>
-            <li>Custom AI usage caps</li>
-          </ul>
-          <button class="btn btn-outline-light" onclick="appTrack('checkout_started',{plan:'enterprise'});window.location='/support';">Talk to Us</button>
-        </div>
-      </div>
-    </div>
+<section class="pr-hero">
+  <div class="container">
+    <div class="pr-badge"><i class="bi bi-currency-dollar"></i> Plan Limits</div>
+    <h1>Simple <span>Pricing</span></h1>
+    <p>Plans are aligned with enforced monthly upload and AI-usage limits for predictable spend and safer scaling.</p>
   </div>
+</section>
 
-  <p class="text-muted small mt-4">Need billing, invoicing, and tax details? See <a href="/billing-policy">Billing & Compliance Policy</a>.</p>
+<section class="pr-sec">
+  <div class="container">
+    <div class="pr-grid">
+      <article class="pr-card">
+        <div class="pr-top">
+          <div class="pr-plan">Free</div>
+          <span class="pr-tag">Starter</span>
+        </div>
+        <p class="pr-sub">For individual evaluation</p>
+        <div class="pr-stats">
+          <div class="pr-stat">
+            <span class="pr-stat-label">Monthly uploads</span>
+            <span class="pr-stat-value">{{ free_quota }}</span>
+          </div>
+          <div class="pr-stat">
+            <span class="pr-stat-label">AI usage cap</span>
+            <span class="pr-stat-value">${{ '%.2f'|format(free_cost_limit/100) }}</span>
+          </div>
+        </div>
+        <ul class="pr-list">
+          <li>Core dashboard and ticket workflow</li>
+          <li>Email-based support</li>
+          <li>Individual onboarding path</li>
+        </ul>
+        <div class="pr-cta">
+          <a href="/signup" class="btn btn-outline-light pr-btn w-100">Start Free</a>
+        </div>
+      </article>
+
+      <article class="pr-card featured">
+        <div class="pr-top">
+          <div class="pr-plan">Pro</div>
+          <span class="pr-tag popular">Most Popular</span>
+        </div>
+        <p class="pr-sub">For active engineering teams</p>
+        <div class="pr-stats">
+          <div class="pr-stat">
+            <span class="pr-stat-label">Monthly uploads</span>
+            <span class="pr-stat-value">{{ pro_quota }}</span>
+          </div>
+          <div class="pr-stat">
+            <span class="pr-stat-label">AI usage cap</span>
+            <span class="pr-stat-value">${{ '%.2f'|format(pro_cost_limit/100) }}</span>
+          </div>
+        </div>
+        <ul class="pr-list">
+          <li>Priority support and deeper reporting</li>
+          <li>Team operations visibility</li>
+          <li>Faster scale for production workloads</li>
+        </ul>
+        <div class="pr-cta">
+          <button class="btn btn-primary pr-btn w-100" onclick="appTrack('checkout_started',{plan:'pro'});window.location='/support';">Contact Sales</button>
+        </div>
+      </article>
+
+      <article class="pr-card">
+        <div class="pr-top">
+          <div class="pr-plan">Enterprise</div>
+          <span class="pr-tag">Custom</span>
+        </div>
+        <p class="pr-sub">Custom scale and compliance</p>
+        <div class="pr-stats">
+          <div class="pr-stat">
+            <span class="pr-stat-label">Monthly uploads</span>
+            <span class="pr-stat-value">{{ enterprise_quota }}</span>
+          </div>
+          <div class="pr-stat">
+            <span class="pr-stat-label">AI usage cap</span>
+            <span class="pr-stat-value">Custom</span>
+          </div>
+        </div>
+        <ul class="pr-list">
+          <li>Custom AI usage caps and controls</li>
+          <li>Contracted SLA and governance options</li>
+          <li>Security and compliance collaboration</li>
+        </ul>
+        <div class="pr-cta">
+          <button class="btn btn-outline-light pr-btn w-100" onclick="appTrack('checkout_started',{plan:'enterprise'});window.location='/support';">Talk to Us</button>
+        </div>
+      </article>
+    </div>
+
+    <p class="pr-note mb-0">Commercial terms are summarized below for quick reference.</p>
+
+    <section id="billing" class="pr-bill">
+      <div class="pr-bill-head">
+        <h2 class="pr-bill-hd">Billing Policy</h2>
+        <span class="pr-bill-badge"><i class="bi bi-receipt"></i> Commercial Terms</span>
+      </div>
+      <div class="pr-bill-grid">
+        <article class="pr-bill-card">
+          <h3><i class="bi bi-x-circle"></i> Cancellation</h3>
+          <p>Subscriptions can be cancelled before the next billing cycle. Access remains active until period end unless otherwise specified.</p>
+        </article>
+        <article class="pr-bill-card">
+          <h3><i class="bi bi-arrow-counterclockwise"></i> Refunds</h3>
+          <p>Refund requests are reviewed case-by-case for duplicate charges and billing errors. Usage-based charges are generally non-refundable.</p>
+        </article>
+        <article class="pr-bill-card">
+          <h3><i class="bi bi-file-earmark-text"></i> Tax &amp; Invoicing</h3>
+          <p>Invoices include required tax fields for active sales geographies. Provide valid billing and tax information for compliant invoicing.</p>
+        </article>
+        <article class="pr-bill-card">
+          <h3><i class="bi bi-headset"></i> Billing Support</h3>
+          <p>For invoice corrections or billing disputes, contact us via the <a href="/support">Support Center</a>.</p>
+        </article>
+      </div>
+    </section>
+  </div>
 </section>
 {% endblock %}

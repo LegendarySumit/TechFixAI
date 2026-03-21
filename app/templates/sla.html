@@ -1,43 +1,84 @@
 {% extends "base.html" %}
 {% block title %}Support SLA - TechFixAI{% endblock %}
+
+{% block extra_css %}
+<style>
+.sla-hero{padding:4.25rem 0 2.2rem;text-align:center;position:relative;overflow:hidden}
+.sla-hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(ellipse 760px 350px at 50% 0%,rgba(16,185,129,.09),transparent);pointer-events:none}
+.sla-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;background:rgba(16,185,129,.11);border:1px solid rgba(16,185,129,.26);border-radius:999px;font-size:.78rem;font-weight:600;color:#6ee7b7;letter-spacing:.05em;text-transform:uppercase;margin-bottom:1.2rem}
+.sla-hero h1{font-size:clamp(1.9rem,4.8vw,2.9rem);font-weight:800;letter-spacing:-.45px;margin-bottom:.8rem}
+.sla-hero h1 span{background:linear-gradient(135deg,#6ee7b7,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sla-hero p{max-width:620px;margin:0 auto;color:#8899bb;font-size:.96rem;line-height:1.75}
+.sla-sec{padding:2.4rem 0;border-top:1px solid rgba(99,102,241,.08)}
+.sla-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-bottom:1rem}
+.sla-kpi{background:rgba(13,27,46,.72);border:1px solid rgba(99,102,241,.14);border-radius:14px;padding:1rem 1.1rem}
+.sla-kpi small{display:block;font-size:.72rem;color:#6b7fa3;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.sla-kpi strong{display:block;margin-top:.35rem;font-size:1rem;color:#c7d2fe}
+.sla-table-wrap{background:rgba(13,27,46,.72);border:1px solid rgba(99,102,241,.14);border-radius:14px;padding:.45rem .45rem .2rem}
+.sla-table{margin-bottom:0;color:#c7d2fe}
+.sla-table thead th{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#8ea1c7;border-color:rgba(99,102,241,.18);padding:.9rem .85rem}
+.sla-table td{font-size:.85rem;color:#8ea1c7;border-color:rgba(99,102,241,.12);padding:.9rem .85rem;vertical-align:middle}
+.sev-pill{display:inline-flex;align-items:center;gap:.35rem;border-radius:999px;padding:.22rem .62rem;font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.sev-p1{background:rgba(244,63,94,.14);border:1px solid rgba(244,63,94,.3);color:#fb7185}
+.sev-p2{background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.3);color:#fbbf24}
+.sev-p3{background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.26);color:#67e8f9}
+.sla-note{margin-top:1rem;color:#8ea1c7;font-size:.82rem}
+@media(max-width:900px){.sla-kpis{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.sla-kpis{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="container py-5">
-  <h1 class="mb-3">Support SLA</h1>
-  <p class="text-muted">Response time commitments by incident severity.</p>
-
-  <div class="table-responsive">
-    <table class="table table-dark table-striped align-middle">
-      <thead>
-        <tr>
-          <th>Severity</th>
-          <th>Definition</th>
-          <th>Initial Response</th>
-          <th>Target Resolution</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>P1</td>
-          <td>Production down / core business blocked</td>
-          <td>&lt; 1 hour</td>
-          <td>&lt; 4 hours</td>
-        </tr>
-        <tr>
-          <td>P2</td>
-          <td>Major degradation, workaround exists</td>
-          <td>&lt; 4 hours</td>
-          <td>&lt; 1 business day</td>
-        </tr>
-        <tr>
-          <td>P3</td>
-          <td>Minor issue, low impact</td>
-          <td>&lt; 1 business day</td>
-          <td>3-5 business days</td>
-        </tr>
-      </tbody>
-    </table>
+<section class="sla-hero">
+  <div class="container">
+    <div class="sla-badge"><i class="bi bi-shield"></i> Response Commitments</div>
+    <h1>Support <span>SLA</span></h1>
+    <p>Clear severity-based commitments for response and resolution timelines to keep incidents predictable and manageable.</p>
   </div>
+</section>
 
-  <p class="text-muted small mt-3 mb-0">SLA applies during supported business hours unless an enterprise contract specifies otherwise.</p>
+<section class="sla-sec">
+  <div class="container">
+    <div class="sla-kpis">
+      <div class="sla-kpi"><small>P1 Initial Response</small><strong>&lt; 1 hour</strong></div>
+      <div class="sla-kpi"><small>P2 Initial Response</small><strong>&lt; 4 hours</strong></div>
+      <div class="sla-kpi"><small>P3 Initial Response</small><strong>&lt; 1 business day</strong></div>
+    </div>
+
+    <div class="sla-table-wrap table-responsive">
+      <table class="table align-middle sla-table">
+        <thead>
+          <tr>
+            <th>Severity</th>
+            <th>Definition</th>
+            <th>Initial Response</th>
+            <th>Target Resolution</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="sev-pill sev-p1">P1</span></td>
+            <td>Production down or core business blocked</td>
+            <td>&lt; 1 hour</td>
+            <td>&lt; 4 hours</td>
+          </tr>
+          <tr>
+            <td><span class="sev-pill sev-p2">P2</span></td>
+            <td>Major degradation with temporary workaround available</td>
+            <td>&lt; 4 hours</td>
+            <td>&lt; 1 business day</td>
+          </tr>
+          <tr>
+            <td><span class="sev-pill sev-p3">P3</span></td>
+            <td>Minor issue with low operational impact</td>
+            <td>&lt; 1 business day</td>
+            <td>3-5 business days</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="sla-note mb-0">SLA applies during supported business hours unless covered by an enterprise support agreement.</p>
+  </div>
 </section>
 {% endblock %}
