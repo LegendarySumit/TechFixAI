@@ -4,6 +4,7 @@ Run with: pytest tests/test_quotas_and_cost.py -v
 """
 
 import pytest
+import asyncio
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
@@ -211,7 +212,7 @@ class TestCostTrackingService:
         """Should estimate text generation cost based on tokens."""
         # 1000 tokens
         cost = CostTrackingService.estimate_text_gen_cost(1000)
-        expected = settings.GROQ_TEXT_GEN_COST_CENTS_PER_1K_TOKENS
+        expected = max(1, int(settings.GROQ_TEXT_GEN_COST_CENTS_PER_1K_TOKENS))
         assert cost == expected
 
     def test_cost_metrics(self, db: Session, free_user: User):
@@ -237,20 +238,20 @@ class TestCostTrackingService:
 class TestGroqResilienceService:
     """Test Groq retry logic and error handling."""
 
-    @pytest.mark.asyncio
-    async def test_successful_call_on_first_attempt(self):
+    def test_successful_call_on_first_attempt(self):
         """Should return result immediately on success."""
         async def mock_api_call():
             return "success"
 
-        result = await GroqResilienceService.call_with_retry(
-            "MockOperation",
-            mock_api_call
+        result = asyncio.run(
+            GroqResilienceService.call_with_retry(
+                "MockOperation",
+                mock_api_call
+            )
         )
         assert result == "success"
 
-    @pytest.mark.asyncio
-    async def test_retry_on_timeout(self):
+    def test_retry_on_timeout(self):
         """Should retry on timeout and eventually succeed."""
         attempt_count = 0
 
@@ -261,18 +262,19 @@ class TestGroqResilienceService:
                 raise GroqTimeoutError("Simulated timeout")
             return "success_after_retry"
 
-        result = await GroqResilienceService.call_with_retry(
-            "MockOperation",
-            mock_api_call,
-            max_retries=3,
-            base_delay=0.01,  # Short delay for testing
+        result = asyncio.run(
+            GroqResilienceService.call_with_retry(
+                "MockOperation",
+                mock_api_call,
+                max_retries=3,
+                base_delay=0.01,  # Short delay for testing
+            )
         )
         
         assert result == "success_after_retry"
         assert attempt_count == 3
 
-    @pytest.mark.asyncio
-    async def test_retry_exhausted_raises_http_exception(self):
+    def test_retry_exhausted_raises_http_exception(self):
         """Should raise HTTPException after max retries exceeded."""
         async def mock_api_call():
             raise GroqTimeoutError("Always fails")
@@ -280,17 +282,18 @@ class TestGroqResilienceService:
         from fastapi import HTTPException
         
         with pytest.raises(HTTPException) as exc_info:
-            await GroqResilienceService.call_with_retry(
-                "MockOperation",
-                mock_api_call,
-                max_retries=2,
-                base_delay=0.01,
+            asyncio.run(
+                GroqResilienceService.call_with_retry(
+                    "MockOperation",
+                    mock_api_call,
+                    max_retries=2,
+                    base_delay=0.01,
+                )
             )
         
         assert exc_info.value.status_code == 504  # Gateway timeout
 
-    @pytest.mark.asyncio
-    async def test_rate_limit_error_handling(self):
+    def test_rate_limit_error_handling(self):
         """Should handle rate limit errors with appropriate response."""
         async def mock_api_call():
             raise GroqRateLimitError("Rate limited")
@@ -298,11 +301,13 @@ class TestGroqResilienceService:
         from fastapi import HTTPException
         
         with pytest.raises(HTTPException) as exc_info:
-            await GroqResilienceService.call_with_retry(
-                "MockOperation",
-                mock_api_call,
-                max_retries=1,
-                base_delay=0.01,
+            asyncio.run(
+                GroqResilienceService.call_with_retry(
+                    "MockOperation",
+                    mock_api_call,
+                    max_retries=1,
+                    base_delay=0.01,
+                )
             )
         
         assert exc_info.value.status_code == 429  # Too many requests
@@ -310,8 +315,6 @@ class TestGroqResilienceService:
     def test_resilience_disabled(self):
         """Should skip retry if AUTO_RETRY_FAILED_GROQ_CALLS is False."""
         # If disabled, call should execute directly without retry logic
-        import asyncio
-        
         attempt_count = 0
 
         async def mock_api_call():
