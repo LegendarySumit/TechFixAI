@@ -267,7 +267,7 @@ async def get_user_quota_detail(
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="User not found")
     
-    quota_status = QuotaService.get_user_quota_status(user)
+    quota_status = QuotaService.get_user_quota_status(user, db)
     
     return {
         "user_id": user.id,

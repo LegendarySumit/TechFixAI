@@ -155,9 +155,10 @@ class QuotaService:
         logger.info(f"Added ${cost_cents / 100:.2f} to {user.email}'s Groq costs")
 
     @staticmethod
-    def get_user_quota_status(user: User) -> dict:
+    def get_user_quota_status(user: User, db: Session | None = None) -> dict:
         """Get user's quota status for API responses."""
-        QuotaService.reset_monthly_quota_if_needed(user, Session())
+        if db is not None:
+            QuotaService.reset_monthly_quota_if_needed(user, db)
         
         upload_limit = QuotaService.get_upload_limit(user)
         cost_limit = QuotaService.get_cost_limit(user)

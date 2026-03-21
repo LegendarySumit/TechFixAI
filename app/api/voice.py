@@ -372,7 +372,7 @@ async def upload_voice(
     )
     
     # Return quota status in response
-    quota_status = QuotaService.get_user_quota_status(user) if user else None
+    quota_status = QuotaService.get_user_quota_status(user, db) if user else None
     
     return {
         "conversation_id": conversation.id,

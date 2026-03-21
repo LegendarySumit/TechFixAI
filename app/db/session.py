@@ -30,7 +30,6 @@ else:
         "max_overflow": 10,  # Allow 10 extra connections during spikes
         "pool_recycle": 3600,  # Recycle connections after 1 hour (Railway timeout prevention)
         "pool_pre_ping": True,  # Verify connection before use
-        "pre_ping": True,  # Test connection before using (detects stale connections)
     }
 
 engine = create_engine(

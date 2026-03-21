@@ -4,7 +4,7 @@ Basic user accounting for web UI and sessions.
 """
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from passlib.context import CryptContext
 from enum import Enum
 

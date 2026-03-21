@@ -197,6 +197,7 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#04
 </div>
 {% if captcha_site_key %}
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% endif %}
 <script>
 function onLoginCaptchaToken(token){
   var input = document.getElementById('captcha_token');
@@ -210,6 +211,12 @@ function onLoginCaptchaToken(token){
   const googleBtn = document.getElementById('google-login-btn');
   const gateMsg = document.getElementById('captcha-gate-msg');
   const captchaInput = document.getElementById('captcha_token');
+
+  function track(eventName, payload){
+    if (typeof window.appTrack === 'function') {
+      window.appTrack(eventName, payload || {});
+    }
+  }
 
   function hasCaptchaToken(){
     return captchaInput && captchaInput.value && captchaInput.value.length > 10;
@@ -240,7 +247,7 @@ function onLoginCaptchaToken(token){
 
   if (form) {
     form.addEventListener('submit', function(e){
-      appTrack('manual_login_submitted', {});
+      track('manual_login_submitted', {});
       if (captchaEnabled && !hasCaptchaToken()) {
         e.preventDefault();
         showCaptchaMsg(true);
@@ -254,16 +261,15 @@ function onLoginCaptchaToken(token){
         showCaptchaMsg(true);
         return;
       }
-      appTrack('google_oauth_click', { source: 'login' });
+      track('google_oauth_click', { source: 'login' });
       const token = encodeURIComponent(captchaInput ? captchaInput.value : '');
       window.location.href = '/auth/google?source=login&captcha_token=' + token;
     });
   }
 
-  appTrack('login_page_viewed', {});
+  track('login_page_viewed', {});
 })();
 </script>
-{% endif %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
