@@ -11,133 +11,28 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Normalize base URL
-        id: cfg
-        env:
-          RAW_BASE_URL: ${{ secrets.PRODUCTION_BASE_URL }}
-        run: |
-          BASE_URL=$(echo "$RAW_BASE_URL" | xargs)
-          if [ -z "$BASE_URL" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "PRODUCTION_BASE_URL secret not set. Skipping uptime checks."
-            exit 0
-          fi
-
-          if [[ ! "$BASE_URL" =~ ^https?:// ]]; then
-            echo "PRODUCTION_BASE_URL is invalid (must start with http:// or https://). Skipping uptime checks."
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          BASE_URL="${BASE_URL%/}"
-          echo "skip=false" >> "$GITHUB_OUTPUT"
-          echo "base_url=$BASE_URL" >> "$GITHUB_OUTPUT"
-
       - name: Validate required secrets
-        if: steps.cfg.outputs.skip != 'true'
         run: |
-          echo "Using base URL: ${{ steps.cfg.outputs.base_url }}"
+          if [ -z "${{ secrets.PRODUCTION_BASE_URL }}" ]; then
+            echo "PRODUCTION_BASE_URL secret is required (e.g., https://techfixai.up.railway.app)"
+            exit 1
+          fi
 
       - name: Check main app endpoint
-        if: steps.cfg.outputs.skip != 'true'
-        env:
-          BASE_URL: ${{ steps.cfg.outputs.base_url }}
         run: |
-          python - <<'PY'
-          import os
-          import sys
-          import time
-          import urllib.error
-          import urllib.request
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.PRODUCTION_BASE_URL }}/")
+          echo "Main endpoint status: $STATUS"
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
+            echo "Main app endpoint is unhealthy"
+            exit 1
+          fi
 
-          url = os.environ["BASE_URL"].rstrip("/") + "/"
-          attempts = 4
-          status = None
-          last_error = None
-
-          for i in range(attempts):
-              try:
-                  req = urllib.request.Request(url, method="GET")
-                  with urllib.request.urlopen(req, timeout=20) as resp:
-                      status = resp.getcode()
-                      print(f"Main endpoint ({url}) status: {status}")
-                      break
-                    - name: Probe production endpoints
-                  status = e.code
-                  print(f"Main endpoint ({url}) status: {status} (HTTPError, attempt {i+1}/{attempts})")
-                  if status >= 500 and i < attempts - 1:
-                      time.sleep(2)
-                      continue
-                  break
-                  last_error = str(e)
-                  print(f"Main endpoint attempt {i+1}/{attempts} error: {last_error}")
-                  if i < attempts - 1:
-                      time.sleep(2)
-                      last_error = str(e)
-                      candidates = [
-                        ("main", f"{base}/"),
-                        ("health", f"{base}/health"),
-                        ("health", f"{base}/health/"),
-                        ("health", f"{base}/api/health"),
-                      ]
-
-                      def probe(url, attempts=4, timeout=20):
-                      gateway_only = False
-                  else:
-                        for i in range(attempts):
-                          try:
-                            req = urllib.request.Request(url, method="GET")
-                            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                              return resp.getcode(), None
-                          except urllib.error.HTTPError as e:
-                            status = e.code
-                            if status >= 500 and i < attempts - 1:
-                              time.sleep(2)
-                              continue
-                            return status, None
-                          except Exception as e:
-                            last_error = str(e)
-                            if i < attempts - 1:
-                              time.sleep(2)
-                        return status, last_error
-
-                      main_ok = False
-                      health_ok = False
-                      health_missing = False
-                      saw_probe_result = False
-                      gateway_only = True
-
-                      for kind, url in candidates:
-                        status, err = probe(url)
-                        print(f"Probe kind={kind} url={url} status={status} error={err}")
-
-                        if status is not None:
-                          saw_probe_result = True
-                          if status not in (502, 503, 504):
-                            gateway_only = False
-                        else:
-                          gateway_only = False
-
-                        if kind == "main" and status is not None and 200 <= status < 400:
-                          main_ok = True
-
-                        if kind == "health" and status in (200, 503):
-                          health_ok = True
-
-                        if kind == "health" and status in (404, 405):
-                          health_missing = True
-
-                      # Keep this workflow green for noisy upstream/gateway behavior; logs remain diagnostic.
-                      if health_ok:
-                        print("Health endpoint check passed.")
-                      elif health_missing and main_ok:
-                        print("Health endpoint not exposed (404/405) but main endpoint is healthy. Passing with warning.")
-                      elif saw_probe_result and gateway_only:
-                        print("All probes are gateway responses (502/503/504). Treating as platform/upstream issue. Passing with warning.")
-                      elif main_ok:
-                        print("Main endpoint is healthy; health route is not stable. Passing with warning.")
-                      else:
-                        print("Endpoints are unstable/unreachable from GitHub runner. Passing with warning to avoid false red workflow.")
-                    gateway_only = False
-                      raise SystemExit(0)
-              sys.exit(0)
+      - name: Check health endpoint
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.PRODUCTION_BASE_URL }}/health")
+          echo "Health endpoint status: $STATUS"
+          # Accept healthy or degraded (200 or 503) as reachable, but fail on network/server errors.
+          if [ "$STATUS" != "200" ] && [ "$STATUS" != "503" ]; then
+            echo "Health endpoint check failed"
+            exit 1
+          fi
