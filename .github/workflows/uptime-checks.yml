@@ -11,26 +11,50 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Validate required secrets
+      - name: Normalize base URL
+        id: cfg
+        env:
+          RAW_BASE_URL: ${{ secrets.PRODUCTION_BASE_URL }}
         run: |
-          if [ -z "${{ secrets.PRODUCTION_BASE_URL }}" ]; then
+          BASE_URL=$(echo "$RAW_BASE_URL" | xargs)
+          if [ -z "$BASE_URL" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "PRODUCTION_BASE_URL secret not set. Skipping uptime checks."
             exit 0
           fi
 
-      - name: Check main app endpoint
+          if [[ ! "$BASE_URL" =~ ^https?:// ]]; then
+            echo "Invalid PRODUCTION_BASE_URL: must start with http:// or https://"
+            exit 1
+          fi
+
+          BASE_URL="${BASE_URL%/}"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "base_url=$BASE_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Validate required secrets
+        if: steps.cfg.outputs.skip != 'true'
         run: |
-          STATUS=$(curl -s -L -o /dev/null -w "%{http_code}" "${{ secrets.PRODUCTION_BASE_URL }}/")
-          echo "Main endpoint status: $STATUS"
+          echo "Using base URL: ${{ steps.cfg.outputs.base_url }}"
+
+      - name: Check main app endpoint
+        if: steps.cfg.outputs.skip != 'true'
+        run: |
+          URL="${{ steps.cfg.outputs.base_url }}/"
+          STATUS=$(curl -sS -L --max-time 20 --retry 3 --retry-delay 2 --retry-all-errors -o /dev/null -w "%{http_code}" "$URL")
+          echo "Main endpoint ($URL) status: $STATUS"
+          # Consider any 2xx/3xx as healthy for entry route.
           if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
             echo "Main app endpoint is unhealthy"
             exit 1
           fi
 
       - name: Check health endpoint
+        if: steps.cfg.outputs.skip != 'true'
         run: |
-          STATUS=$(curl -s -L -o /dev/null -w "%{http_code}" "${{ secrets.PRODUCTION_BASE_URL }}/health")
-          echo "Health endpoint status: $STATUS"
+          URL="${{ steps.cfg.outputs.base_url }}/health"
+          STATUS=$(curl -sS -L --max-time 20 --retry 3 --retry-delay 2 --retry-all-errors -o /dev/null -w "%{http_code}" "$URL")
+          echo "Health endpoint ($URL) status: $STATUS"
           # Accept healthy or degraded (200 or 503) as reachable, but fail on network/server errors.
           if [ "$STATUS" != "200" ] && [ "$STATUS" != "503" ]; then
             echo "Health endpoint check failed"
