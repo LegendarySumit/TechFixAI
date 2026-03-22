@@ -289,7 +289,7 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 - GitHub: [@LegendarySumit](https://github.com/LegendarySumit)
 - Project: [TechFixAI](https://github.com/LegendarySumit/TechFixAI)
-- Live Demo: [legendarysumit.github.io/TechFixAI](https://legendarysumit.github.io/TechFixAI/)
+- Live Demo: [legendarysumit.github.io/TechFixAI](https://techfixai.up.railway.app/)
 
 ---
 
