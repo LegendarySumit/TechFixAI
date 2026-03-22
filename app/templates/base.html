@@ -64,7 +64,7 @@
                         <div class="profile-dropdown" id="profileDropdown">
                             <div class="profile-dropdown-header">
                                 <div class="pdd-avatar">{{ request.state.current_user.full_name[0] | upper if request.state.current_user.full_name else request.state.current_user.username[0] | upper }}</div>
-                                <div>
+                                <div class="pdd-user-info">
                                     <div class="pdd-name">{{ request.state.current_user.full_name or request.state.current_user.username }}</div>
                                     <div class="pdd-email">{{ request.state.current_user.email }}</div>
                                 </div>
