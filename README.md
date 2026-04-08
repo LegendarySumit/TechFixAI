@@ -155,7 +155,7 @@ CORS_ORIGINS=https://your-frontend.vercel.app
 PUBLIC_DEPLOYMENT=true
 FORCE_HTTPS=true
 SESSION_COOKIE_SECURE=true
-APP_BASE_URL=https://your-backend-domain.railway.app
+APP_BASE_URL=https://your-backend-domain.onrender.com
 ADMIN_EMAILS=admin@example.com,other@example.com
 ```
 
@@ -172,7 +172,7 @@ GEMINI_API_KEY=your_gemini_key    # Optional fallback
 ```env
 GOOGLE_CLIENT_ID=your_client_id
 GOOGLE_CLIENT_SECRET=your_client_secret
-GOOGLE_REDIRECT_URI=https://your-backend-domain.railway.app/auth/google/callback
+GOOGLE_REDIRECT_URI=https://your-backend-domain.onrender.com/auth/google/callback
 ```
 
 ### SMTP (Optional)
@@ -186,6 +186,25 @@ FROM_EMAIL=noreply@example.com
 ```
 
 > ⚠️ `APP_BASE_URL` must point to the **backend** URL. `CORS_ORIGINS` must contain **frontend** origin(s). No trailing slashes.
+
+### Deploy On Render + Neon (Backend Only)
+
+1. Create a Neon Postgres project and copy the pooled connection string.
+2. In Render, create a new Web Service from this repository.
+3. Keep these commands:
+	- Build: `pip install -r requirements.txt`
+	- Start: `python -m alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips=*`
+4. Set `DATABASE_URL` in Render using your Neon connection string.
+5. Set required env vars in Render: `SECRET_KEY`, `APP_BASE_URL`, `CORS_ORIGINS`, `GROQ_API_KEY` (plus OAuth/SMTP if used).
+6. Set health check path to `/health`.
+
+Example Neon URL format:
+
+```env
+DATABASE_URL=postgresql://<user>:<password>@<neon-host>/<db>?sslmode=require
+```
+
+This repository now includes a Render blueprint at `render.yaml` for backend-only deployment.
 
 ---
 
