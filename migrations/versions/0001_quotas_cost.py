@@ -15,7 +15,7 @@ from sqlalchemy import inspect
 
 
 # revision identifiers, used by Alembic.
-revision = '0001_quotas_cost'
+revision = '0001_add_quotas_and_cost_tracking'
 down_revision = '001_add_audio_data'
 branch_labels = None
 depends_on = None
