@@ -1,12 +1,11 @@
-"""Compatibility alias for the quotas and cost tracking migration.
+"""Compatibility alias for quotas migration IDs.
 
-This no-op migration exists so older databases stamped with
-0001_add_quotas_and_cost_tracking and deployments stamped with
-0001_quotas_cost can both resolve the same migration chain.
+Use a short revision ID because PostgreSQL stores alembic_version.version_num
+as varchar(32) in many existing setups.
 """
 
 # revision identifiers, used by Alembic.
-revision = '0001_add_quotas_and_cost_tracking'
+revision = '0001_quotas_cost_alias'
 down_revision = '0001_quotas_cost'
 branch_labels = None
 depends_on = None
