@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     PUBLIC_DEPLOYMENT: bool = False
 
     # Database
-    # Railway provides DATABASE_URL as postgresql:// or postgres://.  
+    # Some providers return DATABASE_URL as postgresql:// or postgres://.
     # SQLAlchemy 2 requires postgresql+psycopg2://.  The validator fixes this.
     DATABASE_URL: str = "sqlite:///./techfixai.db"
 
@@ -165,7 +165,7 @@ class Settings(BaseSettings):
 
         return self
 
-    # Storage (use /tmp on Railway — audio is ephemeral; use Cloudinary for persistence)
+    # Storage (use /tmp on hosted platforms — audio is ephemeral; use Cloudinary for persistence)
     AUDIO_STORAGE_PATH: str = os.getenv("AUDIO_STORAGE_PATH", "./storage/audio")
     MAX_AUDIO_SIZE_MB: int = 50
 
@@ -179,7 +179,7 @@ class Settings(BaseSettings):
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    # Optional: set this on Railway/production to a fixed https:// URL.
+    # Optional: set this in production to a fixed https:// URL.
     # If not set, the URI is built dynamically from the incoming request (works for localhost).
     GOOGLE_REDIRECT_URI: str = ""
 
@@ -195,7 +195,7 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
     FROM_EMAIL: str = ""      # defaults to SMTP_USER if not set
-    APP_BASE_URL: str = ""    # e.g. https://techfixai.up.railway.app
+    APP_BASE_URL: str = ""    # e.g. https://techfixai.onrender.com
 
     # Business Logic
     MAX_TICKET_TITLE_LENGTH: int = 200

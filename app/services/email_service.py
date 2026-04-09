@@ -25,7 +25,7 @@ def _get_base_url(request=None) -> str:
     if settings.APP_BASE_URL:
         return settings.APP_BASE_URL.rstrip("/")
     if request:
-        # Build from request: respect x-forwarded-proto for Railway https proxy
+      # Build from request: respect forwarded proto/host when behind a reverse proxy
         scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
         host = request.headers.get("x-forwarded-host", request.url.netloc)
         return f"{scheme}://{host}"

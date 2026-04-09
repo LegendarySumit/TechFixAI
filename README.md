@@ -8,7 +8,7 @@
 ![Python](https://img.shields.io/badge/Python_3.11-3776AB?logo=python&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
-![Railway](https://img.shields.io/badge/Railway-0B0D0E?logo=railway&logoColor=white)
+![Render](https://img.shields.io/badge/Render-46E3B7?logo=render&logoColor=black)
 ![Jinja2](https://img.shields.io/badge/Jinja2-B41717?logo=jinja&logoColor=white)
 
 *Japanese Voice Capture • AI Transcription & Translation • Smart Ticket Generation • Deterministic Dev Assignment*
@@ -23,7 +23,7 @@
 
 **TechFixAI** is a production-grade incident management platform that bridges the language gap in Japanese software teams. It captures voice-recorded incident reports in Japanese, transcribes and translates them using Groq Whisper with technical context awareness, and automatically generates structured support tickets — all in one seamless background pipeline.
 
-The platform goes beyond simple transcription. After a voice report is submitted, TechFixAI deterministically assigns the right developer based on incident type and severity — no random shuffling, no manual triage. Built on FastAPI with SQLAlchemy and Jinja2-rendered pages, it supports SQLite locally and PostgreSQL in production on Railway.
+The platform goes beyond simple transcription. After a voice report is submitted, TechFixAI deterministically assigns the right developer based on incident type and severity — no random shuffling, no manual triage. Built on FastAPI with SQLAlchemy and Jinja2-rendered pages, it supports SQLite locally and PostgreSQL in production.
 
 TechFixAI ships production-ready: full auth with Google OAuth, rate limiting, CAPTCHA, security headers, structured logging, Sentry integration, and Prometheus metrics — all configured and ready to deploy.
 
@@ -65,7 +65,7 @@ TechFixAI ships production-ready: full auth with Google OAuth, rate limiting, CA
 - **Gemini** — Optional fallback
 
 ### Infrastructure & Auth
-- **Railway** — Deployment target
+- **Render** — Deployment target
 - **Google OAuth 2.0** — Social login
 - **Sentry** — Optional error tracking and tracing
 - **Prometheus** — Optional metrics scraping
@@ -193,7 +193,7 @@ FROM_EMAIL=noreply@example.com
 2. In Render, create a new Web Service from this repository.
 3. Keep these commands:
 	- Build: `pip install -r requirements.txt`
-	- Start: `python -m alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips=*`
+	- Start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips=*`
 4. Set `DATABASE_URL` in Render using your Neon connection string.
 5. Set required env vars in Render: `SECRET_KEY`, `APP_BASE_URL`, `CORS_ORIGINS`, `GROQ_API_KEY` (plus OAuth/SMTP if used).
 6. Set health check path to `/health`.
@@ -308,7 +308,7 @@ This project is licensed under a Proprietary All Rights Reserved License. See th
 
 - GitHub: [@LegendarySumit](https://github.com/LegendarySumit)
 - Project: [TechFixAI](https://github.com/LegendarySumit/TechFixAI)
-- Live Demo: [https://techfixai.up.railway.app/](https://techfixai.up.railway.app/)
+- Live Demo: [https://techfixai.onrender.com/](https://techfixai.onrender.com/)
 
 ---
 

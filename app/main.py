@@ -159,7 +159,7 @@ async def lifespan(app: FastAPI):
     
     logger = get_logger(__name__)
     
-    # Ensure audio storage directory exists (important on Railway / fresh deploys)
+    # Ensure audio storage directory exists on fresh deploys
     import os
     audio_path = settings.AUDIO_STORAGE_PATH
     os.makedirs(audio_path, exist_ok=True)

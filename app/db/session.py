@@ -28,7 +28,7 @@ else:
         "poolclass": QueuePool,
         "pool_size": 20,  # Max connections to keep open
         "max_overflow": 10,  # Allow 10 extra connections during spikes
-        "pool_recycle": 3600,  # Recycle connections after 1 hour (Railway timeout prevention)
+        "pool_recycle": 3600,  # Recycle connections after 1 hour to avoid stale connections
         "pool_pre_ping": True,  # Verify connection before use
     }
 
