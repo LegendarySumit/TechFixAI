@@ -3,27 +3,56 @@ Prometheus metrics collection for observability.
 Metrics: request count/latency, error rates, upload failures, queue time, etc.
 """
 
-from prometheus_client import (
-    Counter,
-    Gauge,
-    Histogram,
-    Summary,
-    generate_latest,
-    REGISTRY,
-)
+try:
+    from prometheus_client import (
+        Counter,
+        Gauge,
+        Histogram,
+        Summary,
+        generate_latest,
+        REGISTRY,
+    )
+except Exception:
+    Counter = Gauge = Histogram = Summary = None
+    REGISTRY = None
+
+    def generate_latest(*args, **kwargs):
+        return b""
 import time
 from typing import Optional
 
 
+def _metric_factory(metric_type, *args, **kwargs):
+    if metric_type is None:
+        class _NoOpMetric:
+            def labels(self, *args, **kwargs):
+                return self
+
+            def inc(self, *args, **kwargs):
+                return None
+
+            def observe(self, *args, **kwargs):
+                return None
+
+            def set(self, *args, **kwargs):
+                return None
+
+        return _NoOpMetric()
+
+    return metric_type(*args, **kwargs)
+
+
 # Request metrics
-http_requests_total = Counter(
+http_requests_total = _metric_factory(
+    Counter,
     "http_requests_total",
     "Total HTTP requests",
     ["method", "endpoint", "status_code"],
     registry=REGISTRY,
 )
 
-http_request_duration_seconds = Histogram(
+http_request_duration_seconds = _metric_factory(
+    Histogram,
     "http_request_duration_seconds",
     "HTTP request duration in seconds",
     ["method", "endpoint"],
@@ -31,7 +60,8 @@ http_request_duration_seconds = Histogram(
     registry=REGISTRY,
 )
 
-http_request_duration_summary = Summary(
+http_request_duration_summary = _metric_factory(
+    Summary,
     "http_request_duration_summary",
     "HTTP request duration summary (for p95)",
     ["method", "endpoint"],
@@ -39,21 +69,24 @@ http_request_duration_summary = Summary(
 )
 
 # Error metrics
-http_errors_total = Counter(
+http_errors_total = _metric_factory(
+    Counter,
     "http_errors_total",
     "Total HTTP errors (4xx + 5xx)",
     ["method", "endpoint", "status_code"],
     registry=REGISTRY,
 )
 
-http_5xx_errors_total = Counter(
+http_5xx_errors_total = _metric_factory(
+    Counter,
     "http_5xx_errors_total",
     "Total 5xx errors",
     ["method", "endpoint"],
     registry=REGISTRY,
 )
 
-http_auth_failures_total = Counter(
+http_auth_failures_total = _metric_factory(
+    Counter,
     "http_auth_failures_total",
     "Total authentication/authorization failures",
     ["reason"],  # invalid_token, expired_token, unauthorized, etc.
@@ -61,27 +94,31 @@ http_auth_failures_total = Counter(
 )
 
 # Audio/upload metrics
-voice_upload_total = Counter(
+voice_upload_total = _metric_factory(
+    Counter,
     "voice_upload_total",
     "Total voice uploads",
     ["status"],  # success, failed, cancelled
     registry=REGISTRY,
 )
 
-voice_upload_duration_seconds = Histogram(
+voice_upload_duration_seconds = _metric_factory(
+    Histogram,
     "voice_upload_duration_seconds",
     "Voice upload duration in seconds",
     buckets=(0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0),
     registry=REGISTRY,
 )
 
-voice_upload_bytes = Summary(
+voice_upload_bytes = _metric_factory(
+    Summary,
     "voice_upload_bytes",
     "Voice upload file size in bytes",
     registry=REGISTRY,
 )
 
-voice_upload_failures_total = Counter(
+voice_upload_failures_total = _metric_factory(
+    Counter,
     "voice_upload_failures_total",
     "Total voice upload failures",
     ["reason"],  # timeout, file_size, invalid_format, storage_error, etc.
@@ -89,28 +126,32 @@ voice_upload_failures_total = Counter(
 )
 
 # STT & Translation metrics
-transcription_duration_seconds = Histogram(
+transcription_duration_seconds = _metric_factory(
+    Histogram,
     "transcription_duration_seconds",
     "Speech-to-text transcription duration in seconds",
     buckets=(0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0, 120.0),
     registry=REGISTRY,
 )
 
-transcription_failures_total = Counter(
+transcription_failures_total = _metric_factory(
+    Counter,
     "transcription_failures_total",
     "Total transcription failures",
     ["reason"],  # api_error, timeout, language_not_supported, etc.
     registry=REGISTRY,
 )
 
-translation_duration_seconds = Histogram(
+translation_duration_seconds = _metric_factory(
+    Histogram,
     "translation_duration_seconds",
     "Translation duration in seconds",
     buckets=(0.1, 0.5, 1.0, 5.0, 10.0, 30.0),
     registry=REGISTRY,
 )
 
-translation_failures_total = Counter(
+translation_failures_total = _metric_factory(
+    Counter,
     "translation_failures_total",
     "Total translation failures",
     ["reason"],  # api_error, timeout, unsupported_language, etc.
@@ -118,13 +159,15 @@ translation_failures_total = Counter(
 )
 
 # Ticket metrics
-ticket_created_total = Counter(
+ticket_created_total = _metric_factory(
+    Counter,
     "ticket_created_total",
     "Total tickets created",
     registry=REGISTRY,
 )
 
-ticket_generation_duration_seconds = Histogram(
+ticket_generation_duration_seconds = _metric_factory(
+    Histogram,
     "ticket_generation_duration_seconds",
     "Ticket generation duration in seconds",
     buckets=(0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0),
@@ -132,13 +175,15 @@ ticket_generation_duration_seconds = Histogram(
 )
 
 # Database metrics
-db_connection_errors_total = Counter(
+db_connection_errors_total = _metric_factory(
+    Counter,
     "db_connection_errors_total",
     "Total database connection errors",
     registry=REGISTRY,
 )
 
-db_query_duration_seconds = Histogram(
+db_query_duration_seconds = _metric_factory(
+    Histogram,
     "db_query_duration_seconds",
     "Database query duration in seconds",
     ["operation"],  # select, insert, update, delete
@@ -147,21 +192,24 @@ db_query_duration_seconds = Histogram(
 )
 
 # Scheduler/background task metrics
-cleanup_duration_seconds = Summary(
+cleanup_duration_seconds = _metric_factory(
+    Summary,
     "cleanup_duration_seconds",
     "Data cleanup task duration in seconds",
     ["task_type"],  # audio, database, audit_logs
     registry=REGISTRY,
 )
 
-cleanup_items_deleted = Counter(
+cleanup_items_deleted = _metric_factory(
+    Counter,
     "cleanup_items_deleted",
     "Number of items deleted during cleanup",
     ["task_type"],
     registry=REGISTRY,
 )
 
-cleanup_failures_total = Counter(
+cleanup_failures_total = _metric_factory(
+    Counter,
     "cleanup_failures_total",
     "Total cleanup failures",
     ["task_type"],
@@ -169,19 +217,22 @@ cleanup_failures_total = Counter(
 )
 
 # System metrics
-active_connections = Gauge(
+active_connections = _metric_factory(
+    Gauge,
     "active_connections",
     "Number of active connections",
     registry=REGISTRY,
 )
 
-queue_length = Gauge(
+queue_length = _metric_factory(
+    Gauge,
     "queue_length",
     "Background task queue length",
     registry=REGISTRY,
 )
 
-queue_wait_seconds = Histogram(
+queue_wait_seconds = _metric_factory(
+    Histogram,
     "queue_wait_seconds",
     "Background task queue wait time in seconds",
     ["queue_name"],
@@ -190,14 +241,16 @@ queue_wait_seconds = Histogram(
 )
 
 # Health check metrics
-health_check_total = Counter(
+health_check_total = _metric_factory(
+    Counter,
     "health_check_total",
     "Total health checks",
     ["status"],  # healthy, unhealthy
     registry=REGISTRY,
 )
 
-health_check_duration_seconds = Histogram(
+health_check_duration_seconds = _metric_factory(
+    Histogram,
     "health_check_duration_seconds",
     "Health check duration in seconds",
     buckets=(0.01, 0.05, 0.1, 0.5),
