@@ -23,6 +23,8 @@ class STTService:
         self.openai_client = None
         self.use_groq = False
         self.use_openai = False
+        # Mock fallback should only be used in local/dev workflows.
+        self.allow_mock_fallback = settings.DEBUG or (not settings.PUBLIC_DEPLOYMENT)
         
         # Try Groq API first (free, fastest)
         if settings.GROQ_API_KEY:
@@ -47,7 +49,10 @@ class STTService:
                 print(f"[ERROR] [STT] OpenAI init failed: {str(e)}")
 
         if not self.use_groq and not self.use_openai:
-            print("[ERROR] [STT] NO real STT API available — will use MOCK mode (random Japanese text!)")
+            if self.allow_mock_fallback:
+                print("[ERROR] [STT] NO real STT API available — using MOCK mode (development only)")
+            else:
+                print("[ERROR] [STT] NO real STT API available in production — uploads will fail until STT API is configured")
     
     async def transcribe_audio(self, audio_file_path: str, language: str = "ja") -> dict:
         """
@@ -68,6 +73,8 @@ class STTService:
         
         print(f"[AUDIO] Starting transcription: {audio_file_path}")
         
+        runtime_errors = []
+
         # Try Groq API first (fastest, free)
         if self.use_groq:
             try:
@@ -76,6 +83,7 @@ class STTService:
                 import traceback
                 print(f"[ERROR] Groq transcription failed: {type(e).__name__}: {str(e)}")
                 print(traceback.format_exc())
+                runtime_errors.append(f"Groq failed: {type(e).__name__}: {str(e)}")
         
         # Fallback to OpenAI Whisper API
         if self.use_openai:
@@ -83,10 +91,24 @@ class STTService:
                 return await self._openai_transcribe(audio_file_path, language)
             except Exception as e:
                 print(f"[ERROR] OpenAI transcription failed: {type(e).__name__}: {str(e)}")
+                runtime_errors.append(f"OpenAI failed: {type(e).__name__}: {str(e)}")
         
-        # Final fallback to mock — log clearly so user knows
-        print("[WARNING] FALLING BACK TO MOCK TRANSCRIPTION — real audio ignored")
-        return await self._mock_transcribe(audio_file_path, language)
+        # Final fallback to mock for local/dev only. In production, fail loudly
+        # so users never receive fabricated transcript text.
+        if self.allow_mock_fallback:
+            print("[WARNING] FALLING BACK TO MOCK TRANSCRIPTION — real audio ignored")
+            return await self._mock_transcribe(audio_file_path, language)
+
+        providers = []
+        if self.use_groq:
+            providers.append("Groq")
+        if self.use_openai:
+            providers.append("OpenAI")
+        provider_text = ", ".join(providers) if providers else "none"
+        error_text = " | ".join(runtime_errors) if runtime_errors else "No STT provider available"
+        raise RuntimeError(
+            f"STT failed in production. Providers attempted: {provider_text}. Details: {error_text}"
+        )
     
     async def _groq_transcribe(self, audio_file_path: str, language: str) -> dict:
         """
