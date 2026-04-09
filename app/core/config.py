@@ -176,6 +176,18 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
 
+    @field_validator("GROQ_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", mode="before")
+    @classmethod
+    def normalize_api_key(cls, v: str) -> str:
+        """Normalize API keys to avoid auth failures from copy/paste artifacts."""
+        if v is None:
+            return ""
+        key = str(v).strip()
+        # Remove accidental wrapping quotes from dashboard/env pastes.
+        if len(key) >= 2 and ((key[0] == '"' and key[-1] == '"') or (key[0] == "'" and key[-1] == "'")):
+            key = key[1:-1].strip()
+        return key
+
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
