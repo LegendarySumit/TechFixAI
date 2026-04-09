@@ -189,6 +189,9 @@ async def process_voice_pipeline(
         print(f"❌ Pipeline error: {str(e)}\n")
         try:
             conversation.status = ConversationStatus.FAILED
+            # Surface a short failure reason for UI polling/status screens.
+            # Keep this concise and non-sensitive for end users.
+            conversation.english_translation = f"Transcription failed: {str(e)[:220]}"
             db.commit()
         except Exception:
             db.rollback()

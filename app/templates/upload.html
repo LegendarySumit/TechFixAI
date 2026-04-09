@@ -1496,12 +1496,21 @@ async function uploadAudio(audioData) {
 // Poll for Japanese transcription
 async function pollForTranscription() {
     let attempts = 0;
-    const maxAttempts = 30; // 30 seconds max
+    const maxAttempts = 120; // allow up to ~2 minutes on slow cold starts
     
     while (attempts < maxAttempts) {
         try {
             const response = await fetch(`/api/voice/status/${currentConversationId}`);
+            if (!response.ok) {
+                throw new Error(`Status endpoint failed with HTTP ${response.status}`);
+            }
             const data = await response.json();
+
+            // Fail fast on terminal error status instead of waiting for timeout.
+            if (data.status === 'failed') {
+                const reason = data.english_translation || 'Transcription failed during processing.';
+                throw new Error(reason);
+            }
             
             // Check if we have Japanese transcription
             if (data.japanese_transcript) {
@@ -1538,6 +1547,12 @@ async function pollForTranscription() {
             
         } catch (error) {
             console.error('Status poll error:', error);
+            const errorText = String(error?.message || '');
+            if (errorText.toLowerCase().includes('transcription failed')) {
+                alert(errorText);
+                document.getElementById('recordingStatus').textContent = 'Transcription failed. Try again.';
+                return;
+            }
             attempts++;
             await sleep(1000);
         }
