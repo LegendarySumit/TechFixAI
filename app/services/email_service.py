@@ -36,9 +36,18 @@ def send_verification_email(to_email: str, token: str, full_name: str, request=N
     """
     Send email verification link to user.
     Returns True on success, False on failure (non-fatal — user can request resend).
+    
+    POLICY: Email verification is DISABLED by default. Users are auto-verified on signup.
+    Only call this function if email delivery is explicitly required.
     """
     if not settings.SMTP_HOST or not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        print(f"⚠️ [Email] SMTP not configured — skipping verification email to {to_email}")
+        print(f"ℹ️ [Email] Email sending is disabled (SMTP not fully configured). User {to_email} will not receive verification email.")
+        print(f"   This is expected behavior — users are auto-verified on signup.")
+        return False
+    
+    # Safety check: only send if all SMTP vars are non-empty strings
+    if not all([settings.SMTP_HOST.strip(), settings.SMTP_USER.strip(), settings.SMTP_PASSWORD.strip()]):
+        print(f"❌ [Email] SMTP configuration incomplete — aborting email send to {to_email}")
         return False
 
     base_url = _get_base_url(request)

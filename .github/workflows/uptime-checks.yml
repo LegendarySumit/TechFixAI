@@ -17,7 +17,8 @@ jobs:
           BASE_URL="${{ secrets.PRODUCTION_BASE_URL }}"
           if [ -z "$BASE_URL" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Skipping uptime checks: PRODUCTION_BASE_URL secret is not set."
+            echo "::notice::Uptime checks skipped: PRODUCTION_BASE_URL secret is not configured."
+            echo "::notice::To enable monitoring, set PRODUCTION_BASE_URL in GitHub Secrets (e.g., https://app.example.com)"
             exit 0
           fi
 
@@ -25,26 +26,58 @@ jobs:
           echo "base_url=$BASE_URL" >> "$GITHUB_OUTPUT"
 
       - name: Check main app endpoint
-        if: steps.target.outputs.configured == 'true'
+        if: ${{ steps.target.outputs.configured == 'true' }}
         run: |
-          STATUS=$(curl -sS -L --retry 2 --retry-delay 2 --connect-timeout 10 --max-time 20 -o /dev/null -w "%{http_code}" "${{ steps.target.outputs.base_url }}/")
-          echo "Main endpoint status: $STATUS"
-          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
-            echo "Main app endpoint is unhealthy"
+          BASE_URL="${{ steps.target.outputs.base_url }}"
+          echo "Checking main endpoint: $BASE_URL/"
+          
+          curl -sS -L --retry 3 --retry-delay 1 --retry-max-time 15 \
+            --connect-timeout 5 --max-time 15 -w "\n%{http_code}" -o /tmp/response.txt "$BASE_URL/" > /tmp/curl_output.txt 2>&1
+          HTTP_CODE=$(tail -n 1 /tmp/curl_output.txt | tr -d '[:space:]')
+          
+          echo "HTTP Status: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "301" ] && [ "$HTTP_CODE" != "302" ] && [ "$HTTP_CODE" != "307" ] && [ "$HTTP_CODE" != "308" ]; then
+            echo "::error::Main endpoint returned $HTTP_CODE (expected 2xx-3xx or redirect)"
+            echo "Response preview:"
+            head -c 500 /tmp/response.txt || true
             exit 1
           fi
+          echo "[OK] Main endpoint healthy ($HTTP_CODE)"
 
       - name: Check health endpoint
-        if: steps.target.outputs.configured == 'true'
+        if: ${{ steps.target.outputs.configured == 'true' }}
         run: |
-          STATUS=$(curl -sS -L --retry 2 --retry-delay 2 --connect-timeout 10 --max-time 20 -o /dev/null -w "%{http_code}" "${{ steps.target.outputs.base_url }}/health")
-          echo "Health endpoint status: $STATUS"
-          # Accept healthy or degraded (200 or 503) as reachable, but fail on network/server errors.
-          if [ "$STATUS" != "200" ] && [ "$STATUS" != "503" ]; then
-            echo "Health endpoint check failed"
+          BASE_URL="${{ steps.target.outputs.base_url }}"
+          HEALTH_URL="$BASE_URL/health"
+          echo "Checking health endpoint: $HEALTH_URL"
+          
+          curl -sS -L --retry 3 --retry-delay 1 --retry-max-time 15 \
+            --connect-timeout 5 --max-time 15 -w "\n%{http_code}" -o /tmp/health.json "$HEALTH_URL" > /tmp/curl_health.txt 2>&1
+          HTTP_CODE=$(tail -n 1 /tmp/curl_health.txt | tr -d '[:space:]')
+          
+          echo "HTTP Status: $HTTP_CODE"
+          
+          # Accept 200 (healthy), 503 (degraded), or 307/308 (redirects) as valid responses
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "[OK] Health check passed (200 - Healthy)"
+            cat /tmp/health.json 2>/dev/null | head -c 200 || true
+          elif [ "$HTTP_CODE" = "503" ]; then
+            echo "[WARN] Health check degraded (503 - Service Unavailable)"
+            cat /tmp/health.json 2>/dev/null | head -c 200 || true
+          elif [ "$HTTP_CODE" = "307" ] || [ "$HTTP_CODE" = "308" ]; then
+            echo "[OK] Health check redirect (typical for HTTPS redirect)"
+          else
+            echo "::error::Health check failed ($HTTP_CODE)"
+            echo "Response:"
+            cat /tmp/health.json 2>/dev/null || echo "(no response body)"
             exit 1
           fi
 
-      - name: Uptime checks skipped (no target configured)
-        if: steps.target.outputs.configured != 'true'
-        run: echo "No PRODUCTION_BASE_URL configured; workflow intentionally skipped."
+      - name: Report uptime check completion
+        if: ${{ steps.target.outputs.configured == 'true' }}
+        run: echo "[OK] Uptime checks completed successfully"
+
+      - name: Report uptime checks skipped
+        if: ${{ steps.target.outputs.configured != 'true' }}
+        run: echo "[SKIPPED] Uptime checks skipped - PRODUCTION_BASE_URL not configured"
