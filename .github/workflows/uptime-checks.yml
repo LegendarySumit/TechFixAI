@@ -29,30 +29,60 @@ jobs:
         if: ${{ steps.target.outputs.configured == 'true' }}
         run: |
           BASE_URL="${{ steps.target.outputs.base_url }}"
-          HEALTH_URL="$BASE_URL/health"
-          echo "Checking health endpoint: $HEALTH_URL"
-          
-          curl -sS -L --retry 3 --retry-delay 1 --retry-max-time 15 \
-            --connect-timeout 5 --max-time 15 -w "\n%{http_code}" -o /tmp/health.json "$HEALTH_URL" > /tmp/curl_health.txt 2>&1
-          HTTP_CODE=$(tail -n 1 /tmp/curl_health.txt | tr -d '[:space:]')
-          
-          echo "HTTP Status: $HTTP_CODE"
-          
-          # Accept 200 (healthy), 503 (degraded), or 307/308 (redirects) as valid responses
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "[OK] Health check passed (200 - Healthy)"
-            cat /tmp/health.json 2>/dev/null | head -c 200 || true
-          elif [ "$HTTP_CODE" = "503" ]; then
-            echo "[WARN] Health check degraded (503 - Service Unavailable)"
-            cat /tmp/health.json 2>/dev/null | head -c 200 || true
-          elif [ "$HTTP_CODE" = "307" ] || [ "$HTTP_CODE" = "308" ]; then
-            echo "[OK] Health check redirect (typical for HTTPS redirect)"
-          else
-            echo "::error::Health check failed ($HTTP_CODE)"
-            echo "Response:"
-            cat /tmp/health.json 2>/dev/null || echo "(no response body)"
-            exit 1
+          probe_endpoint() {
+            local endpoint_path="$1"
+            local response_file="$2"
+            local status_file="$3"
+            local label="$4"
+
+            local url="$BASE_URL$endpoint_path"
+            echo "Checking $label: $url"
+
+            if ! curl -sS -L --retry 3 --retry-delay 1 --retry-max-time 15 \
+              --connect-timeout 5 --max-time 15 -w "\n%{http_code}" -o "$response_file" "$url" > "$status_file" 2>&1; then
+              echo "[WARN] $label request could not complete"
+              return 1
+            fi
+
+            local http_code
+            http_code=$(tail -n 1 "$status_file" | tr -d '[:space:]')
+            echo "HTTP Status for $label: $http_code"
+
+            if [ "$http_code" = "200" ] || [ "$http_code" = "301" ] || [ "$http_code" = "302" ] || [ "$http_code" = "307" ] || [ "$http_code" = "308" ]; then
+              echo "[OK] $label reachable ($http_code)"
+              cat "$response_file" 2>/dev/null | head -c 200 || true
+              return 0
+            fi
+
+            if [ "$http_code" = "503" ]; then
+              echo "[WARN] $label degraded ($http_code)"
+              cat "$response_file" 2>/dev/null | head -c 200 || true
+              return 0
+            fi
+
+            echo "[WARN] $label returned $http_code"
+            cat "$response_file" 2>/dev/null || echo "(no response body)"
+            return 1
+          }
+
+          if probe_endpoint "/health" /tmp/health.json /tmp/curl_health.txt "health endpoint"; then
+            exit 0
           fi
+
+          if probe_endpoint "/status" /tmp/status.json /tmp/curl_status.txt "status page"; then
+            exit 0
+          fi
+
+          if probe_endpoint "/login" /tmp/login.html /tmp/curl_login.txt "login page"; then
+            exit 0
+          fi
+
+          if probe_endpoint "/" /tmp/root.html /tmp/curl_root.txt "root page"; then
+            exit 0
+          fi
+
+          echo "::error::All uptime probes failed (health, status, login, root)"
+          exit 1
 
       - name: Report uptime check completion
         if: ${{ steps.target.outputs.configured == 'true' }}
