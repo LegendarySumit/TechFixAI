@@ -65,20 +65,39 @@ jobs:
             return 1
           }
 
+          probe_404_count=0
+
           if probe_endpoint "/health" /tmp/health.json /tmp/curl_health.txt "health endpoint"; then
             exit 0
+          else
+            health_code=$(tail -n 1 /tmp/curl_health.txt | tr -d '[:space:]')
+            [ "$health_code" = "404" ] && probe_404_count=$((probe_404_count + 1))
           fi
 
           if probe_endpoint "/status" /tmp/status.json /tmp/curl_status.txt "status page"; then
             exit 0
+          else
+            status_code=$(tail -n 1 /tmp/curl_status.txt | tr -d '[:space:]')
+            [ "$status_code" = "404" ] && probe_404_count=$((probe_404_count + 1))
           fi
 
           if probe_endpoint "/login" /tmp/login.html /tmp/curl_login.txt "login page"; then
             exit 0
+          else
+            login_code=$(tail -n 1 /tmp/curl_login.txt | tr -d '[:space:]')
+            [ "$login_code" = "404" ] && probe_404_count=$((probe_404_count + 1))
           fi
 
           if probe_endpoint "/" /tmp/root.html /tmp/curl_root.txt "root page"; then
             exit 0
+          else
+            root_code=$(tail -n 1 /tmp/curl_root.txt | tr -d '[:space:]')
+            [ "$root_code" = "404" ] && probe_404_count=$((probe_404_count + 1))
+          fi
+
+          if [ "$probe_404_count" -eq 4 ]; then
+            echo "::error::All probes returned 404 Not Found. PRODUCTION_BASE_URL is pointing at a service that is not serving this app or is deploying stale code. Verify the secret points to the backend URL, and redeploy the backend service."
+            exit 1
           fi
 
           echo "::error::All uptime probes failed (health, status, login, root)"
