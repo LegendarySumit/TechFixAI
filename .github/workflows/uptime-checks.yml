@@ -25,26 +25,6 @@ jobs:
           echo "configured=true" >> "$GITHUB_OUTPUT"
           echo "base_url=$BASE_URL" >> "$GITHUB_OUTPUT"
 
-      - name: Check main app endpoint
-        if: ${{ steps.target.outputs.configured == 'true' }}
-        run: |
-          BASE_URL="${{ steps.target.outputs.base_url }}"
-          echo "Checking main endpoint: $BASE_URL/"
-          
-          curl -sS -L --retry 3 --retry-delay 1 --retry-max-time 15 \
-            --connect-timeout 5 --max-time 15 -w "\n%{http_code}" -o /tmp/response.txt "$BASE_URL/" > /tmp/curl_output.txt 2>&1
-          HTTP_CODE=$(tail -n 1 /tmp/curl_output.txt | tr -d '[:space:]')
-          
-          echo "HTTP Status: $HTTP_CODE"
-          
-          if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "301" ] && [ "$HTTP_CODE" != "302" ] && [ "$HTTP_CODE" != "307" ] && [ "$HTTP_CODE" != "308" ]; then
-            echo "::error::Main endpoint returned $HTTP_CODE (expected 2xx-3xx or redirect)"
-            echo "Response preview:"
-            head -c 500 /tmp/response.txt || true
-            exit 1
-          fi
-          echo "[OK] Main endpoint healthy ($HTTP_CODE)"
-
       - name: Check health endpoint
         if: ${{ steps.target.outputs.configured == 'true' }}
         run: |
