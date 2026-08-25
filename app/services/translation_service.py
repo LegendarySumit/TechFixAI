@@ -38,9 +38,9 @@ class TranslationService:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=settings.GEMINI_API_KEY)
-                self.gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+                self.gemini_model = genai.GenerativeModel("gemini-2.5-flash")
                 self.use_gemini = True
-                print("✅ [Translation] Gemini API ready (gemini-1.5-flash) — fallback")
+                print("✅ [Translation] Gemini API ready (gemini-2.5-flash) — fallback")
             except Exception as e:
                 print(f"⚠️ [Translation] Gemini init failed: {str(e)}")
         else:
