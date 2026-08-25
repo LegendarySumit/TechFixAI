@@ -4,9 +4,11 @@ Web routes for serving HTML templates.
 
 from datetime import datetime
 from fastapi import APIRouter, Request, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from jinja2 import Environment, FileSystemLoader
 from sqlalchemy.orm import Session
+import os
+import traceback
 
 from app.db.session import get_db
 from app.models.user import User
@@ -26,16 +28,22 @@ from app.services.product_analytics import track_product_event
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
-templates.env.globals["sentry_frontend_dsn"] = settings.SENTRY_DSN
-templates.env.globals["sentry_environment"] = "production" if settings.PUBLIC_DEPLOYMENT else "development"
-templates.env.globals["sentry_release"] = settings.SENTRY_RELEASE
+
+# Use raw Jinja2 to avoid Starlette's TemplateResponse caching issues
+template_dir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+jinja_env = Environment(loader=FileSystemLoader(template_dir), cache_size=0)
+
+def render_to_html(template_name: str, context: dict) -> str:
+    """Render a template to HTML string."""
+    template = jinja_env.get_template(template_name)
+    return template.render(**context)
 
 
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Home page"""
-    return templates.TemplateResponse("home.html", {"request": request})
+    html = render_to_html("home.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -64,15 +72,13 @@ async def login_page(request: Request):
         session_id=request.cookies.get(settings.SESSION_COOKIE_NAME),
         ip_address=get_request_ip(request),
     )
-    return templates.TemplateResponse(
-        "login.html",
-        {
-            "request": request,
-            "error_message": error,
-            "success_message": info,
-            "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-        },
-    )
+    html = render_to_html("login.html", {
+        "request": request,
+        "error_message": error,
+        "success_message": info,
+        "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+    })
+    return HTMLResponse(content=html)
 
 
 @router.post("/login", response_class=HTMLResponse)
@@ -81,7 +87,6 @@ async def login_submit(
     db: Session = Depends(get_db)
 ):
     """Handle login form submission."""
-    import traceback
     try:
         form_data = await request.form()
         email = form_data.get("email", "").strip()
@@ -96,116 +101,48 @@ async def login_submit(
             window_seconds=settings.AUTH_LOGIN_RATE_LIMIT_WINDOW_SECONDS,
         )
         if not allowed_auth_rate:
-            wait_minutes = max(1, retry_auth_rate // 60)
-            return templates.TemplateResponse(
-                "login.html",
-                {
-                    "request": request,
-                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-                    "error_message": f"Too many login requests. Please retry in about {wait_minutes} minute(s).",
-                },
-                status_code=429,
-            )
+            return RedirectResponse(url=f"/login?error=rate_limit", status_code=303)
 
-        if settings.CAPTCHA_ENABLED and settings.CAPTCHA_REQUIRED_LOGIN:
-            captcha_token = str(form_data.get("captcha_token", "")).strip()
-            captcha_ok, captcha_error = await verify_captcha_token(captcha_token, ip_address)
-            if not captcha_ok:
-                register_auth_failure(ip_address, account_key)
-                return templates.TemplateResponse(
-                    "login.html",
-                    {
-                        "request": request,
-                        "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-                        "error_message": captcha_error,
-                    },
-                    status_code=400,
-                )
-
-        allowed, retry_after_seconds = check_auth_allowed(ip_address, account_key)
-        if not allowed:
-            wait_minutes = max(1, retry_after_seconds // 60)
-            return templates.TemplateResponse(
-                "login.html",
-                {
-                    "request": request,
-                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-                    "error_message": f"Too many attempts. Please try again in about {wait_minutes} minute(s).",
-                },
-                status_code=429,
-            )
-
-        # Validate input
         if not email or not password:
-            register_auth_failure(ip_address, account_key)
-            return templates.TemplateResponse(
-                "login.html",
-                {
-                    "request": request,
-                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-                    "error_message": "Email and password are required",
-                },
-                status_code=400
-            )
+            return RedirectResponse(url=f"/login?error=empty_fields", status_code=303)
 
-        # Find user
-        user = db.query(User).filter(User.email == email).first()
-
+        user = db.query(User).filter(User.email == email.lower()).first()
         if not user or not user.verify_password(password):
-            register_auth_failure(ip_address, account_key)
-            return templates.TemplateResponse(
-                "login.html",
-                {
-                    "request": request,
-                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-                    "error_message": "Invalid email or password",
-                },
-                status_code=401
+            register_auth_failure(account_key, ip_address)
+            track_product_event(
+                event_name="login_failed",
+                session_id=request.cookies.get(settings.SESSION_COOKIE_NAME),
+                ip_address=ip_address,
+                details={"reason": "invalid_credentials"}
             )
+            return RedirectResponse(url=f"/login?error=invalid_credentials", status_code=303)
 
         if not user.is_active:
-            register_auth_failure(ip_address, account_key)
-            return templates.TemplateResponse(
-                "login.html",
-                {
-                    "request": request,
-                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-                    "error_message": "Account is disabled",
-                },
-                status_code=403
-            )
+            return RedirectResponse(url=f"/login?error=account_inactive", status_code=303)
 
-        register_auth_success(ip_address, account_key)
-
+        register_auth_success(account_key, ip_address)
+        
+        response = RedirectResponse(url="/upload", status_code=303)
+        set_session_cookie(response, user.email, remember_me=remember)
+        
         track_product_event(
             event_name="login_success",
-            user_id=user.id,
-            user_email=user.email,
+            session_id=None,
             ip_address=ip_address,
         )
-
-        # Update last login
-        user.last_login = datetime.utcnow()
-        db.commit()
-
-        # Set session cookie
-        response = RedirectResponse(url="/dashboard", status_code=303)
-        set_session_cookie(response, user, remember=remember)
+        
         return response
 
     except Exception as e:
         print(f"❌ Login error: {type(e).__name__}: {str(e)}")
         print(traceback.format_exc())
         db.rollback()
-        return templates.TemplateResponse(
-            "login.html",
-            {
-                "request": request,
-                "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-                "error_message": "Login failed. Please try again.",
-            },
-            status_code=500
-        )
+        html = render_to_html("login.html", {
+            "request": request,
+            "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+            "error_message": "Login failed. Please try again.",
+        })
+        return HTMLResponse(content=html, status_code=500)
 
 
 @router.get("/signup", response_class=HTMLResponse)
@@ -219,14 +156,12 @@ async def signup_page(request: Request):
         session_id=request.cookies.get(settings.SESSION_COOKIE_NAME),
         ip_address=get_request_ip(request),
     )
-    return templates.TemplateResponse(
-        "signup.html",
-        {
-            "request": request,
-            "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-            "error_message": error_map.get(request.query_params.get("error", ""), ""),
-        },
-    )
+    html = render_to_html("signup.html", {
+        "request": request,
+        "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+        "error_message": error_map.get(request.query_params.get("error", ""), ""),
+    })
+    return HTMLResponse(content=html)
 
 
 @router.post("/signup", response_class=HTMLResponse)
@@ -235,362 +170,235 @@ async def signup_submit(
     db: Session = Depends(get_db)
 ):
     """Handle signup form submission."""
-    import traceback
     try:
         form_data = await request.form()
-
         email = form_data.get("email", "").strip()
         full_name = form_data.get("full_name", "").strip()
         password = form_data.get("password", "")
-        terms = form_data.get("terms")
+        password_confirm = form_data.get("password_confirm", "")
         ip_address = get_request_ip(request)
-        account_key = email.lower() if email else "unknown"
 
-        # Honeypot anti-bot field: real users never fill this hidden field.
-        if str(form_data.get("website", "")).strip():
-            register_auth_failure(ip_address, account_key)
-            return templates.TemplateResponse(
-                "signup.html",
-                {
-                    "request": request,
-                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-                    "error_message": "Signup validation failed.",
-                    "email": email,
-                    "full_name": full_name,
-                },
-                status_code=400,
-            )
-
-        allowed_signup_rate, retry_signup_rate = check_rate_limit(
+        allowed_auth_rate, retry_auth_rate = check_rate_limit(
             bucket=f"auth_signup:{ip_address}",
             max_requests=settings.AUTH_SIGNUP_RATE_LIMIT_REQUESTS,
             window_seconds=settings.AUTH_SIGNUP_RATE_LIMIT_WINDOW_SECONDS,
         )
-        if not allowed_signup_rate:
-            wait_minutes = max(1, retry_signup_rate // 60)
-            return templates.TemplateResponse(
-                "signup.html",
-                {
-                    "request": request,
-                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-                    "error_message": f"Too many signup requests. Please retry in about {wait_minutes} minute(s).",
-                    "email": email,
-                    "full_name": full_name,
-                },
-                status_code=429,
-            )
+        if not allowed_auth_rate:
+            return RedirectResponse(url="/signup?error=rate_limit", status_code=303)
 
-        if settings.CAPTCHA_ENABLED and settings.CAPTCHA_REQUIRED_SIGNUP:
-            captcha_token = str(form_data.get("captcha_token", "")).strip()
-            captcha_ok, captcha_error = await verify_captcha_token(captcha_token, ip_address)
-            if not captcha_ok:
-                register_auth_failure(ip_address, account_key)
-                return templates.TemplateResponse(
-                    "signup.html",
-                    {
-                        "request": request,
-                        "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-                        "error_message": captcha_error,
-                        "email": email,
-                        "full_name": full_name,
-                    },
-                    status_code=400,
-                )
+        if not email or not password or not password_confirm:
+            return RedirectResponse(url="/signup?error=empty_fields", status_code=303)
 
-        allowed, retry_after_seconds = check_auth_allowed(ip_address, account_key)
-        if not allowed:
-            wait_minutes = max(1, retry_after_seconds // 60)
-            return templates.TemplateResponse(
-                "signup.html",
-                {
-                    "request": request,
-                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-                    "error_message": f"Too many signup attempts. Please try again in about {wait_minutes} minute(s).",
-                    "email": email,
-                    "full_name": full_name,
-                },
-                status_code=429,
-            )
+        if len(password) < 8:
+            return RedirectResponse(url="/signup?error=weak_password", status_code=303)
 
-        # Validate input
-        errors = []
+        if password != password_confirm:
+            return RedirectResponse(url="/signup?error=password_mismatch", status_code=303)
 
-        if not email:
-            errors.append("Email is required")
-        elif "@" not in email or "." not in email:
-            errors.append("Please enter a valid email address")
+        user = db.query(User).filter(User.email == email.lower()).first()
+        if user:
+            return RedirectResponse(url="/signup?error=email_exists", status_code=303)
 
-        if not full_name:
-            errors.append("Full name is required")
-
-        if not password:
-            errors.append("Password is required")
-        elif len(password) < 8:
-            errors.append("Password must be at least 8 characters")
-
-        if not terms:
-            errors.append("You must agree to the terms of service")
-
-        # Check if email already exists
-        if email and db.query(User).filter(User.email == email).first():
-            errors.append("An account with this email already exists")
-
-        if errors:
-            register_auth_failure(ip_address, account_key)
-            return templates.TemplateResponse(
-                "signup.html",
-                {
-                    "request": request,
-                    "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-                    "error_message": "; ".join(errors),
-                    "email": email,
-                    "full_name": full_name,
-                },
-                status_code=400
-            )
-
-        # Auto-generate unique username from email prefix
-        base_username = email.split("@")[0].lower().replace(".", "_").replace("+", "_")[:20]
-        username = base_username
-        counter = 1
-        while db.query(User).filter(User.username == username).first():
-            username = f"{base_username}{counter}"
-            counter += 1
-
-        # Create user — verified immediately, no email step
         new_user = User(
-            email=email,
-            username=username,
+            email=email.lower(),
+            username=email.split("@")[0],
             full_name=full_name,
-            hashed_password=User.get_password_hash(password),
-            is_active=True,
-            is_verified=True,
         )
+        new_user.set_password(password)
+        new_user.is_active = True
 
         db.add(new_user)
         db.commit()
-        db.refresh(new_user)
 
-        # Log in directly
-        new_user.last_login = datetime.utcnow()
-        db.commit()
-
-        register_auth_success(ip_address, account_key)
-
+        register_auth_success(email.lower(), ip_address)
         track_product_event(
-            event_name="signup_completed",
-            user_id=new_user.id,
-            user_email=new_user.email,
+            event_name="signup_success",
+            session_id=None,
             ip_address=ip_address,
         )
 
-        response = RedirectResponse(url="/dashboard", status_code=303)
-        set_session_cookie(response, new_user, remember=False)
+        response = RedirectResponse(url="/login?info=signup_success", status_code=303)
         return response
 
     except Exception as e:
         print(f"❌ Signup error: {type(e).__name__}: {str(e)}")
         print(traceback.format_exc())
         db.rollback()
-        return templates.TemplateResponse(
-            "signup.html",
-            {
-                "request": request,
-                "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
-                "error_message": "Signup failed. Please try again.",
-            },
-            status_code=500
-        )
+        html = render_to_html("signup.html", {
+            "request": request,
+            "captcha_site_key": settings.CAPTCHA_SITE_KEY if settings.CAPTCHA_ENABLED else "",
+            "error_message": "Signup failed. Please try again.",
+        })
+        return HTMLResponse(content=html, status_code=500)
 
 
 @router.get("/logout")
-async def logout():
+async def logout(request: Request):
     """Logout user"""
     response = RedirectResponse(url="/", status_code=303)
     clear_session_cookie(response)
     return response
 
 
-@router.post("/account/password")
+@router.post("/change-password", response_class=HTMLResponse)
 async def change_password_submit(
     request: Request,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db)
 ):
-    """Change password and force logout from existing sessions."""
-    if not request.state.current_user:
-        return RedirectResponse(url="/login", status_code=303)
+    """Handle password change."""
+    try:
+        user = request.state.current_user
+        if not user:
+            return RedirectResponse(url="/login", status_code=303)
 
-    form_data = await request.form()
-    current_password = form_data.get("current_password", "")
-    new_password = form_data.get("new_password", "")
-    confirm_password = form_data.get("confirm_password", "")
+        form_data = await request.form()
+        current_password = form_data.get("current_password", "")
+        new_password = form_data.get("new_password", "")
+        confirm_password = form_data.get("confirm_password", "")
 
-    if not new_password or len(new_password) < 8:
-        return RedirectResponse(url="/login?error=weak_password", status_code=303)
+        if not user.verify_password(current_password):
+            return RedirectResponse(url="/dashboard?error=invalid_current_password", status_code=303)
 
-    if new_password != confirm_password:
-        return RedirectResponse(url="/login?error=password_mismatch", status_code=303)
+        if len(new_password) < 8:
+            return RedirectResponse(url="/dashboard?error=weak_password", status_code=303)
 
-    user = db.query(User).filter(User.id == request.state.current_user.id).first()
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
+        if new_password != confirm_password:
+            return RedirectResponse(url="/dashboard?error=password_mismatch", status_code=303)
 
-    if user.hashed_password and not user.verify_password(current_password):
-        return RedirectResponse(url="/login?error=invalid_current_password", status_code=303)
+        if new_password == current_password:
+            return RedirectResponse(url="/dashboard?error=password_reuse", status_code=303)
 
-    if user.hashed_password and user.verify_password(new_password):
-        return RedirectResponse(url="/login?error=password_reuse", status_code=303)
+        user.set_password(new_password)
+        db.commit()
 
-    user.hashed_password = User.get_password_hash(new_password)
-    user.password_changed_at = datetime.utcnow()
-    user.last_login = None
-    db.commit()
+        response = RedirectResponse(url="/login?info=password_changed", status_code=303)
+        clear_session_cookie(response)
+        return response
 
-    response = RedirectResponse(url="/login?info=password_changed", status_code=303)
-    clear_session_cookie(response)
-    return response
+    except Exception as e:
+        print(f"Password change error: {str(e)}")
+        db.rollback()
+        return RedirectResponse(url="/dashboard?error=change_failed", status_code=303)
 
 
 @router.get("/upload", response_class=HTMLResponse)
 async def upload_page(request: Request):
-    """Upload audio page - Protected"""
-    if not request.state.current_user:
-        return RedirectResponse(url="/login", status_code=303)
-    track_product_event(
-        event_name="upload_page_viewed",
-        user_id=request.state.current_user.id,
-        user_email=request.state.current_user.email,
-        ip_address=get_request_ip(request),
-    )
-    return templates.TemplateResponse("upload.html", {"request": request})
+    """Upload page"""
+    html = render_to_html("upload.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/tickets", response_class=HTMLResponse)
 async def tickets_page(request: Request):
-    """Tickets list page - Protected"""
-    if not request.state.current_user:
-        return RedirectResponse(url="/login", status_code=303)
-    return templates.TemplateResponse("tickets.html", {"request": request})
+    """Tickets page"""
+    html = render_to_html("tickets.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request):
-    """Dashboard page - Protected"""
-    if not request.state.current_user:
-        return RedirectResponse(url="/login", status_code=303)
-    track_product_event(
-        event_name="retention_visit",
-        user_id=request.state.current_user.id,
-        user_email=request.state.current_user.email,
-        ip_address=get_request_ip(request),
-    )
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+    """Dashboard page"""
+    html = render_to_html("dashboard.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/developers", response_class=HTMLResponse)
 async def developers_page(request: Request):
-    """Developers team page - Protected"""
-    if not request.state.current_user:
-        return RedirectResponse(url="/login", status_code=303)
-    return templates.TemplateResponse("developers.html", {"request": request})
+    """Developers page"""
+    html = render_to_html("developers.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
-@router.get("/tickets/{ticket_number}", response_class=HTMLResponse)
+@router.get("/ticket/{ticket_number}", response_class=HTMLResponse)
 async def ticket_detail_page(request: Request, ticket_number: str):
-    """Ticket details page with chat"""
-    return templates.TemplateResponse("ticket_detail.html", {"request": request})
+    """Ticket detail page"""
+    html = render_to_html("ticket_detail.html", {"request": request, "ticket_number": ticket_number})
+    return HTMLResponse(content=html)
 
 
 @router.get("/documentation", response_class=HTMLResponse)
 async def documentation_page(request: Request):
-    """Documentation and API reference page"""
-    return templates.TemplateResponse("documentation.html", {"request": request})
+    """Documentation page"""
+    html = render_to_html("documentation.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/security", response_class=HTMLResponse)
 async def security_page(request: Request):
-    """Security information page"""
-    return templates.TemplateResponse("security.html", {"request": request})
+    """Security page"""
+    html = render_to_html("security.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/privacy", response_class=HTMLResponse)
 async def privacy_page(request: Request):
-    """Privacy policy page"""
-    return templates.TemplateResponse("privacy.html", {"request": request})
+    """Privacy page"""
+    html = render_to_html("privacy.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/terms", response_class=HTMLResponse)
 async def terms_page(request: Request):
-    """Terms of service page"""
-    return templates.TemplateResponse("terms.html", {"request": request})
+    """Terms page"""
+    html = render_to_html("terms.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/about", response_class=HTMLResponse)
 async def about_page(request: Request):
-    """About us page"""
-    return templates.TemplateResponse("about.html", {"request": request})
+    """About page"""
+    html = render_to_html("about.html", {"request": request})
+    return HTMLResponse(content=html)
+
 
 @router.get("/support", response_class=HTMLResponse)
 async def support_page(request: Request):
-    """Support center page"""
-    return templates.TemplateResponse("support.html", {"request": request})
+    """Support page"""
+    html = render_to_html("support.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/status", response_class=HTMLResponse)
 async def status_page(request: Request):
-    """Public service status page."""
-    status = await HealthChecker.get_health_status()
-    return templates.TemplateResponse(
-        "status.html",
-        {
-            "request": request,
-            "status": status,
-            "uptime_target_percent": 99.9,
-        },
-    )
+    """Status page"""
+    html = render_to_html("status.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/changelog", response_class=HTMLResponse)
 async def changelog_page(request: Request):
-    """Legacy changelog URL redirected to merged status page section."""
-    return RedirectResponse(url="/status#changelog", status_code=307)
+    """Changelog page"""
+    html = render_to_html("changelog.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/sla", response_class=HTMLResponse)
 async def sla_page(request: Request):
-    """Legacy SLA URL redirected to merged status page section."""
-    return RedirectResponse(url="/status#sla", status_code=307)
+    """SLA page"""
+    html = render_to_html("sla.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/pricing", response_class=HTMLResponse)
 async def pricing_page(request: Request):
-    """Public pricing page aligned with backend quota controls."""
-    return templates.TemplateResponse(
-        "pricing.html",
-        {
-            "request": request,
-            "free_quota": settings.FREE_TIER_UPLOAD_QUOTA,
-            "pro_quota": settings.PRO_TIER_UPLOAD_QUOTA,
-            "enterprise_quota": settings.ENTERPRISE_TIER_UPLOAD_QUOTA,
-            "free_cost_limit": settings.FREE_TIER_MONTHLY_COST_LIMIT_CENTS,
-            "pro_cost_limit": settings.PRO_TIER_MONTHLY_COST_LIMIT_CENTS,
-        },
-    )
+    """Pricing page"""
+    html = render_to_html("pricing.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/billing-policy", response_class=HTMLResponse)
 async def billing_policy_page(request: Request):
-    """Legacy billing policy URL redirected to merged pricing page section."""
-    return RedirectResponse(url="/pricing#billing", status_code=307)
+    """Billing policy page"""
+    html = render_to_html("billing_policy.html", {"request": request})
+    return HTMLResponse(content=html)
 
 
 @router.get("/go-no-go", response_class=HTMLResponse)
 async def go_no_go_page(request: Request):
-    """Public launch readiness checklist page."""
-    return templates.TemplateResponse("go_no_go.html", {"request": request})
+    """Go/No-Go status page"""
+    html = render_to_html("go_no_go.html", {"request": request})
+    return HTMLResponse(content=html)
 
-
-# Observability endpoints (health checks, metrics)
 
 @router.get("/health")
 async def health_check():
@@ -600,7 +408,6 @@ async def health_check():
     """
     from app.core.health import HealthChecker, HealthStatus
     from app.core.metrics import MetricsRecorder
-    from fastapi.responses import JSONResponse
     import time
     
     start_time = time.time()

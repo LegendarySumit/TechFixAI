@@ -74,8 +74,8 @@ async def process_voice_pipeline(
     Background tasks must NOT share the request's DB session (it is closed
     by the time the task runs).  We open a fresh session here instead.
     
-    1. Groq STT → Japanese text
-    2. Groq Translation → English text
+    1. Groq STT → Text (auto-detect language: en or ja)
+    2. Groq Translation → English text (if input was Japanese)
     3. Ticket generation
     4. Developer assignment
     """
@@ -110,8 +110,11 @@ async def process_voice_pipeline(
                 db.commit()
                 return
         
-        transcription_result = await stt_service.transcribe_audio(audio_file_path)
-        conversation.japanese_transcript = transcription_result["text"]
+        # Step 1: Transcribe audio
+        transcription_result = await stt_service.transcribe_audio(audio_file_path, language="ja")
+        japanese_transcript = transcription_result["text"]
+        
+        conversation.japanese_transcript = japanese_transcript
         conversation.status = ConversationStatus.TRANSCRIBED
         db.commit()
         
@@ -125,14 +128,15 @@ async def process_voice_pipeline(
             )
             QuotaService.add_groq_cost(user, stt_cost_estimate, db)
         
-        print(f"✅ STT: {conversation.japanese_transcript[:60]}")
-        
-        # Step 2: Translate with Groq (FAST - 1-2 seconds)
+        # Step 2: Translate to English
         translation_result = await translation_service.translate_technical_text(
-            conversation.japanese_transcript,
-            context="technical support"
+            japanese_transcript,
+            context="technical support",
+            source_language="ja"
         )
-        conversation.english_translation = translation_result["translated_text"]
+        english_translation = translation_result["translated_text"]
+        
+        conversation.english_translation = english_translation
         conversation.status = ConversationStatus.TRANSLATED
         db.commit()
         
@@ -149,9 +153,9 @@ async def process_voice_pipeline(
             )
             QuotaService.add_groq_cost(user, translation_cost, db)
         
-        print(f"✅ Translation: {conversation.english_translation[:60]}")
+
         
-        # Step 3: Ticket generation (INSTANT - direct from English)
+        # Step 3: Generate ticket from translation
         ticket_data = await ticket_service.generate_ticket_from_text(
             conversation.english_translation,
             conversation.japanese_transcript
@@ -171,27 +175,20 @@ async def process_voice_pipeline(
                 properties={"ticket_number": ticket.ticket_number},
             )
         
-        print(f"✅ Ticket: #{ticket.ticket_number}")
-        
-        # Step 4: Assignment (FAST - 1-2 seconds)
+        # Step 4: Auto-assign if enabled
         if settings.AUTO_ASSIGNMENT_ENABLED:
-            assigned_dev = await assignment_service.assign_ticket(db, ticket)
-            if assigned_dev:
-                print(f"✅ Assigned: {assigned_dev.name}")
+            await assignment_service.assign_ticket(db, ticket)
         
-        # Mark complete
         conversation.status = ConversationStatus.COMPLETED
         db.commit()
         
-        print(f"🎉 COMPLETE - Fast Groq translation + instant ticket\n")
+        print(f"[VOICE] Ticket #{ticket.ticket_number} completed")
         
     except Exception as e:
-        print(f"❌ Pipeline error: {str(e)}\n")
+        print(f"[VOICE] Pipeline error: {type(e).__name__}: {str(e)[:100]}")
         try:
             conversation.status = ConversationStatus.FAILED
-            # Surface a short failure reason for UI polling/status screens.
-            # Keep this concise and non-sensitive for end users.
-            conversation.english_translation = f"Transcription failed: {str(e)[:220]}"
+            conversation.english_translation = f"Processing failed: {str(e)[:100]}"
             db.commit()
         except Exception:
             db.rollback()
@@ -408,6 +405,7 @@ async def chat_transcribe_voice(
         )
 
     audio_content = await audio.read()
+    print(f"[CHAT-VOICE] Received audio file: {audio.filename}, size: {len(audio_content)} bytes")
     _validate_audio_upload(audio, audio_content)
 
     os.makedirs(settings.AUDIO_STORAGE_PATH, exist_ok=True)
@@ -418,22 +416,31 @@ async def chat_transcribe_voice(
     try:
         with open(temp_audio_path, "wb") as f:
             f.write(audio_content)
+        print(f"[CHAT-VOICE] Audio file saved: {temp_audio_path}")
 
-        transcription_result = await stt_service.transcribe_audio(temp_audio_path)
-        japanese_text = transcription_result.get("text", "")
+        # Transcribe with language auto-detection
+        print(f"[CHAT-VOICE] Starting transcription...")
+        transcription_result = await stt_service.transcribe_audio(temp_audio_path, language="ja")
+        transcribed_text = transcription_result.get("text", "")
+        detected_language = transcription_result.get("language", "ja")
 
-        if not japanese_text.strip():
+        if not transcribed_text.strip():
             raise HTTPException(status_code=400, detail="Unable to transcribe audio")
 
+        # Translate with detected language (JA->EN or pass-through if EN)
         translation_result = await translation_service.translate_technical_text(
-            japanese_text,
-            context="developer chat"
+            transcribed_text,
+            context="developer chat",
+            source_language=detected_language
         )
-        english_text = translation_result.get("translated_text", japanese_text)
+        translated_text = translation_result.get("translated_text", transcribed_text)
+        target_language = translation_result.get("target_language", "en")
 
         return {
-            "japanese_transcript": japanese_text,
-            "english_translation": english_text,
+            "transcribed_text": transcribed_text,
+            "translated_text": translated_text,
+            "source_language": detected_language,
+            "target_language": target_language,
             "transcription_method": transcription_result.get("method"),
             "translation_method": translation_result.get("method"),
         }

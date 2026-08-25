@@ -147,7 +147,7 @@ def start_cleanup_scheduler():
                 next_midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
                 seconds_until_midnight = (next_midnight - now).total_seconds()
                 
-                print(f"⏰ Next cleanup scheduled in {seconds_until_midnight / 3600:.1f} hours")
+                pass  # Next cleanup scheduled
                 MetricsRecorder.set_queue_length(1)
                 MetricsRecorder.record_queue_wait("daily_cleanup", seconds_until_midnight)
                 
@@ -155,7 +155,7 @@ def start_cleanup_scheduler():
                 time.sleep(seconds_until_midnight)
                 
                 # Run cleanup
-                print("🧹 Running scheduled data cleanup...")
+                pass  # Running cleanup
                 MetricsRecorder.set_queue_length(0)
 
                 step_start = time.time()
@@ -199,4 +199,4 @@ def start_cleanup_scheduler():
     # Start cleanup thread as daemon
     cleanup_thread = threading.Thread(target=run_daily_cleanup, daemon=True)
     cleanup_thread.start()
-    print(f"✅ Data retention cleanup scheduler started (retention: {settings.DATA_RETENTION_DAYS} days)")
+    pass  # Scheduler started silently

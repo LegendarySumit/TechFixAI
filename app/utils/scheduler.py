@@ -135,13 +135,13 @@ def start_cleanup_scheduler():
                 next_midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
                 seconds_until_midnight = (next_midnight - now).total_seconds()
                 
-                print(f"⏰ Next cleanup scheduled in {seconds_until_midnight / 3600:.1f} hours")
+                pass  # Next cleanup scheduled
                 
                 # Wait until next midnight
                 threading.Event().wait(seconds_until_midnight)
                 
                 # Run cleanup
-                print("🧹 Running scheduled data cleanup...")
+                pass  # Running cleanup
                 cleanup_old_audio_files()
                 cleanup_old_database_records()
                 cleanup_old_audit_records()
@@ -152,4 +152,4 @@ def start_cleanup_scheduler():
     # Start cleanup thread as daemon
     cleanup_thread = threading.Thread(target=run_daily_cleanup, daemon=True)
     cleanup_thread.start()
-    print(f"✅ Data retention cleanup scheduler started (retention: {settings.DATA_RETENTION_DAYS} days)")
+    pass  # Scheduler started silently

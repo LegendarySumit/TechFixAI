@@ -92,9 +92,13 @@ def setup_structured_logging(
     
     # Suppress noisy libraries
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("sqlalchemy").setLevel(logging.WARNING)
+    logging.getLogger("sqlalchemy").setLevel(logging.CRITICAL)
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.CRITICAL)
+    logging.getLogger("sqlalchemy.pool").setLevel(logging.CRITICAL)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("asyncio").setLevel(logging.WARNING)
+    logging.getLogger("alembic").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
 
 def get_logger(name: str) -> logging.Logger:

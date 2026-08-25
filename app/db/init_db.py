@@ -67,9 +67,9 @@ def _migrate_add_missing_columns(engine):
                         conn.rollback()
                     except Exception:
                         pass
-                    print(f"   ℹ️  Migration note for {table}.{col_name}: {e}")
+                    pass
 
-    print("✅ DB column migration complete")
+    # Column migrations complete
 
 
 def init_db():
@@ -80,7 +80,7 @@ def init_db():
 
     # Create all tables (no-op for existing tables)
     Base.metadata.create_all(bind=engine)
-    print("✅ Database tables created successfully")
+    # Database tables created
 
     # Add any columns added after first deploy (safe no-op if already present)
     _migrate_add_missing_columns(engine)
@@ -131,9 +131,9 @@ def init_db():
                 db.add(dev)
             
             db.commit()
-            print(f"✅ Seeded {len(seed_developers)} developers")
+            pass
         else:
-            print(f"ℹ️  Database already has {existing_devs} developers")
+            pass
     
     except Exception as e:
         print(f"❌ Error seeding database: {e}")

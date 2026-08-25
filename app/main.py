@@ -6,6 +6,11 @@ Purpose: Automated incident intake + routing system
 NOT a chatbot. NOT a translation app. NOT an AI demo.
 """
 
+import warnings
+# Suppress deprecation warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -157,33 +162,24 @@ async def lifespan(app: FastAPI):
     # Initialize observability (logging, Sentry, metrics)
     setup_observability()
     
-    logger = get_logger(__name__)
-    
     # Ensure audio storage directory exists on fresh deploys
     import os
     audio_path = settings.AUDIO_STORAGE_PATH
     os.makedirs(audio_path, exist_ok=True)
-    logger.info(f"Audio storage: {os.path.abspath(audio_path)}")
-
-    # API key diagnostics — critical for spotting misconfiguration
-    logger.info("API Key Status:")
-    logger.info(f"   GROQ_API_KEY   : {'SET' if settings.GROQ_API_KEY else 'NOT SET'}")
-    logger.info(f"   GEMINI_API_KEY : {'SET' if settings.GEMINI_API_KEY else 'NOT SET'}")
-    logger.info(f"   GOOGLE_CLIENT_ID: {'SET' if settings.GOOGLE_CLIENT_ID else 'NOT SET'}")
-    logger.info(f"   SECRET_KEY     : {'SET' if settings.SECRET_KEY else 'NOT SET'}")
-    logger.info(f"   PUBLIC_DEPLOYMENT: {settings.PUBLIC_DEPLOYMENT}")
-    logger.info(f"   FORCE_HTTPS      : {settings.FORCE_HTTPS}")
 
     # Create all DB tables (safe no-op if they already exist)
     from app.db.init_db import init_db
     init_db()
-    logger.info("Database tables ready")
-
-    logger.info("Starting Voice-to-Ticket AI System...")
+    
+    # Show startup message
+    print("\n" + "="*60)
+    print("🚀 TechFixAI Server Running")
+    print("📱 Open: http://127.0.0.1:8000")
+    print("="*60 + "\n")
     start_cleanup_scheduler()
     yield
     # Shutdown
-    logger.info("Application shutdown")
+    # Application shutdown
 
 
 app = FastAPI(

@@ -54,24 +54,29 @@ class STTService:
             else:
                 print("[ERROR] [STT] NO real STT API available in production — uploads will fail until STT API is configured")
     
-    async def transcribe_audio(self, audio_file_path: str, language: str = "ja") -> dict:
+    async def transcribe_audio(self, audio_file_path: str, language: str = None) -> dict:
         """
         Transcribe audio file to text using cloud APIs.
         
         Args:
             audio_file_path: Path to audio file
-            language: Language code (default: ja for Japanese)
+            language: Language code (e.g., "ja", "en"). If None, auto-detect.
+                     Pass explicit language for faster/more reliable transcription.
         
         Returns:
             dict with:
                 - text: Transcribed text
-                - language: Detected language
+                - language: Detected or specified language ("ja" or "en")
                 - method: Transcription method used
         """
         if not os.path.exists(audio_file_path):
             raise FileNotFoundError(f"Audio file not found: {audio_file_path}")
         
-        print(f"[AUDIO] Starting transcription: {audio_file_path}")
+        # Default to Japanese if language not specified (backward compatibility)
+        if language is None:
+            language = "ja"
+        
+        print(f"[AUDIO] Starting transcription: {audio_file_path} (language={language})")
         
         runtime_errors = []
 
@@ -171,12 +176,22 @@ class STTService:
             # Use 2-tuple (name, bytes) — no explicit MIME — so Groq auto-detects
             # format from magic bytes. This is exactly what worked in production.
             # Specifying MIME risks a mismatch if content-type headers lie.
-            transcription = self.groq_client.audio.transcriptions.create(
-                file=(filename, audio_bytes),
-                model="whisper-large-v3",
-                language=language,
-                response_format="json"
-            )
+            # Try whisper-large-v3 first, fall back to turbo if needed
+            try:
+                transcription = self.groq_client.audio.transcriptions.create(
+                    file=(filename, audio_bytes),
+                    model="whisper-large-v3",
+                    language=language,
+                    response_format="json"
+                )
+            except Exception as model_err:
+                print(f"   ⚠️ whisper-large-v3 failed, trying whisper-large-v3-turbo: {str(model_err)}")
+                transcription = self.groq_client.audio.transcriptions.create(
+                    file=(filename, audio_bytes),
+                    model="whisper-large-v3-turbo",
+                    language=language,
+                    response_format="json"
+                )
 
             transcribed_text = transcription.text.strip()
             if not transcribed_text:

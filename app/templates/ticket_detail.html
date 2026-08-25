@@ -898,17 +898,41 @@ async function stopChatRecording() {
     try {
         const formData = new FormData();
         formData.append('audio', result.blob, 'chat-voice.webm');
+        console.log('📤 Uploading audio blob:', result.blob.size, 'bytes');
         showChatProcessing('Transcribing & translating…');
         const uploadResp = await fetch('/api/voice/chat-transcribe', { method: 'POST', body: formData });
-        if (!uploadResp.ok) throw new Error(`Voice chat processing failed: ${uploadResp.status}`);
+        console.log('📥 API Response status:', uploadResp.status);
+        
+        if (!uploadResp.ok) {
+            const errorText = await uploadResp.text();
+            console.error('❌ API Error:', errorText);
+            throw new Error(`Voice chat processing failed: ${uploadResp.status}`);
+        }
+        
         const statusData = await uploadResp.json();
+        console.log('📊 API Response data:', statusData);
 
         hideChatProcessing();
         setInputRowEnabled(true);
-        showTranslationPreview(
-            statusData.japanese_transcript || '',
-            statusData.english_translation || statusData.japanese_transcript || ''
-        );
+        
+        // Handle response based on source language
+        console.log('✅ Processing response. Source language:', statusData.source_language);
+        let jpText, enText;
+        if (statusData.source_language === 'ja') {
+            jpText = statusData.transcribed_text || '';
+            enText = statusData.translated_text || statusData.transcribed_text || '';
+            console.log('🇯🇵 Japanese detected');
+            console.log('  JP Text:', jpText.substring(0, 50));
+            console.log('  EN Text:', enText.substring(0, 50));
+        } else {
+            jpText = '';
+            enText = statusData.transcribed_text || '';
+            console.log('🇬🇧 English detected');
+            console.log('  EN Text:', enText.substring(0, 50));
+        }
+        
+        console.log('📢 Calling showTranslationPreview with:', { jpText, enText });
+        showTranslationPreview(jpText, enText);
     } catch (err) {
         console.error('Voice chat error:', err);
         hideChatProcessing();

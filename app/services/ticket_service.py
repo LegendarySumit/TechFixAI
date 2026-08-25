@@ -33,25 +33,25 @@ class TicketService:
                 from groq import Groq
                 self.groq_client = Groq(api_key=settings.GROQ_API_KEY)
                 self.use_groq = True
-                print("✅ [Ticket] Groq API ready (llama-3.1-8b-instant)")
+                pass  # Groq ready
             except Exception as e:
-                print(f"❌ [Ticket] Groq init failed: {str(e)}")
+                pass  # Groq init failed
         else:
-            print("⚠️ [Ticket] GROQ_API_KEY not set")
+            pass  # Groq API key not set
 
         # ── Gemini (secondary fallback — initialized independently) ──
         if settings.GEMINI_API_KEY:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=settings.GEMINI_API_KEY)
-                self.gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+                self.gemini_model = genai.GenerativeModel("gemini-2.5-flash")
                 self.use_gemini = True
-                print("✅ [Ticket] Gemini API ready (gemini-1.5-flash) — fallback")
+                pass  # Gemini ready
             except Exception as e:
-                print(f"⚠️ [Ticket] Gemini init failed: {str(e)}")
+                pass  # Gemini init failed
 
         if not self.use_groq and not self.use_gemini:
-            print("⚠️ [Ticket] No AI API available — using rule-based fallback")
+            pass  # No AI API available
     
     async def generate_ticket_from_text(
         self,
@@ -83,7 +83,7 @@ class TicketService:
         return self._mock_generate_ticket(english_text)
 
     async def _groq_generate_ticket(self, english_text: str) -> Dict:
-        """Generate ticket using Groq API (llama-3.1-8b-instant)."""
+        """Generate ticket using Groq API with model fallback chain."""
         print(f"🎫 [Ticket] Generating with Groq: {english_text[:50]}...")
 
         TICKET_PROMPT = """You are a technical support ticket analyzer.
@@ -97,16 +97,31 @@ Extract structured information from the problem description and return ONLY vali
 }
 Output ONLY the JSON object, no markdown, no explanation."""
 
-        completion = self.groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": TICKET_PROMPT},
-                {"role": "user", "content": english_text}
-            ],
-            temperature=0.1,
-            max_tokens=400
-        )
-
+        # Try multiple models in order
+        models_to_try = ["meta-llama/llama-prompt-guard-2-86m", "meta-llama/llama-prompt-guard-2-22m"]
+        completion = None
+        
+        for model_name in models_to_try:
+            try:
+                print(f"[DEBUG] Ticket generation trying model: {model_name}")
+                completion = self.groq_client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": TICKET_PROMPT},
+                        {"role": "user", "content": english_text}
+                    ],
+                    temperature=0.1,
+                    max_tokens=512
+                )
+                print(f"[DEBUG] Model {model_name} succeeded!")
+                break
+            except Exception as e:
+                print(f"[DEBUG] Model {model_name} failed: {str(e)[:100]}")
+                continue
+        
+        if not completion:
+            raise RuntimeError("All Groq models failed for ticket generation")
+        
         response_text = completion.choices[0].message.content.strip()
         # Strip markdown code blocks if model adds them
         if response_text.startswith("```"):

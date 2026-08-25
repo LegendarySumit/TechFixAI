@@ -165,6 +165,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
 def setup_observability():
     """Initialize Sentry, logging, and metrics."""
+    import logging
     
     # Setup structured logging
     from app.core.logging_config import setup_structured_logging
@@ -173,16 +174,17 @@ def setup_observability():
         enabled=settings.STRUCTURED_LOGGING_ENABLED,
     )
     
+    # Suppress noisy loggers AFTER setup
+    logging.getLogger("sqlalchemy").setLevel(logging.CRITICAL)
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.CRITICAL)
+    logging.getLogger("sqlalchemy.pool").setLevel(logging.CRITICAL)
+    logging.getLogger("sqlalchemy.orm").setLevel(logging.CRITICAL)
+    logging.getLogger("urllib3").setLevel(logging.CRITICAL)
+    logging.getLogger("asyncio").setLevel(logging.WARNING)
+    
     _logger = get_logger(__name__)
-    _logger.info(
-        "Structured logging initialized",
-        extra={
-            "context": {
-                "structured_logging": settings.STRUCTURED_LOGGING_ENABLED,
-                "log_level": settings.LOG_LEVEL,
-            }
-        },
-    )
+    # Suppress startup logs
+    pass
     
     # Setup Sentry for error tracking
     if settings.SENTRY_DSN:
@@ -213,18 +215,10 @@ def setup_observability():
             },
         )
     else:
-        _logger.warning("Sentry DSN not configured - error tracking disabled")
+        pass  # Sentry not configured
     
     # Metrics
     if settings.METRICS_ENABLED:
-        _logger.info(
-            "Prometheus metrics enabled",
-            extra={
-                "context": {
-                    "metrics_enabled": True,
-                    "endpoint": "/metrics",
-                }
-            },
-        )
+        pass  # Metrics enabled silently
     else:
         _logger.info("Prometheus metrics disabled")

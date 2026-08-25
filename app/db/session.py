@@ -19,12 +19,12 @@ if is_sqlite:
     # SQLite doesn't benefit from pooling in single-instance mode
     pool_config = {
         "poolclass": NullPool,
-        "echo": settings.DEBUG,
+        "echo": False,  # Disable SQLAlchemy query logging
     }
 else:
     # PostgreSQL: configure connection pooling for multi-instance deployment
     pool_config = {
-        "echo": settings.DEBUG,
+        "echo": False,  # Disable SQLAlchemy query logging
         "poolclass": QueuePool,
         "pool_size": 20,  # Max connections to keep open
         "max_overflow": 10,  # Allow 10 extra connections during spikes

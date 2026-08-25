@@ -210,7 +210,7 @@ async def get_global_costs(
 async def get_user_costs(
     skip: int = 0,
     limit: int = Query(default=50, le=500),
-    sort_by: str = Query(default="spend", regex="^(spend|uploads|tier)$"),
+    sort_by: str = Query(default="spend", pattern="^(spend|uploads|tier)$"),
     _current_user=Depends(get_current_user_or_401),
     db: Session = Depends(get_db)
 ):
