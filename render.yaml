@@ -2,6 +2,7 @@ services:
   - type: web
     name: techfixai
     env: python
+    pythonVersion: 3.12
     plan: free
     buildCommand: "pip install --upgrade pip setuptools wheel && pip install -r requirements.txt"
     startCommand: "python run_quiet.py"
